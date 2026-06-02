@@ -54,6 +54,9 @@ export function summarize(list) {
 export const MONTHLY = { target: 16, done: 11 };
 export const ASSEMBLY = { done: 4 };
 
+// 未承認（サンプル固定値）
+export const UNAPPROVED = { machines: 3, users: 5 };
+
 export const STATUS_LABEL = {
   inspected: "点検済",
   uninspected: "未点検",
@@ -62,9 +65,18 @@ export const STATUS_LABEL = {
 
 export const MENU = [
   "ダッシュボード", "現場内在庫一覧", "貸出管理", "返却引取依頼", "棚卸", "点検",
-  "持込機械管理", "仮設・その他管理", "巡回/パトロール", "作業計画書", "動力盤管理",
-  "安全書類", "各種QRコード発行", "稼働レポート", "設定",
+  "持込機械管理", "仮設・その他管理", "巡回/パトロール", "動力盤管理",
+  "各種QRコード発行", "稼働レポート", "設定",
+  // 別ドメインへの外部リンク（設定の下に表示）
+  "作業計画書", "火気使用届",
 ];
+
+// 別ドメインのページへ遷移するメニュー（外部リンク）
+// ※URLはデモ用のプレースホルダー。実運用では各システムのURLに差し替える。
+export const EXTERNAL_LINKS = {
+  "作業計画書": "https://work-plan.example.com/",
+  "火気使用届": "https://fire-permit.example.com/",
+};
 
 export function todayStr() {
   const d = new Date();

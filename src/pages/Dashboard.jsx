@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import Card from "../components/Card.jsx";
-import { MACHINES, TEMPS, summarize, MONTHLY, ASSEMBLY } from "../data.js";
+import { MACHINES, TEMPS, summarize, MONTHLY, ASSEMBLY, UNAPPROVED } from "../data.js";
 
 const mSum = summarize(MACHINES);
 const tSum = summarize(TEMPS);
@@ -40,6 +40,12 @@ export default function Dashboard() {
         <Card label="月例点検対象数" value={MONTHLY.target} unit="件" />
         <Card label="月例点検実施数" value={MONTHLY.done} unit="件" tone="ok" />
         <Card label="組立後等点検実施数" value={ASSEMBLY.done} unit="件" tone="ok" />
+      </div>
+
+      <div className="section-title">未承認</div>
+      <div className="cards">
+        <Card label="未承認機械" value={UNAPPROVED.machines} unit="台" tone="warn" />
+        <Card label="未承認ユーザー" value={UNAPPROVED.users} unit="人" tone="warn" />
       </div>
     </div>
   );

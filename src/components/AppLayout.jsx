@@ -1,5 +1,15 @@
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
-import { MENU, todayStr } from "../data.js";
+import { MENU, EXTERNAL_LINKS, todayStr } from "../data.js";
+
+// 別ドメインへの遷移を示す外部リンクアイコン
+function ExternalIcon() {
+  return (
+    <svg className="ext-icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
+      <path fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+        d="M14 5h5v5M19 5l-8 8M11 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5" />
+    </svg>
+  );
+}
 
 // メニュー名 → 画面タイトル / 遷移先の対応
 function menuTitle(pathname, search) {
@@ -32,16 +42,30 @@ export default function AppLayout() {
           デジタル点検システム<small>新産業の森作業所</small>
         </Link>
         <nav>
-          {MENU.map((m) => (
-            <button
-              key={m}
-              className={"item" + (active === m ? " active" : "")}
-              onClick={() => selectMenu(m)}
-            >
-              <span className="dot" />
-              {m}
-            </button>
-          ))}
+          {MENU.map((m) =>
+            EXTERNAL_LINKS[m] ? (
+              <a
+                key={m}
+                className="item external"
+                href={EXTERNAL_LINKS[m]}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className="dot" />
+                {m}
+                <ExternalIcon />
+              </a>
+            ) : (
+              <button
+                key={m}
+                className={"item" + (active === m ? " active" : "")}
+                onClick={() => selectMenu(m)}
+              >
+                <span className="dot" />
+                {m}
+              </button>
+            )
+          )}
         </nav>
         <Link to="/" className="back-link">← デモ画面一覧へ戻る</Link>
       </aside>
