@@ -23,13 +23,11 @@ export default function DemoList() {
             <Link key={i} className="demo" to={d.to}>
               <span className="badge">{d.badge}</span>
               <h2>{d.title}</h2>
-              <p>{d.desc}</p>
             </Link>
           ) : (
             <div key={i} className="demo soon">
               <span className="badge">{d.badge}</span>
               <h2>{d.title}（準備中）</h2>
-              <p>{d.desc}</p>
             </div>
           )
         )}

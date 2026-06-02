@@ -15,6 +15,7 @@ function ExternalIcon() {
 function menuTitle(pathname, search) {
   if (pathname === "/app" || pathname === "/app/") return "ダッシュボード";
   if (pathname.startsWith("/app/inspection")) return "点検";
+  if (pathname.startsWith("/app/approval")) return "承認・申請";
   return "デモ";
 }
 
@@ -25,6 +26,7 @@ export default function AppLayout() {
   // 現在アクティブなメニュー判定
   let active = "ダッシュボード";
   if (location.pathname.startsWith("/app/inspection")) active = "点検";
+  else if (location.pathname.startsWith("/app/approval")) active = "承認・申請";
   else if (location.pathname.startsWith("/app/placeholder/")) {
     active = decodeURIComponent(location.pathname.split("/app/placeholder/")[1] || "");
   }
@@ -32,6 +34,7 @@ export default function AppLayout() {
   function selectMenu(m) {
     if (m === "ダッシュボード") navigate("/app");
     else if (m === "点検") navigate("/app/inspection");
+    else if (m === "承認・申請") navigate("/app/approval");
     else navigate("/app/placeholder/" + encodeURIComponent(m));
   }
 
