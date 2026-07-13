@@ -4,6 +4,7 @@ import { WORKADJUST_MENU, WORKADJUST_EXTERNAL_LINKS, formatDateStr } from "../da
 import { WaSettingsProvider, useWaSettings } from "./wa/WaSettingsContext.jsx";
 import DatePager from "./wa/DatePager.jsx";
 import { listOverlaps, KIND_LABEL, fmtHour } from "./wa/rsvTimeline.js";
+import bellIcon from "../assets/icons/notifications.svg";
 
 // ヘッダーの共通日付送り（全ページで作業日を共有）
 function HeaderDatePager() {
@@ -20,7 +21,7 @@ function OverlapBell() {
   return (
     <div className="bell-wrap">
       <button className="bell-btn" onClick={() => setOpen((o) => !o)} title="予約の重複通知">
-        🔔
+        <img className="ic-bell" src={bellIcon} alt="通知" />
         {n > 0 && <span className="bell-badge">{n}</span>}
       </button>
       {open && (

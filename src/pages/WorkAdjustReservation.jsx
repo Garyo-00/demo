@@ -24,6 +24,7 @@ import {
   settingsKeyOf,
   spotDurations,
 } from "../components/wa/WaSettingsContext.jsx";
+import printIcon from "../assets/icons/print.svg";
 
 // タブ表示順（揚重機 → ゲート → その他）
 const KINDS = ["lift", "gate", "aerial"];
@@ -175,7 +176,7 @@ export default function WorkAdjustReservation() {
       <div className="toolbar">
         <span className="subtle">{visible.length} 件</span>
         <button className="ghost-btn spacer" onClick={() => setShowPrint(true)}>
-          🖨 出力
+          <img className="ic-btn" src={printIcon} alt="" />出力
         </button>
         <button
           className="primary-btn"

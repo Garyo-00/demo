@@ -15,6 +15,7 @@ import Modal from "../components/wa/Modal.jsx";
 import PrintPreview from "../components/wa/PrintPreview.jsx";
 import SchedulePrint from "../components/wa/SchedulePrint.jsx";
 import { useWaSettings } from "../components/wa/WaSettingsContext.jsx";
+import printIcon from "../assets/icons/print.svg";
 import {
   SuggestField,
   ReadonlyField,
@@ -220,7 +221,7 @@ export default function WorkAdjustSchedule() {
           disabled={approvedRows.length === 0}
           title={approvedRows.length === 0 ? "確定済みの作業予定がありません" : "確定済みのみ出力します"}
         >
-          🖨 出力
+          <img className="ic-btn" src={printIcon} alt="" />出力
         </button>
         <button className="primary-btn" onClick={openCreate}>
           ＋ 新規作成
