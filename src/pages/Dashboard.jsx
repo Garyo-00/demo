@@ -37,15 +37,15 @@ export default function Dashboard() {
 
       <div className="section-title">月例・組立後等点検</div>
       <div className="cards three">
-        <Card label="月例点検対象数" value={MONTHLY.target} unit="件" />
-        <Card label="月例点検実施数" value={MONTHLY.done} unit="件" tone="ok" />
-        <Card label="組立後等点検実施数" value={ASSEMBLY.done} unit="件" tone="ok" />
+        <Card label="月例点検対象数" value={MONTHLY.target} unit="件" onLink={() => go(null, null)} />
+        <Card label="月例点検実施数" value={MONTHLY.done} unit="件" tone="ok" onLink={() => go(null, null)} />
+        <Card label="組立後等点検実施数" value={ASSEMBLY.done} unit="件" tone="ok" onLink={() => go(null, null)} />
       </div>
 
       <div className="section-title">未承認</div>
       <div className="cards">
-        <Card label="未承認機械" value={UNAPPROVED.machines} unit="台" tone="warn" />
-        <Card label="未承認ユーザー" value={UNAPPROVED.users} unit="人" tone="warn" />
+        <Card label="未承認機械" value={UNAPPROVED.machines} unit="台" tone="warn" onLink={() => navigate("/app/approval?scope=all")} linkLabel="承認・申請へ" />
+        <Card label="未承認ユーザー" value={UNAPPROVED.users} unit="人" tone="warn" onLink={() => navigate("/app/approval?scope=all")} linkLabel="承認・申請へ" />
       </div>
     </div>
   );

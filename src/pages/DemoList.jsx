@@ -5,7 +5,18 @@ const DEMOS = [
     to: "/app",
     badge: "点検",
     title: "ダッシュボード",
-    desc: "当日の点検進捗（機械・仮設）と月例/組立後等点検をカードで俯瞰。サイドバー式UI。",
+    ready: true,
+  },
+  {
+    to: "/workplan",
+    badge: "作業計画書",
+    title: "ダッシュボード",
+    ready: true,
+  },
+  {
+    to: "/workadjust",
+    badge: "作業間調整pro",
+    title: "作業予定一覧",
     ready: true,
   },
 ];

@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
-import { MENU, EXTERNAL_LINKS, todayStr } from "../data.js";
+import { MENU, EXTERNAL_LINKS, MY_PENDING_APPROVALS, todayStr } from "../data.js";
 
 // 別ドメインへの遷移を示す外部リンクアイコン
 function ExternalIcon() {
@@ -66,6 +66,9 @@ export default function AppLayout() {
               >
                 <span className="dot" />
                 {m}
+                {m === "承認・申請" && MY_PENDING_APPROVALS > 0 && (
+                  <span className="menu-badge">{MY_PENDING_APPROVALS}</span>
+                )}
               </button>
             )
           )}

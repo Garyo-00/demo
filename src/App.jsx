@@ -4,6 +4,19 @@ import AppLayout from "./components/AppLayout.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import InspectionRecords from "./pages/InspectionRecords.jsx";
 import ApprovalRequests from "./pages/ApprovalRequests.jsx";
+import WorkPlanLayout from "./components/WorkPlanLayout.jsx";
+import WorkPlanDashboard from "./pages/WorkPlanDashboard.jsx";
+import WorkPlanSettings from "./pages/WorkPlanSettings.jsx";
+import WorkPlanFloorPlanSetting from "./pages/WorkPlanFloorPlanSetting.jsx";
+import WorkPlanApprovalFlowSetting from "./pages/WorkPlanApprovalFlowSetting.jsx";
+import WorkAdjustLayout from "./components/WorkAdjustLayout.jsx";
+import WorkAdjustSchedule from "./pages/WorkAdjustSchedule.jsx";
+import WorkAdjustReservation from "./pages/WorkAdjustReservation.jsx";
+import WorkAdjustFloorPlan from "./pages/WorkAdjustFloorPlan.jsx";
+import WorkAdjustRegistry from "./pages/WorkAdjustRegistry.jsx";
+import WorkAdjustFloorPlanSetting from "./pages/WorkAdjustFloorPlanSetting.jsx";
+import WorkAdjustCompanies from "./pages/WorkAdjustCompanies.jsx";
+import WorkAdjustSettings from "./pages/WorkAdjustSettings.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
 
 export default function App() {
@@ -14,6 +27,24 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="inspection" element={<InspectionRecords />} />
         <Route path="approval" element={<ApprovalRequests />} />
+        <Route path="placeholder/:name" element={<Placeholder />} />
+      </Route>
+      <Route path="/workplan" element={<WorkPlanLayout />}>
+        <Route index element={<WorkPlanDashboard />} />
+        <Route path="approval" element={<ApprovalRequests />} />
+        <Route path="settings" element={<WorkPlanSettings />} />
+        <Route path="settings/floor-plan" element={<WorkPlanFloorPlanSetting />} />
+        <Route path="settings/approval-flow" element={<WorkPlanApprovalFlowSetting />} />
+        <Route path="placeholder/:name" element={<Placeholder />} />
+      </Route>
+      <Route path="/workadjust" element={<WorkAdjustLayout />}>
+        <Route index element={<WorkAdjustSchedule />} />
+        <Route path="reservation" element={<WorkAdjustReservation />} />
+        <Route path="floor-plan" element={<WorkAdjustFloorPlan />} />
+        <Route path="floor-plan-setting" element={<WorkAdjustFloorPlanSetting />} />
+        <Route path="registry" element={<WorkAdjustRegistry />} />
+        <Route path="companies" element={<WorkAdjustCompanies />} />
+        <Route path="settings" element={<WorkAdjustSettings />} />
         <Route path="placeholder/:name" element={<Placeholder />} />
       </Route>
     </Routes>

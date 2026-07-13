@@ -5,6 +5,7 @@ import {
   REQUEST_TYPES,
   APPROVAL_STATUS_LABEL,
   CURRENT_USER,
+  MY_PENDING_APPROVALS,
 } from "../data.js";
 
 // 申請の種別サブタブ（null = すべて）
@@ -15,6 +16,8 @@ export default function ApprovalRequests() {
   // 上位タブ: approval=承認 / request=申請（既定は承認）
   const tab = params.get("tab") === "request" ? "request" : "approval";
   const type = params.get("type");
+  // 承認タブの表示範囲: mine=自分の承認待ち（既定） / all=すべての承認待ち
+  const scope = params.get("scope") === "all" ? "all" : "mine";
 
   function setParam(key, value) {
     const next = new URLSearchParams(params);
@@ -30,24 +33,20 @@ export default function ApprovalRequests() {
   }
 
   // 承認待ち件数（承認タブのバッジ用）
-  const myPending = useMemo(
-    () =>
-      REQUESTS.filter(
-        (r) => r.approver === CURRENT_USER.name && r.status === "pending"
-      ).length,
-    []
-  );
+  const myPending = MY_PENDING_APPROVALS;
 
   const rows = useMemo(() => {
     if (tab === "approval") {
-      // 自分が承認者で、かつ承認待ちの申請のみ
+      // 承認待ちの申請。既定は自分が承認者のもの、フィルタですべてに切替可能
       return REQUESTS.filter(
-        (r) => r.approver === CURRENT_USER.name && r.status === "pending"
+        (r) =>
+          r.status === "pending" &&
+          (scope === "all" || r.approver === CURRENT_USER.name)
       );
     }
     // 申請: すべて／種別で絞り込み
     return REQUESTS.filter((r) => !type || r.type === type);
-  }, [tab, type]);
+  }, [tab, type, scope]);
 
   return (
     <div>
@@ -71,7 +70,20 @@ export default function ApprovalRequests() {
       </div>
 
       {tab === "approval" ? (
-        <p className="tab-note">自身が承認者の申請のみ表示されます。</p>
+        <div className="filters">
+          <span
+            className={"chip" + (scope === "mine" ? " on" : "")}
+            onClick={() => setParam("scope", null)}
+          >
+            自分の承認待ち
+          </span>
+          <span
+            className={"chip" + (scope === "all" ? " on" : "")}
+            onClick={() => setParam("scope", "all")}
+          >
+            すべての承認待ち
+          </span>
+        </div>
       ) : (
         <div className="filters">
           {TYPE_TABS.map((t, i) => (
