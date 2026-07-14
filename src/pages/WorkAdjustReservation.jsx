@@ -63,6 +63,7 @@ function emptyRsv(kind, date, resvType = "normal", resource = "") {
     start: "08:00",
     end: "10:00",
     content: "",
+    remark: "",
     vehicleType: kind === "gate" ? WA_VEHICLE_TYPES[0] : "",
     resvType,
   };
@@ -231,18 +232,20 @@ export default function WorkAdjustReservation() {
                     b.side === "right"
                       ? { left: b.barLeft + INSET, top: b.row * rowH, height: rowH }
                       : { right: trackW - b.barRight + INSET, top: b.row * rowH, height: rowH };
+                  // 確定後の通常予約はグレーアウト（スポットは対象外）
+                  const grayed = isConfirmed && !spot ? " confirmed" : "";
                   return (
                     <Fragment key={b.id}>
                       {/* 予約バー（色のみ・テキストは重ねて表示） */}
                       <div
-                        className={"rsv-bar" + (spot ? " spot" : "")}
+                        className={"rsv-bar" + (spot ? " spot" : "") + grayed}
                         style={{ left: b.barLeft, width: b.barW, top: barTop, height: barH }}
                         onClick={() => openBlock(b)}
                         title={title}
                       />
                       {/* ラベル。ゲートは車種を2行目に改行 */}
                       <div
-                        className={"rsv-tlabel " + b.side + (spot ? " spot" : "")}
+                        className={"rsv-tlabel " + b.side + (spot ? " spot" : "") + grayed}
                         style={labelStyle}
                         onClick={() => openBlock(b)}
                         title={title}
@@ -294,7 +297,7 @@ export default function WorkAdjustReservation() {
         <span className="lg-item"><span className="lg-chip spot" />スポット予約（15〜60分）</span>
       </div>
       <p className="rsv-note">
-        ※ デモでは枠をクリックして編集・削除できます（実運用ではドラッグで新規作成・編集・削除）。予約時間は15分単位です。
+        ※ デモでは枠をクリックして編集・削除できます（実運用ではドラッグで新規作成）。予約時間は15分単位です。
         <br />
         ※ スポット予約の所要時間は「予約時間間隔設定」に依存します（現在：{intervalLabel} → {spotDurs.map((d) => d + "分").join(" / ")}）。
         <br />
@@ -390,6 +393,14 @@ export default function WorkAdjustReservation() {
               maxLength={CONTENT_MAX}
               hint={`最大 ${CONTENT_MAX} 文字`}
             />
+            <div className="field full">
+              <label>備考</label>
+              <textarea
+                value={editing.remark || ""}
+                onChange={(e) => setEditing((x) => ({ ...x, remark: e.target.value }))}
+                placeholder="備考（任意）"
+              />
+            </div>
           </div>
         </Modal>
       )}

@@ -99,8 +99,8 @@ export default function WorkAdjustSettings() {
 
   return (
     <div>
-      <div className="crumb">設定</div>
-      <strong style={{ fontSize: 15 }}>設定</strong>
+      <div className="crumb">設定 ／ 予約設定</div>
+      <strong style={{ fontSize: 15 }}>予約設定</strong>
 
       <div className="tabs">
         {TABS.map(([k, label]) => (

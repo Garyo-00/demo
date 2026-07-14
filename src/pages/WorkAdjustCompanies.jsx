@@ -167,7 +167,7 @@ export default function WorkAdjustCompanies() {
   if (view === "form") {
     return (
       <div>
-        <div className="crumb">協力会社一覧</div>
+        <div className="crumb">協力会社設定</div>
         <div className="section-title first">{isEdit ? "編集" : "新規作成"}</div>
 
         <div className="cmp-form">
@@ -292,7 +292,7 @@ export default function WorkAdjustCompanies() {
   // ===== 一覧画面 =====
   return (
     <div>
-      <div className="section-title first">協力会社一覧</div>
+      <div className="section-title first">協力会社設定</div>
       <p className="lead" style={{ margin: "0 0 18px" }}>
         出面・日報管理および他サービスで共通利用する協力会社設定
       </p>

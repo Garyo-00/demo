@@ -26,8 +26,8 @@ export default function ReservationPrint({ date, label, isGate, items, reservati
             </div>
             <div className="pf-signblock">
               <div className="pf-sign">
-                <div className="pf-sign-label">登録台数</div>
-                <div className="pf-sign-body">{items.length} 台</div>
+                <div className="pf-sign-label">押印</div>
+                <div className="pf-sign-body" />
               </div>
             </div>
           </div>

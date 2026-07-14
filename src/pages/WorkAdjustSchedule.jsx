@@ -9,6 +9,7 @@ import {
   WA_STATUS_LABEL,
   WA_STATUS_PILL,
   WA_PRIME_USERS,
+  WA_MY_COMPANY,
   formatDateStr,
 } from "../data.js";
 import Modal from "../components/wa/Modal.jsx";
@@ -22,43 +23,54 @@ import {
   TextAreaField,
 } from "../components/wa/Field.jsx";
 
-function emptyRow(date) {
+// 作業ブロック（棟・階・エリア・工区・作業内容・作業人数・工数）
+function emptyBlock() {
+  return {
+    building: "", floor: "", area: "", zone: "", content: "",
+    normalWorkers: 1, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
+  };
+}
+// 新規作成フォーム（共通項目＋作業ブロックを複数）
+function emptyForm(date) {
   return {
     id: "",
     date,
-    status: "draft",
     company: "",
     industry: "",
     jobType: "",
     foreman: "",
-    building: "",
-    floor: "",
-    area: "",
-    zone: "",
-    content: "",
-    normalWorkers: 1,
-    normalHours: 8,
-    overtimeWorkers: 0,
-    overtimeHours: 0,
-    safetyNote: "",
-    // 実績（元請が確定後に入力。新規作成時は未入力）
-    actualNormalWorkers: null,
-    actualNormalHours: null,
-    actualOvertimeWorkers: null,
-    actualOvertimeHours: null,
+    blocks: [emptyBlock()],
+  };
+}
+// 既存レコード → 編集フォーム（ブロック1つ）
+function toForm(r) {
+  return {
+    id: r.id,
+    date: r.date,
+    company: r.company,
+    industry: r.industry,
+    jobType: r.jobType,
+    foreman: r.foreman,
+    blocks: [
+      {
+        building: r.building, floor: r.floor, area: r.area, zone: r.zone, content: r.content,
+        normalWorkers: r.normalWorkers, normalHours: r.normalHours,
+        overtimeWorkers: r.overtimeWorkers, overtimeHours: r.overtimeHours,
+      },
+    ],
   };
 }
 
 // 各パターンの作業人数の選択肢（0〜30名）
 const WORKER_OPTS = Array.from({ length: 31 }, (_, i) => i);
-// 予定の合計作業人数（テーブル表示用）
+// 予定の作業人数（通常作業のみをカウント／テーブル表示用）
 function totalWorkers(r) {
-  return (Number(r.normalWorkers) || 0) + (Number(r.overtimeWorkers) || 0);
+  return Number(r.normalWorkers) || 0;
 }
-// 実績の合計作業人数（未入力なら null）
+// 実績の作業人数（通常作業のみ。未入力なら null）
 function actualTotal(r) {
-  if (r.actualNormalWorkers == null && r.actualOvertimeWorkers == null) return null;
-  return (Number(r.actualNormalWorkers) || 0) + (Number(r.actualOvertimeWorkers) || 0);
+  if (r.actualNormalWorkers == null) return null;
+  return Number(r.actualNormalWorkers) || 0;
 }
 
 export default function WorkAdjustSchedule() {
@@ -67,8 +79,10 @@ export default function WorkAdjustSchedule() {
   const [editing, setEditing] = useState(null); // 作成/編集中の行
   const [confirmDraft, setConfirmDraft] = useState(null); // 確定ダイアログ（全未確定の下書き）
   const [actualDraft, setActualDraft] = useState(null); // 実績入力ダイアログ（全確定の下書き）
-  const [seq, setSeq] = useState(WA_WORK_SCHEDULES.length);
+  const [seq, setSeq] = useState(1000);
   const [showPrint, setShowPrint] = useState(false);
+  const [copyMode, setCopyMode] = useState(null); // "prime" | "foreman" | null
+  const [copySel, setCopySel] = useState(() => new Set()); // 複製元として選択したID
 
   // 表示中の日付の作業予定のみ。並び順は業種を基準にする
   const dayRows = rows
@@ -83,11 +97,11 @@ export default function WorkAdjustSchedule() {
   const allConfirmed = dayRows.length > 0 && !hasPending;
 
   function openCreate() {
-    setEditing(emptyRow(date));
+    setEditing(emptyForm(date));
   }
   function openEdit(row) {
     if (row.status === "approved") return; // 確定中は編集不可（要・確定解除）
-    setEditing({ ...row });
+    setEditing(toForm(row));
   }
   function remove(row) {
     if (row.status === "approved") return; // 確定中は削除不可
@@ -97,14 +111,43 @@ export default function WorkAdjustSchedule() {
   }
 
   function save() {
-    const row = editing;
-    if (row.id) {
-      setRows((rs) => rs.map((r) => (r.id === row.id ? row : r)));
+    const f = editing;
+    if (f.id) {
+      // 編集：既存レコードを更新（ステータス・安全指示・実績は保持）
+      const b = f.blocks[0];
+      setRows((rs) =>
+        rs.map((r) =>
+          r.id === f.id
+            ? {
+                ...r,
+                date: f.date, company: f.company, industry: f.industry,
+                jobType: f.jobType, foreman: f.foreman,
+                building: b.building, floor: b.floor, area: b.area, zone: b.zone, content: b.content,
+                normalWorkers: b.normalWorkers, normalHours: b.normalHours,
+                overtimeWorkers: b.overtimeWorkers, overtimeHours: b.overtimeHours,
+              }
+            : r
+        )
+      );
     } else {
-      const n = seq + 1;
+      // 新規：作業ブロックごとにレコードを作成
+      let n = seq;
+      const newRows = f.blocks.map((b) => {
+        n += 1;
+        return {
+          id: "W-" + String(n).padStart(3, "0"),
+          date: f.date, status: "pending",
+          company: f.company, industry: f.industry, jobType: f.jobType, foreman: f.foreman,
+          building: b.building, floor: b.floor, area: b.area, zone: b.zone, content: b.content,
+          normalWorkers: b.normalWorkers, normalHours: b.normalHours,
+          overtimeWorkers: b.overtimeWorkers, overtimeHours: b.overtimeHours,
+          safetyNote: "",
+          actualNormalWorkers: null, actualNormalHours: null,
+          actualOvertimeWorkers: null, actualOvertimeHours: null,
+        };
+      });
       setSeq(n);
-      const id = "W-" + String(n).padStart(3, "0");
-      setRows((rs) => [...rs, { ...row, id, status: "pending" }]);
+      setRows((rs) => [...rs, ...newRows]);
     }
     setEditing(null);
   }
@@ -112,6 +155,91 @@ export default function WorkAdjustSchedule() {
   // 職長は協力会社から自動反映
   function setCompany(company) {
     setEditing((e) => ({ ...e, company, foreman: WA_FOREMEN[company] || "" }));
+  }
+  // 作業ブロックの操作
+  function setBlock(i, patch) {
+    setEditing((e) => ({
+      ...e,
+      blocks: e.blocks.map((b, idx) => (idx === i ? { ...b, ...patch } : b)),
+    }));
+  }
+  const setBlockObj = (i) => (updater) =>
+    setEditing((e) => ({
+      ...e,
+      blocks: e.blocks.map((b, idx) => (idx === i ? updater(b) : b)),
+    }));
+  function addBlock() {
+    setEditing((e) => ({ ...e, blocks: [...e.blocks, emptyBlock()] }));
+  }
+  function removeBlock(i) {
+    setEditing((e) => ({ ...e, blocks: e.blocks.filter((_, idx) => idx !== i) }));
+  }
+
+  // --- コピー作成（過去の作業予定を本日ぶんとして複製）---
+  // 表示中日付より前の予定（複製元の候補）。ISO日付なので文字列比較でOK。
+  const pastRows = rows.filter((r) => r.date < date);
+  // 直近 n 日ぶん（日付の新しい順に n 日）を対象に絞り込む
+  function recentDays(list, n) {
+    const days = [...new Set(list.map((r) => r.date))].sort().reverse().slice(0, n);
+    const keep = new Set(days);
+    return list.filter((r) => keep.has(r.date));
+  }
+  // 元請版：全協力会社ぶん・直近3日 ／ 職長版：自社ぶん・直近5日
+  const copySource =
+    copyMode === "prime"
+      ? recentDays(pastRows, 3)
+      : copyMode === "foreman"
+      ? recentDays(pastRows.filter((r) => r.company === WA_MY_COMPANY), 5)
+      : [];
+  // 会社→レコード配列（元請版の大カテゴリ見出し用）／ 会社は50音で安定表示
+  const copyGroups = [...new Set(copySource.map((r) => r.company))]
+    .sort((a, b) => a.localeCompare(b, "ja"))
+    .map((company) => ({
+      company,
+      items: copySource
+        .filter((r) => r.company === company)
+        .sort((a, b) => b.date.localeCompare(a.date)),
+    }));
+
+  function openCopy(mode) {
+    setCopyMode(mode);
+    setCopySel(new Set());
+  }
+  function toggleCopy(id) {
+    setCopySel((s) => {
+      const next = new Set(s);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+  function toggleCopyGroup(items) {
+    const ids = items.map((r) => r.id);
+    const allOn = ids.every((id) => copySel.has(id));
+    setCopySel((s) => {
+      const next = new Set(s);
+      ids.forEach((id) => (allOn ? next.delete(id) : next.add(id)));
+      return next;
+    });
+  }
+  function commitCopy() {
+    const picked = copySource.filter((r) => copySel.has(r.id));
+    let n = seq;
+    const newRows = picked.map((r) => {
+      n += 1;
+      return {
+        ...r,
+        id: "W-" + String(n).padStart(3, "0"),
+        date, // 本日（表示中の日付）ぶんとして登録
+        status: "pending", // 未確定でコピー（元請の確定はこれから）
+        safetyNote: "", // 元請安全指示事項は確定時に入力
+        actualNormalWorkers: null, actualNormalHours: null,
+        actualOvertimeWorkers: null, actualOvertimeHours: null,
+      };
+    });
+    setSeq(n);
+    setRows((rs) => [...rs, ...newRows]);
+    setCopyMode(null);
+    setCopySel(new Set());
   }
 
   // 確定（全未確定を対象に、元請安全指示事項を入力するダイアログを開く）
@@ -223,6 +351,12 @@ export default function WorkAdjustSchedule() {
         >
           <img className="ic-btn" src={printIcon} alt="" />出力
         </button>
+        <button className="ghost-btn" onClick={() => openCopy("prime")}>
+          コピー作成（元請）
+        </button>
+        <button className="ghost-btn" onClick={() => openCopy("foreman")}>
+          コピー作成（職長）
+        </button>
         <button className="primary-btn" onClick={openCreate}>
           ＋ 新規作成
         </button>
@@ -257,7 +391,7 @@ export default function WorkAdjustSchedule() {
             </thead>
             <tbody>
               {dayRows.map((r) => (
-                <tr key={r.id}>
+                <tr key={r.id} className={r.status === "approved" ? "row-confirmed" : ""}>
                   <td>
                     <span className={"pill " + WA_STATUS_PILL[r.status]}>
                       {WA_STATUS_LABEL[r.status]}
@@ -283,18 +417,24 @@ export default function WorkAdjustSchedule() {
                     {r.safetyNote ? r.safetyNote : <span className="subtle">—</span>}
                   </td>
                   <td>
-                    {r.status === "approved" ? (
-                      <span className="subtle">確定済</span>
-                    ) : (
-                      <div className="row-actions">
-                        <button className="mini-btn" onClick={() => openEdit(r)}>
-                          編集
-                        </button>
-                        <button className="mini-btn danger" onClick={() => remove(r)}>
-                          削除
-                        </button>
-                      </div>
-                    )}
+                    <div className="row-actions">
+                      <button
+                        className="mini-btn"
+                        onClick={() => openEdit(r)}
+                        disabled={r.status === "approved"}
+                        title={r.status === "approved" ? "確定済みのため編集できません" : ""}
+                      >
+                        編集
+                      </button>
+                      <button
+                        className="mini-btn danger"
+                        onClick={() => remove(r)}
+                        disabled={r.status === "approved"}
+                        title={r.status === "approved" ? "確定済みのため削除できません" : ""}
+                      >
+                        削除
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -342,6 +482,7 @@ export default function WorkAdjustSchedule() {
             </>
           }
         >
+          {/* 共通項目 */}
           <div className="form-grid">
             <ReadonlyField
               label="日付"
@@ -360,7 +501,6 @@ export default function WorkAdjustSchedule() {
               label="業種"
               value={editing.industry}
               onChange={(v) =>
-                // 業種を変えたら職種はリセット（下位階層のため）
                 setEditing((x) => ({ ...x, industry: v, jobType: "" }))
               }
               options={WA_INDUSTRIES}
@@ -383,59 +523,156 @@ export default function WorkAdjustSchedule() {
               value={editing.foreman}
               hint="協力会社名から自動反映（DNNの設定を参照）"
             />
-            <SuggestField
-              label="棟"
-              value={editing.building}
-              onChange={(v) => setEditing((x) => ({ ...x, building: v }))}
-              options={WA_HISTORY.building}
-              hint="自由記述＋履歴から選択"
-            />
-            <SuggestField
-              label="階"
-              value={editing.floor}
-              onChange={(v) => setEditing((x) => ({ ...x, floor: v }))}
-              options={WA_HISTORY.floor}
-              hint="自由記述＋履歴から選択"
-            />
-            <SuggestField
-              label="エリア"
-              value={editing.area}
-              onChange={(v) => setEditing((x) => ({ ...x, area: v }))}
-              options={WA_HISTORY.area}
-              hint="自由記述＋履歴から選択"
-            />
-            <SuggestField
-              label="工区"
-              value={editing.zone}
-              onChange={(v) => setEditing((x) => ({ ...x, zone: v }))}
-              options={WA_HISTORY.zone}
-              hint="自由記述＋履歴から選択"
-            />
-            <SuggestField
-              full
-              label="作業内容"
-              value={editing.content}
-              onChange={(v) => setEditing((x) => ({ ...x, content: v }))}
-              options={WA_HISTORY.content}
-              hint="自由記述＋履歴から選択"
-            />
-            <div className="field full">
-              <label>作業人数・工数</label>
-              <div className="worker-grid">
-                {patternRow(editing, setEditing, "通常作業", "normalWorkers", "normalHours")}
-                {patternRow(editing, setEditing, "早出・残業作業", "overtimeWorkers", "overtimeHours")}
-              </div>
-              <span className="hint">
-                作業人数は数値の選択式、工数は数値入力（単位：h）。テーブルには合計人数（
-                {totalWorkers(editing)} 名）のみ表示します（工数は非表示）。
-              </span>
-            </div>
-            <div className="field full">
-              <span className="hint">
-                ※ 元請安全指示事項は、元請ユーザーが「確定」時に入力します。
-              </span>
-            </div>
           </div>
+
+          {/* 作業ブロック（棟・階・エリア・工区・作業内容・作業人数・工数）。新規は複数追加可 */}
+          {editing.blocks.map((bk, i) => (
+            <div className="cmp-block" key={i}>
+              <div className="cmp-block-head">
+                <span className="cmp-block-title">作業 {i + 1}</span>
+                {editing.blocks.length > 1 && (
+                  <button className="mini-btn danger" onClick={() => removeBlock(i)}>
+                    削除
+                  </button>
+                )}
+              </div>
+              <div className="form-grid">
+                <SuggestField
+                  label="棟"
+                  value={bk.building}
+                  onChange={(v) => setBlock(i, { building: v })}
+                  options={WA_HISTORY.building}
+                  hint="自由記述＋履歴から選択"
+                />
+                <SuggestField
+                  label="階"
+                  value={bk.floor}
+                  onChange={(v) => setBlock(i, { floor: v })}
+                  options={WA_HISTORY.floor}
+                  hint="自由記述＋履歴から選択"
+                />
+                <SuggestField
+                  label="エリア"
+                  value={bk.area}
+                  onChange={(v) => setBlock(i, { area: v })}
+                  options={WA_HISTORY.area}
+                  hint="自由記述＋履歴から選択"
+                />
+                <SuggestField
+                  label="工区"
+                  value={bk.zone}
+                  onChange={(v) => setBlock(i, { zone: v })}
+                  options={WA_HISTORY.zone}
+                  hint="自由記述＋履歴から選択"
+                />
+                <SuggestField
+                  full
+                  label="作業内容"
+                  value={bk.content}
+                  onChange={(v) => setBlock(i, { content: v })}
+                  options={WA_HISTORY.content}
+                  hint="自由記述＋履歴から選択"
+                />
+                <div className="field full">
+                  <label>作業人数・工数</label>
+                  <div className="worker-grid">
+                    {patternRow(bk, setBlockObj(i), "通常作業", "normalWorkers", "normalHours")}
+                    {patternRow(bk, setBlockObj(i), "早出・残業作業", "overtimeWorkers", "overtimeHours")}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {!editing.id && (
+            <div className="cmp-addrow">
+              <button className="linklike" onClick={addBlock}>
+                ＋ 作業を追加
+              </button>
+            </div>
+          )}
+        </Modal>
+      )}
+
+      {/* コピー作成（過去の予定を選択して本日ぶんとして複製） */}
+      {copyMode && (
+        <Modal
+          wide
+          title={
+            copyMode === "prime"
+              ? "コピー作成（元請）－ 全協力会社・直近3日"
+              : "コピー作成（職長）－ 自社・直近5日"
+          }
+          onClose={() => setCopyMode(null)}
+          footer={
+            <>
+              <button className="ghost-btn" onClick={() => setCopyMode(null)}>
+                キャンセル
+              </button>
+              <button
+                className="primary-btn"
+                onClick={commitCopy}
+                disabled={copySel.size === 0}
+              >
+                選択した内容を {formatDateStr(date)} の予定として登録（{copySel.size} 件）
+              </button>
+            </>
+          }
+        >
+          <p className="subtle" style={{ marginTop: 0 }}>
+            {copyMode === "prime" ? (
+              <>
+                過去（直近3日）の作業予定を協力会社別に表示しています。複製する作業を選択すると、
+                <b>{formatDateStr(date)}</b> の作業予定として一括登録されます（未確定で登録）。
+              </>
+            ) : (
+              <>
+                自社（<b>{WA_MY_COMPANY}</b>）が作成した過去（直近5日）の作業予定を表示しています。
+                複製する作業を選択すると、<b>{formatDateStr(date)}</b> の作業予定として登録されます（未確定で登録）。
+              </>
+            )}
+          </p>
+
+          {copyGroups.length === 0 ? (
+            <div className="empty">複製できる過去の作業予定がありません。</div>
+          ) : (
+            <div className="copy-list">
+              {copyGroups.map((g) => {
+                const allOn = g.items.every((r) => copySel.has(r.id));
+                return (
+                  <div className="copy-group" key={g.company}>
+                    <div className="copy-group-head">
+                      <span className="copy-group-name">{g.company}</span>
+                      <button className="linklike" onClick={() => toggleCopyGroup(g.items)}>
+                        {allOn ? "選択を解除" : "すべて選択"}
+                      </button>
+                    </div>
+                    {g.items.map((r) => (
+                      <label
+                        className={"copy-row" + (copySel.has(r.id) ? " on" : "")}
+                        key={r.id}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={copySel.has(r.id)}
+                          onChange={() => toggleCopy(r.id)}
+                        />
+                        <span className="copy-date">{formatDateStr(r.date)}</span>
+                        <span className="copy-job">
+                          {r.industry}／{r.jobType}
+                        </span>
+                        <span className="copy-loc">
+                          {[r.building, r.floor, r.area, r.zone].filter(Boolean).join(" / ")}
+                        </span>
+                        <span className="copy-content">{r.content}</span>
+                        <span className="copy-workers">{totalWorkers(r)} 名</span>
+                      </label>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </Modal>
       )}
 

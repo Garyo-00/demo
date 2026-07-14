@@ -152,13 +152,10 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
               <td>{e.bringIn}</td>
               <td>{e.primary}</td>
               <td>
-                <button
-                  className={"toggle-btn" + (e.show ? " on" : "")}
-                  onClick={() => toggleShow(e)}
-                  title="予約ページへの表示／非表示"
-                >
-                  {e.show ? "表示" : "非表示"}
-                </button>
+                <label className="cmp-check" title="予約ページへの表示／非表示">
+                  <input type="checkbox" checked={e.show} onChange={() => toggleShow(e)} />
+                  表示する
+                </label>
               </td>
               <td>
                 <div className="row-actions">
@@ -412,13 +409,10 @@ export default function WorkAdjustRegistry() {
                   <td>{g.location}</td>
                   <td>{g.note || <span className="subtle">—</span>}</td>
                   <td>
-                    <button
-                      className={"toggle-btn" + (g.show ? " on" : "")}
-                      onClick={() => toggleGateShow(g)}
-                      title="予約ページへの表示／非表示"
-                    >
-                      {g.show ? "表示" : "非表示"}
-                    </button>
+                    <label className="cmp-check" title="予約ページへの表示／非表示">
+                      <input type="checkbox" checked={g.show} onChange={() => toggleGateShow(g)} />
+                      表示する
+                    </label>
                   </td>
                   <td>
                     <div className="row-actions">
