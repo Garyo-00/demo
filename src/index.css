@@ -551,17 +551,32 @@ td .subtle{color:var(--sub);font-size:12px;}
   .wa-schedule-table,.reg-table{display:none;}
   .wa-card-list{display:flex;flex-direction:column;gap:12px;margin-top:14px;}
 
-  /* 一括登録／持込機械から同期ダイアログ：行ごとにカード化（横スクロール不要） */
-  .bulk-table,.import-table{white-space:normal;}
-  .bulk-table thead,.import-table thead{display:none;}
-  .bulk-table tbody,.bulk-table tr,.bulk-table td,
-  .import-table tbody,.import-table tr,.import-table td{display:block;width:auto;}
-  .bulk-table tr,.import-table tr{border:1px solid var(--line);border-radius:10px;
+  /* 一括登録ダイアログ：行ごとにカード化（入力欄を縦に並べ横スクロール不要） */
+  .bulk-table{white-space:normal;}
+  .bulk-table thead{display:none;}
+  .bulk-table tbody,.bulk-table tr,.bulk-table td{display:block;width:auto;}
+  .bulk-table tr{border:1px solid var(--line);border-radius:10px;
     padding:10px 12px 12px;margin-bottom:12px;background:#fafbfc;}
-  .bulk-table td,.import-table td{border:none;padding:8px 0 0;text-align:left;}
-  .bulk-table td::before,.import-table td::before{content:attr(data-label);display:block;
+  .bulk-table td{border:none;padding:8px 0 0;text-align:left;}
+  .bulk-table td::before{content:attr(data-label);display:block;
     font-size:12px;font-weight:600;color:var(--sub);margin-bottom:4px;}
-  .import-table td.col-check{width:auto;}
+
+  /* 持込機械から同期ダイアログ：コンパクトなカード（選択ボタンは右端・タップしやすく） */
+  .import-table{white-space:normal;}
+  .import-table thead{display:none;}
+  .import-table tbody{display:block;}
+  .import-table tr{position:relative;display:block;border:1px solid var(--line);border-radius:10px;
+    padding:8px 54px 8px 12px;margin-bottom:8px;background:#fafbfc;}
+  .import-table td{display:flex;gap:8px;width:auto;border:none;padding:2px 0;
+    font-size:13px;line-height:1.4;text-align:left;}
+  .import-table td::before{content:attr(data-label);flex:0 0 92px;color:var(--sub);
+    font-weight:600;font-size:12px;}
+  /* 選択チェックは右端の縦帯にまとめ、タップ領域を確保 */
+  .import-table td.col-check{position:absolute;top:0;right:0;bottom:0;width:54px;
+    padding:0;margin:0;display:flex;align-items:center;justify-content:center;
+    border-left:1px solid var(--line);}
+  .import-table td.col-check::before{display:none;}
+  .import-table td.col-check input{width:22px;height:22px;cursor:pointer;accent-color:var(--accent);}
 
   /* タブは横スクロール */
   .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;}
