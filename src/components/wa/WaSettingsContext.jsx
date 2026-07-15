@@ -26,7 +26,7 @@ export function WaSettingsProvider({ children }) {
   const [perm, setPerm] = useState(DEFAULT_PERM);
   const [rtype, setRtype] = useState(DEFAULT_TYPE);
   const [interval, setInterval] = useState(DEFAULT_INTERVAL);
-  // 作業配置図設定で登録した台紙（配置図確認で共通利用）
+  // 作業配置図設定で登録した台紙（配置図作成で共通利用）
   const [templates, setTemplates] = useState(WA_FLOORPLAN_SETTINGS);
   // 資機材・ゲート登録（予約ページで共通利用。show=予約表示）
   const [gates, setGates] = useState(WA_GATE_REGISTRY);

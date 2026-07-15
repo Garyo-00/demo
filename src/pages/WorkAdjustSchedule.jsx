@@ -374,7 +374,8 @@ export default function WorkAdjustSchedule() {
         <div className="empty">この日の作業予定はありません。</div>
       ) : (
         <>
-          <table>
+          {/* デスクトップ：テーブル表示 */}
+          <table className="wa-schedule-table">
             <thead>
               <tr>
                 <th>ステータス</th>
@@ -440,6 +441,66 @@ export default function WorkAdjustSchedule() {
               ))}
             </tbody>
           </table>
+
+          {/* モバイル：カード表示（横スクロールなしで全項目を表示） */}
+          <div className="wa-card-list">
+            {dayRows.map((r) => (
+              <div
+                key={r.id}
+                className={"wa-card" + (r.status === "approved" ? " confirmed" : "")}
+              >
+                <div className="wa-card-top">
+                  <span className={"pill " + WA_STATUS_PILL[r.status]}>
+                    {WA_STATUS_LABEL[r.status]}
+                  </span>
+                  <strong className="wa-card-co">{r.company}</strong>
+                </div>
+                <div className="wa-card-grid">
+                  <div className="wa-card-field">
+                    <span className="wa-card-label">業種／職種</span>
+                    <span>{r.industry}／{r.jobType}</span>
+                  </div>
+                  <div className="wa-card-field">
+                    <span className="wa-card-label">作業場所</span>
+                    <span>{[r.building, r.floor, r.area, r.zone].filter(Boolean).join(" / ")}</span>
+                  </div>
+                  <div className="wa-card-field">
+                    <span className="wa-card-label">作業内容</span>
+                    <span>{r.content || "—"}</span>
+                  </div>
+                  <div className="wa-card-field">
+                    <span className="wa-card-label">作業人数（予定／実績）</span>
+                    <span>
+                      {totalWorkers(r)} 名 ／{" "}
+                      {actualTotal(r) != null ? actualTotal(r) + " 名" : "—"}
+                    </span>
+                  </div>
+                  <div className="wa-card-field">
+                    <span className="wa-card-label">元請安全指示事項</span>
+                    <span>{r.safetyNote || "—"}</span>
+                  </div>
+                </div>
+                <div className="wa-card-actions">
+                  <button
+                    className="mini-btn"
+                    onClick={() => openEdit(r)}
+                    disabled={r.status === "approved"}
+                    title={r.status === "approved" ? "確定済みのため編集できません" : ""}
+                  >
+                    編集
+                  </button>
+                  <button
+                    className="mini-btn danger"
+                    onClick={() => remove(r)}
+                    disabled={r.status === "approved"}
+                    title={r.status === "approved" ? "確定済みのため削除できません" : ""}
+                  >
+                    削除
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
 
           {/* テーブル下：全作業共通の確定／確定解除／実績入力 */}
           <div className="confirm-bar">

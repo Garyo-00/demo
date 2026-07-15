@@ -131,7 +131,8 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
           </div>
         </div>
       </div>
-      <table>
+      {/* デスクトップ：テーブル表示 */}
+      <table className="reg-table">
         <thead>
           <tr>
             <th>ID</th>
@@ -171,6 +172,47 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
           ))}
         </tbody>
       </table>
+
+      {/* モバイル：カード表示（横スクロール不要） */}
+      <div className="wa-card-list">
+        {list.map((e) => (
+          <div className="wa-card" key={e.id}>
+            <div className="wa-card-top">
+              <span className="wa-card-id">{e.id}</span>
+              <strong className="wa-card-co">{e.name}</strong>
+            </div>
+            <div className="wa-card-grid">
+              <div className="wa-card-field">
+                <span className="wa-card-label">カテゴリ</span>
+                <span>{e.category}</span>
+              </div>
+              <div className="wa-card-field">
+                <span className="wa-card-label">持込会社名</span>
+                <span>{e.bringIn}</span>
+              </div>
+              <div className="wa-card-field">
+                <span className="wa-card-label">一次会社</span>
+                <span>{e.primary}</span>
+              </div>
+              <div className="wa-card-field">
+                <span className="wa-card-label">予約表示</span>
+                <label className="cmp-check">
+                  <input type="checkbox" checked={e.show} onChange={() => toggleShow(e)} />
+                  表示する
+                </label>
+              </div>
+            </div>
+            <div className="wa-card-actions">
+              <button className="mini-btn" onClick={() => setEdit({ ...e })}>
+                編集
+              </button>
+              <button className="mini-btn danger" onClick={() => remove(e)}>
+                削除
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* 新規／編集 */}
       {edit && (
@@ -251,7 +293,7 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
           <p className="subtle" style={{ marginTop: 0 }}>
             4項目すべて入力された行のみ登録されます（カテゴリ／表示名（現場内呼称）／持込会社名／一次会社）。
           </p>
-          <table>
+          <table className="bulk-table">
             <thead>
               <tr>
                 <th>カテゴリ*</th>
@@ -263,19 +305,19 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
             <tbody>
               {bulk.map((r, i) => (
                 <tr key={i}>
-                  <td>
+                  <td data-label="カテゴリ">
                     <input list="cat-list" value={r.category} style={cellInput}
                       onChange={(e) => setBulkRow(i, "category", e.target.value)} />
                   </td>
-                  <td>
+                  <td data-label="表示名（現場内呼称）">
                     <input list="name-list" value={r.name} style={cellInput}
                       onChange={(e) => setBulkRow(i, "name", e.target.value)} />
                   </td>
-                  <td>
+                  <td data-label="持込会社名">
                     <input list="co-list" value={r.bringIn} style={cellInput}
                       onChange={(e) => setBulkRow(i, "bringIn", e.target.value)} />
                   </td>
-                  <td>
+                  <td data-label="一次会社">
                     <input list="co-list" value={r.primary} style={cellInput}
                       onChange={(e) => setBulkRow(i, "primary", e.target.value)} />
                   </td>
@@ -306,7 +348,7 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
           <p className="subtle" style={{ marginTop: 0 }}>
             別サービス「<strong>安全セーフティ</strong>」の持込機械一覧から選択して取り込みます。
           </p>
-          <table>
+          <table className="import-table">
             <thead>
               <tr>
                 <th className="col-check"></th>
@@ -319,17 +361,17 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
             <tbody>
               {WA_SAFETY_MACHINES.map((m) => (
                 <tr key={m.id}>
-                  <td className="col-check">
+                  <td className="col-check" data-label="選択">
                     <input
                       type="checkbox"
                       checked={importSel.has(m.id)}
                       onChange={() => toggleImport(m.id)}
                     />
                   </td>
-                  <td>{m.category}</td>
-                  <td>{m.name}</td>
-                  <td>{m.bringIn}</td>
-                  <td>{m.primary}</td>
+                  <td data-label="カテゴリ">{m.category}</td>
+                  <td data-label="表示名（現場内呼称）">{m.name}</td>
+                  <td data-label="持込会社名">{m.bringIn}</td>
+                  <td data-label="一次会社">{m.primary}</td>
                 </tr>
               ))}
             </tbody>
@@ -372,13 +414,13 @@ export default function WorkAdjustRegistry() {
 
       <div className="tabs">
         <button className={"tab" + (tab === "lift" ? " on" : "")} onClick={() => setTab("lift")}>
-          揚重機登録
+          揚重機
         </button>
         <button className={"tab" + (tab === "gate" ? " on" : "")} onClick={() => setTab("gate")}>
-          ゲート登録
+          ゲート
         </button>
         <button className={"tab" + (tab === "equip" ? " on" : "")} onClick={() => setTab("equip")}>
-          資機材登録
+          資機材・その他
         </button>
       </div>
 
@@ -390,7 +432,8 @@ export default function WorkAdjustRegistry() {
               ＋ ゲート登録
             </button>
           </div>
-          <table>
+          {/* デスクトップ：テーブル表示 */}
+          <table className="reg-table">
             <thead>
               <tr>
                 <th>ゲートID</th>
@@ -428,6 +471,43 @@ export default function WorkAdjustRegistry() {
               ))}
             </tbody>
           </table>
+
+          {/* モバイル：カード表示（横スクロール不要） */}
+          <div className="wa-card-list">
+            {gates.map((g) => (
+              <div className="wa-card" key={g.id}>
+                <div className="wa-card-top">
+                  <span className="wa-card-id">{g.id}</span>
+                  <strong className="wa-card-co">{g.name}</strong>
+                </div>
+                <div className="wa-card-grid">
+                  <div className="wa-card-field">
+                    <span className="wa-card-label">設置場所</span>
+                    <span>{g.location || "—"}</span>
+                  </div>
+                  <div className="wa-card-field">
+                    <span className="wa-card-label">備考</span>
+                    <span>{g.note || "—"}</span>
+                  </div>
+                  <div className="wa-card-field">
+                    <span className="wa-card-label">予約表示</span>
+                    <label className="cmp-check">
+                      <input type="checkbox" checked={g.show} onChange={() => toggleGateShow(g)} />
+                      表示する
+                    </label>
+                  </div>
+                </div>
+                <div className="wa-card-actions">
+                  <button className="mini-btn" onClick={() => setGateEdit({ ...g })}>
+                    編集
+                  </button>
+                  <button className="mini-btn danger" onClick={() => removeGate(g)}>
+                    削除
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </>
       )}
 
@@ -435,7 +515,7 @@ export default function WorkAdjustRegistry() {
         <EquipmentSection label="揚重機" list={lifts} setList={setLifts} idPrefix="L" />
       )}
       {tab === "equip" && (
-        <EquipmentSection label="資機材" list={equipment} setList={setEquipment} idPrefix="E" />
+        <EquipmentSection label="資機材・その他" list={equipment} setList={setEquipment} idPrefix="E" />
       )}
 
       {/* 共通 datalist */}

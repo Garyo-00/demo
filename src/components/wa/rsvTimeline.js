@@ -18,7 +18,7 @@ export function pctHour(h) {
 }
 
 // 予約タブ（資源種別）のラベル
-export const KIND_LABEL = { lift: "揚重機", gate: "ゲート", aerial: "その他" };
+export const KIND_LABEL = { lift: "揚重機", gate: "ゲート", aerial: "資機材・その他" };
 
 // 1トラック内の「通常予約」が重複している時間帯（≥2件）を返す。[[startH,endH], ...]
 export function overlapBands(blocks) {

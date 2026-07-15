@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { MENU, EXTERNAL_LINKS, MY_PENDING_APPROVALS, todayStr } from "../data.js";
 
@@ -31,7 +32,10 @@ export default function AppLayout() {
     active = decodeURIComponent(location.pathname.split("/app/placeholder/")[1] || "");
   }
 
+  const [navOpen, setNavOpen] = useState(false);
+
   function selectMenu(m) {
+    setNavOpen(false);
     if (m === "ダッシュボード") navigate("/app");
     else if (m === "点検") navigate("/app/inspection");
     else if (m === "承認・申請") navigate("/app/approval");
@@ -40,8 +44,9 @@ export default function AppLayout() {
 
   return (
     <div className="layout">
-      <aside className="side">
-        <Link to="/app" className="brand">
+      {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
+      <aside className={"side" + (navOpen ? " open" : "")}>
+        <Link to="/app" className="brand" onClick={() => setNavOpen(false)}>
           デジタル点検システム<small>新産業の森作業所</small>
         </Link>
         <nav>
@@ -73,10 +78,13 @@ export default function AppLayout() {
             )
           )}
         </nav>
-        <Link to="/" className="back-link">← デモ画面一覧へ戻る</Link>
+        <Link to="/" className="back-link" onClick={() => setNavOpen(false)}>← デモ画面一覧へ戻る</Link>
       </aside>
       <div className="main">
         <div className="topbar">
+          <button className="nav-toggle" onClick={() => setNavOpen(true)} aria-label="メニューを開く">
+            ☰
+          </button>
           <h1>{menuTitle(location.pathname, location.search)}</h1>
           <span className="date">{todayStr()} 時点</span>
         </div>

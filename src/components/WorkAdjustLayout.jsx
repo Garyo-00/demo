@@ -73,7 +73,7 @@ function ExternalIcon() {
 const ROUTES = [
   ["/workadjust/reservation", "予約"],
   ["/workadjust/floor-plan-setting", "作業配置図設定"],
-  ["/workadjust/floor-plan", "配置図確認"],
+  ["/workadjust/floor-plan", "配置図作成"],
   ["/workadjust/registry", "資機材・ゲート登録"],
   ["/workadjust/companies", "協力会社設定"],
   ["/workadjust/settings", "予約設定"],
@@ -95,11 +95,14 @@ export default function WorkAdjustLayout() {
   const [settingsOpen, setSettingsOpen] = useState(
     settingsGroup ? settingsGroup.children.includes(active) : false
   );
+  // モバイル：サイドメニュー（ドロワー）の開閉
+  const [navOpen, setNavOpen] = useState(false);
 
   function selectMenu(m) {
+    setNavOpen(false); // 遷移したらドロワーを閉じる
     if (m === "作業予定一覧") navigate("/workadjust");
     else if (m === "予約") navigate("/workadjust/reservation");
-    else if (m === "配置図確認") navigate("/workadjust/floor-plan");
+    else if (m === "配置図作成") navigate("/workadjust/floor-plan");
     else if (m === "作業配置図設定") navigate("/workadjust/floor-plan-setting");
     else if (m === "資機材・ゲート登録") navigate("/workadjust/registry");
     else if (m === "協力会社設定") navigate("/workadjust/companies");
@@ -109,8 +112,9 @@ export default function WorkAdjustLayout() {
   return (
     <WaSettingsProvider>
     <div className="layout">
-      <aside className="side">
-        <Link to="/workadjust" className="brand">
+      {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
+      <aside className={"side" + (navOpen ? " open" : "")}>
+        <Link to="/workadjust" className="brand" onClick={() => setNavOpen(false)}>
           作業間調整pro<small>新産業の森作業所</small>
         </Link>
         <nav>
@@ -159,6 +163,7 @@ export default function WorkAdjustLayout() {
               href={WORKADJUST_EXTERNAL_LINKS[m]}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => setNavOpen(false)}
             >
               <span className="dot" />
               {m}
@@ -166,10 +171,13 @@ export default function WorkAdjustLayout() {
             </a>
           ))}
         </nav>
-        <Link to="/" className="back-link">← デモ画面一覧へ戻る</Link>
+        <Link to="/" className="back-link" onClick={() => setNavOpen(false)}>← デモ画面一覧へ戻る</Link>
       </aside>
       <div className="main">
         <div className="topbar">
+          <button className="nav-toggle" onClick={() => setNavOpen(true)} aria-label="メニューを開く">
+            ☰
+          </button>
           <h1>{active}</h1>
           <div className="topbar-right">
             <OverlapBell />

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
 import { WORKPLAN_MENU, MY_PENDING_APPROVALS, todayStr } from "../data.js";
 
@@ -28,7 +29,10 @@ export default function WorkPlanLayout() {
     );
   }
 
+  const [navOpen, setNavOpen] = useState(false);
+
   function selectMenu(m) {
+    setNavOpen(false);
     if (m === "ダッシュボード") navigate("/workplan");
     else if (m === "承認・申請") navigate("/workplan/approval");
     else if (m === "設定") navigate("/workplan/settings");
@@ -37,8 +41,9 @@ export default function WorkPlanLayout() {
 
   return (
     <div className="layout">
-      <aside className="side">
-        <Link to="/workplan" className="brand">
+      {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
+      <aside className={"side" + (navOpen ? " open" : "")}>
+        <Link to="/workplan" className="brand" onClick={() => setNavOpen(false)}>
           作業計画書システム<small>新産業の森作業所</small>
         </Link>
         <nav>
@@ -56,10 +61,13 @@ export default function WorkPlanLayout() {
             </button>
           ))}
         </nav>
-        <Link to="/" className="back-link">← デモ画面一覧へ戻る</Link>
+        <Link to="/" className="back-link" onClick={() => setNavOpen(false)}>← デモ画面一覧へ戻る</Link>
       </aside>
       <div className="main">
         <div className="topbar">
+          <button className="nav-toggle" onClick={() => setNavOpen(true)} aria-label="メニューを開く">
+            ☰
+          </button>
           <h1>{pageTitle(location.pathname)}</h1>
           <span className="date">{todayStr()} 時点</span>
         </div>

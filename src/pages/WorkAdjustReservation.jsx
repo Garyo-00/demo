@@ -51,7 +51,7 @@ function addMinutes(hhmm, min) {
 const durationMin = (start, end) => Math.round((toHour(end) - toHour(start)) * 60);
 
 // 予約タブ（資源種別）のラベル
-const KIND_LABEL = { lift: "揚重機", gate: "ゲート", aerial: "その他" };
+const KIND_LABEL = { lift: "揚重機", gate: "ゲート", aerial: "資機材・その他" };
 
 function emptyRsv(kind, date, resvType = "normal", resource = "") {
   return {
@@ -193,6 +193,7 @@ export default function WorkAdjustReservation() {
         </button>
       </div>
 
+      <div className="rsv-scroll">
       <div className="rsv-board" ref={boardRef}>
         <div className="rsv-corner">{resource.label}＼時刻</div>
         <div className="rsv-hours" style={{ gridTemplateColumns: `repeat(${HOURS.length}, 1fr)` }}>
@@ -269,6 +270,7 @@ export default function WorkAdjustReservation() {
           );
         })}
       </div>
+      </div>
 
       {/* 確定（日付単位・全タブ共通） */}
       <div className="confirm-bar">
@@ -301,7 +303,7 @@ export default function WorkAdjustReservation() {
         <br />
         ※ スポット予約の所要時間は「予約時間間隔設定」に依存します（現在：{intervalLabel} → {spotDurs.map((d) => d + "分").join(" / ")}）。
         <br />
-        ※ 確定は<strong>揚重機・ゲート・その他すべてのタブ共通（日付単位）</strong>です。確定後は<strong>通常予約はできず、スポット予約のみ</strong>作成・編集できます。
+        ※ 確定は<strong>すべてのタブ（揚重機／ゲート／資機材・その他）共通（日付単位）</strong>です。確定後は<strong>通常予約はできず、スポット予約のみ</strong>作成・編集できます。
       </p>
 
       {editing && (

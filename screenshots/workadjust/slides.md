@@ -20,6 +20,9 @@ style: |
   .row { display: flex; gap: 22px; flex: 1; min-height: 0; align-items: stretch; }
   .shot { flex: 1; display: flex; align-items: center; justify-content: center; min-width: 0; }
   .shot img { max-width: 100%; max-height: 590px; object-fit: contain; }
+  /* スマホ画面（端末キャプチャを横に2枚並べる） */
+  .shot-phones p { display: flex; gap: 18px; margin: 0; align-items: center; justify-content: center; }
+  .shot-phones img { max-height: 588px; max-width: 47%; width: auto; border: 1px solid #d5dbe4; }
   .spec {
     flex: 0 0 336px; display: flex; flex-direction: column;
     background: #fff; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 14px 16px;
@@ -263,12 +266,12 @@ style: |
 
 ---
 
-##### 08. 配置図確認
+##### 08. 配置図作成
 
 <div class="row">
 <div class="shot">
 
-![](08-配置図確認.png)
+![](08-配置図作成.png)
 
 </div>
 <div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
@@ -276,12 +279,12 @@ style: |
 
 ---
 
-##### 09. 配置図確認 — 新規作成（台紙選択）
+##### 09. 配置図作成 — 新規作成（台紙選択）
 
 <div class="row">
 <div class="shot">
 
-![](09-配置図確認_新規作成台紙選択.png)
+![](09-配置図作成_新規作成台紙選択.png)
 
 </div>
 <div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
@@ -289,12 +292,12 @@ style: |
 
 ---
 
-##### 10. 配置図確認 — 配置を追加
+##### 10. 配置図作成 — 配置を追加
 
 <div class="row">
 <div class="shot">
 
-![](10-配置図確認_配置を追加.png)
+![](10-配置図作成_配置を追加.png)
 
 </div>
 <div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
@@ -497,6 +500,186 @@ style: |
 
 ---
 
+##### 26. スマホ表示 — ナビゲーション／ベル通知
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](mobile/26-1-drawer.png)
+![](mobile/26-2-bell.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 27. スマホ表示 — 作業予定一覧（確定前／確定後）
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](mobile/27-1-schedule-pending.png)
+![](mobile/27-2-schedule-confirmed.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 28. スマホ表示 — 作業予定の新規作成／コピー作成（元請）
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](mobile/28-1-schedule-create.png)
+![](mobile/28-2-copy-prime.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 29. スマホ表示 — コピー作成（職長）
+
+<div class="row">
+<div class="shot">
+
+![](mobile/29-1-copy-foreman.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 30. スマホ表示 — 予約一覧（確定前／確定後）
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](mobile/30-1-reservation-before.png)
+![](mobile/30-2-reservation-after.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 31. スマホ表示 — 予約の新規作成／編集
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](mobile/31-1-reservation-create.png)
+![](mobile/31-2-reservation-edit.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 32. スマホ表示 — 配置図作成
+
+<div class="row">
+<div class="shot">
+
+![](mobile/32-1-floorplan.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 33. スマホ表示 — 作業配置図設定／協力会社設定
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](mobile/33-1-floorplan-setting.png)
+![](mobile/33-2-companies.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 34. スマホ表示 — 予約設定（予約時間／予約権限）
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](mobile/34-1-settings-time.png)
+![](mobile/34-2-settings-auth.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 35. スマホ表示 — 予約設定（予約種類／予約時間間隔）
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](mobile/35-1-settings-type.png)
+![](mobile/35-2-settings-interval.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 36. スマホ表示 — 資機材・ゲート登録（揚重機／資機材・その他）
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](mobile/36-1-registry-lift.png)
+![](mobile/36-2-registry-equip.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 37. スマホ表示 — 資機材・ゲート登録（ゲート／新規登録）
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](mobile/37-1-registry-gate.png)
+![](mobile/37-2-registry-new.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 38. スマホ表示 — 資機材・ゲート登録（一括登録／持込機械から同期）
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](mobile/38-1-registry-bulk.png)
+![](mobile/38-2-registry-import.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
 <!-- _class: qa -->
 
 ##### コメントへの回答（1/3）
@@ -536,7 +719,7 @@ style: |
 <div class="qa">
 <div class="qa-item"><div class="qa-q">15. <span class="qa-tag">07-2 予約作成</span>備考入力したい</div><div class="qa-a">回答：備考を追加しました</div></div>
 <div class="qa-item"><div class="qa-q">16. <span class="qa-tag">07-3 予約出力</span>登録台数不要／押印欄が欲しい</div><div class="qa-a">回答：登録台数を消して押印エリアに変更しました</div></div>
-<div class="qa-item"><div class="qa-q">17. <span class="qa-tag">08 配置図確認</span>複数作れる？（作れた方が良いかも）</div><div class="qa-a">回答：1日あたり、登録されている作業配置図分作成できるような仕様で考えています</div></div>
+<div class="qa-item"><div class="qa-q">17. <span class="qa-tag">08 配置図作成</span>複数作れる？（作れた方が良いかも）</div><div class="qa-a">回答：1日あたり、登録されている作業配置図分作成できるような仕様で考えています</div></div>
 <div class="qa-item"><div class="qa-q">18. <span class="qa-tag">11 配置図設定一覧</span>「変換済」ってなんですか？</div><div class="qa-a">回答：NEOの作業配置図設定画面と同じもので、PDFと画像が登録されたかどうかのステータスになります</div></div>
 <div class="qa-item"><div class="qa-q">19. <span class="qa-tag">12 配置図設定登録</span>立面図の可能性あり →「平面図」の名称を「図面」等に変更</div><div class="qa-a">回答：NEO側で変更します</div></div>
 <div class="qa-item"><div class="qa-q">20. <span class="qa-tag">16 資機材（資機材）</span>「表示する」チェックボックスのデザインを揃えたい</div><div class="qa-a">回答：協力会社設定画面のデザインと統一しました</div></div>

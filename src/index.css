@@ -52,9 +52,15 @@ a.demo:hover{box-shadow:0 6px 20px rgba(31,111,235,.12);transform:translateY(-2p
 .side .back-link:hover{color:#fff;}
 
 .main{flex:1;min-width:0;display:flex;flex-direction:column;}
-.topbar{background:#fff;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;}
-.topbar h1{font-size:18px;margin:0;}
+.topbar{background:#fff;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:12px;}
+.topbar h1{font-size:18px;margin:0;margin-right:auto;}
 .topbar-right{display:flex;align-items:center;gap:14px;}
+/* モバイル用ハンバーガー（既定は非表示、モバイルのみ表示） */
+.nav-toggle{display:none;flex:0 0 auto;width:38px;height:38px;border:1px solid var(--line);
+  background:#fff;border-radius:8px;font-size:18px;line-height:1;cursor:pointer;color:var(--ink);
+  align-items:center;justify-content:center;}
+.nav-toggle:hover{background:#f0f3f7;}
+.nav-backdrop{display:none;}
 
 /* ヘッダーの重複通知ベル */
 .bell-wrap{position:relative;}
@@ -170,6 +176,19 @@ tr:last-child td{border-bottom:none;}
 .row-actions{display:flex;gap:6px;white-space:nowrap;}
 /* 確定済みの作業予定は行の背景を薄いグレーに */
 .row-confirmed td{background:#f2f4f7;color:#667085;}
+
+/* 作業予定一覧のカード表示（モバイル専用。既定は非表示） */
+.wa-card-list{display:none;}
+.wa-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
+.wa-card.confirmed{background:#f2f4f7;}
+.wa-card-top{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.wa-card-co{font-size:15px;}
+.wa-card-id{font-size:12px;color:var(--sub);font-weight:600;background:#f2f4f7;border-radius:6px;padding:2px 8px;flex:0 0 auto;}
+.wa-card-grid{display:flex;flex-direction:column;gap:9px;}
+.wa-card-field{display:grid;grid-template-columns:118px 1fr;gap:10px;font-size:13px;line-height:1.5;}
+.wa-card-label{color:var(--sub);font-weight:600;font-size:12px;}
+.wa-card-actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);}
+.wa-card-actions .mini-btn{flex:1;padding:9px;font-size:13px;}
 .wa-note{font-size:12px;color:var(--sub);margin:12px 0;line-height:1.6;}
 .wa-note strong{color:var(--warn);}
 .bulkbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;
@@ -257,13 +276,14 @@ tr:last-child td{border-bottom:none;}
 
 /* ===== 作業配置図設定 ===== */
 .badge-green{display:inline-block;background:#12b76a;color:#fff;font-size:11.5px;font-weight:700;
-  border-radius:999px;padding:3px 12px;}
+  border-radius:999px;padding:3px 12px;white-space:nowrap;}
 .badge-gray{display:inline-block;background:var(--idle-bg);color:var(--idle);font-size:11.5px;
-  font-weight:600;border-radius:999px;padding:3px 12px;}
+  font-weight:600;border-radius:999px;padding:3px 12px;white-space:nowrap;}
 .fps-listcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;}
 .fps-listhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
 .fps-listhead strong{font-size:15px;}
-.fps-table{border:none;}
+/* overflow:visible にして、⋮メニューがテーブルの角丸クリップで見切れないようにする */
+.fps-table{border:none;overflow:visible;}
 .fps-table th{background:transparent;border-bottom:1px solid var(--line);}
 .fps-table td{border-bottom:1px solid var(--line);}
 .fps-table tr:last-child td{border-bottom:none;}
@@ -288,12 +308,12 @@ tr:last-child td{border-bottom:none;}
 .fps-detail-note{margin-bottom:16px;}
 .fps-detail-note .da-label{display:block;margin-bottom:4px;}
 
-/* 配置図確認：編集／確定バー */
+/* 配置図作成：編集／確定バー */
 .fp-editbar{display:flex;align-items:center;gap:12px;margin:0 0 10px;padding:10px 14px;
   background:#fff;border:1px solid var(--line);border-radius:10px;}
 .fp-editbar-name{font-size:14px;}
 
-/* 配置図確認：台紙キャンバス */
+/* 配置図作成：台紙キャンバス */
 .fp-canvas{position:relative;height:520px;border:1px solid var(--line);border-radius:10px;
   overflow:hidden;background:#fff;}
 .fp-canvas.editing{cursor:crosshair;outline:2px dashed var(--accent);outline-offset:-2px;}
@@ -304,7 +324,7 @@ tr:last-child td{border-bottom:none;}
 .fp-hint{position:absolute;left:50%;top:16px;transform:translateX(-50%);background:rgba(255,255,255,.9);
   border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--sub);}
 
-/* 配置図確認：元請連絡事項 */
+/* 配置図作成：元請連絡事項 */
 .fp-notes{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
 .fp-notes-label{display:block;font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px;}
 .fp-notes-sub{font-weight:400;font-size:12px;color:var(--sub);margin-left:6px;}
@@ -490,4 +510,101 @@ td .subtle{color:var(--sub);font-size:12px;}
   .pp-bar{display:none;}
   .pp-scroll{padding:0;gap:0;overflow:visible;display:block;}
   .paper{box-shadow:none;margin:0 auto;page-break-after:always;}
+}
+
+/* ===== レスポンシブ（スマホ／タブレット） ===== */
+/* 予約タイムラインは常に横スクロール可能（狭い画面で崩れないように） */
+.rsv-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+@media(max-width:768px){
+  /* サイドメニューをオフキャンバスのドロワーに切替 */
+  .side{position:fixed;top:0;left:0;bottom:0;width:270px;flex-basis:270px;z-index:200;
+    transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 40px rgba(0,0,0,.35);}
+  .side.open{transform:translateX(0);}
+  .nav-backdrop{display:block;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:150;}
+  .nav-toggle{display:inline-flex;}
+
+  /* ヘッダー・本文の余白を縮小。狭い場合は日付ページャを2段目へ折り返す */
+  .topbar{padding:10px 14px;flex-wrap:wrap;row-gap:8px;position:relative;}
+  .topbar h1{font-size:16px;white-space:nowrap;}
+  .topbar .date{font-size:12px;}
+  .content{padding:16px 14px;}
+  .topbar-right{gap:8px;}
+
+  /* 日付ページャ・ベルをコンパクトに */
+  .datepager .dp-arrow{padding:0 8px;font-size:12px;}
+  .datepager .dp-label{min-width:96px;font-size:12.5px;}
+  .datepager .dp-current{padding:6px 8px;}
+  .bell-btn{width:36px;height:36px;}
+  /* ベルのドロップダウンはヘッダー全幅を基準に配置（画面外に見切れないように） */
+  .bell-wrap{position:static;}
+  .bell-menu{left:12px;right:12px;top:calc(100% + 6px);width:auto;max-width:none;}
+
+  /* テーブルは横スクロール（帳票の pf-table は除く） */
+  table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;}
+  .cmp-table{white-space:normal;}
+  .pf-table{display:table;white-space:normal;overflow:visible;}
+  /* 作業配置図設定は通常テーブルのまま（⋮メニューが見切れないよう overflow:visible） */
+  .fps-table{display:table;width:100%;white-space:normal;overflow:visible;}
+
+  /* 作業予定一覧・資機材ゲート登録：テーブルを隠してカード表示に切替（横スクロール不要） */
+  .wa-schedule-table,.reg-table{display:none;}
+  .wa-card-list{display:flex;flex-direction:column;gap:12px;margin-top:14px;}
+
+  /* 一括登録／持込機械から同期ダイアログ：行ごとにカード化（横スクロール不要） */
+  .bulk-table,.import-table{white-space:normal;}
+  .bulk-table thead,.import-table thead{display:none;}
+  .bulk-table tbody,.bulk-table tr,.bulk-table td,
+  .import-table tbody,.import-table tr,.import-table td{display:block;width:auto;}
+  .bulk-table tr,.import-table tr{border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px 12px;margin-bottom:12px;background:#fafbfc;}
+  .bulk-table td,.import-table td{border:none;padding:8px 0 0;text-align:left;}
+  .bulk-table td::before,.import-table td::before{content:attr(data-label);display:block;
+    font-size:12px;font-weight:600;color:var(--sub);margin-bottom:4px;}
+  .import-table td.col-check{width:auto;}
+
+  /* タブは横スクロール */
+  .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;}
+  .tabs .tab{white-space:nowrap;padding:10px 14px;}
+
+  /* フォームは1カラムに */
+  .form-grid{grid-template-columns:1fr;}
+  .cmp-form-row,.set-row,.cmp-ref-item{grid-template-columns:1fr;gap:8px;align-items:start;}
+  .cmp-form,.cmp-search,.fps-section{padding:16px;}
+  .set-block{max-width:none;padding:6px 16px;}
+
+  /* ツールバー・操作ボタン列は折り返し */
+  .toolbar,.cmp-actions,.cmp-form-foot,.fps-foot,.cmp-search-btns,.fps-listhead,.modal-foot,.pp-bar{flex-wrap:wrap;}
+  .cmp-actions{justify-content:flex-start;}
+  .toolbar .spacer,.ghost-btn.spacer,.primary-btn.spacer,.stack-actions.spacer{margin-left:0;}
+  .stack-actions{align-items:stretch;}
+
+  /* モーダルを画面幅いっぱいに */
+  .modal-overlay{padding:16px 10px;}
+  .modal-body{padding:16px 14px;}
+  .modal-head,.modal-foot{padding:14px;}
+
+  /* 予約タイムラインは最小幅を確保して横スクロール */
+  .rsv-board{min-width:720px;}
+  .rsv-legend{flex-wrap:wrap;gap:10px 18px;}
+
+  /* コピー作成の行は主要項目のみ表示（場所・業種は省略） */
+  .copy-row{grid-template-columns:18px 74px 1fr auto;gap:8px;}
+  .copy-row .copy-loc,.copy-row .copy-job{display:none;}
+
+  /* 配置図キャンバス・平面図ボックスの高さを抑制 */
+  .fp-canvas{height:360px;}
+  .fps-planbox{height:300px;}
+
+  /* 出力プレビュー */
+  .pp-scroll{padding:12px;}
+}
+
+@media(max-width:480px){
+  .side{width:84vw;flex-basis:84vw;}
+  .topbar h1{font-size:15px;}
+  .datepager .dp-label{min-width:82px;font-size:12px;}
+  .primary-btn.big{padding:11px 22px;font-size:14px;}
+  .cmp-search-btns{width:100%;}
+  .cmp-search-btns .primary-btn,.cmp-search-btns .ghost-btn{flex:1;padding:9px 12px;}
 }

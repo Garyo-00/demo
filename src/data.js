@@ -137,7 +137,7 @@ export const WA_PROJECT = {
 export const WORKADJUST_NAV = [
   { label: "作業予定一覧" },
   { label: "予約" },
-  { label: "配置図確認" },
+  { label: "配置図作成" },
   {
     label: "設定",
     children: ["作業配置図設定", "資機材・ゲート登録", "協力会社設定", "予約設定"],

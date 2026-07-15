@@ -151,7 +151,7 @@ export default function WorkAdjustFloorPlan() {
 
   return (
     <div>
-      <div className="crumb">配置図確認</div>
+      <div className="crumb">配置図作成</div>
       <div className="toolbar">
         {dayPlans.length > 0 ? (
           <select
