@@ -446,7 +446,7 @@ td .subtle{color:var(--sub);font-size:12px;}
 .rsv-tlabel.spot .tl-time{color:var(--warn);opacity:.85;}
 .rsv-tlabel.spot .rsv-veh{background:var(--warn);}
 
-/* 確定後の通常予約はグレーアウト（重複の赤帯 .rsv-overlap には非適用） */
+/* 確定済みの予約（通常・スポット）はグレーアウト（重複の赤帯 .rsv-overlap には非適用） */
 .rsv-bar.confirmed{background:#e4e7ec;}
 .rsv-tlabel.confirmed,
 .rsv-tlabel.confirmed .tl-co,

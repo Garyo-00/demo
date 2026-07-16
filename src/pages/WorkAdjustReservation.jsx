@@ -135,9 +135,10 @@ export default function WorkAdjustReservation() {
   function setSpotDur(dur) {
     setEditing((x) => ({ ...x, end: addMinutes(x.start, dur) }));
   }
-  // 予約バーのクリック（確定後は通常予約を編集不可・スポットのみ可）
+  // 予約バーのクリック（確定済みの予約は通常・スポットとも編集不可。
+  // 確定後に追加したスポット予約は未確定なので編集・削除できる）
   function openBlock(b) {
-    if (isConfirmed && b.resvType !== "spot") return;
+    if (b.confirmed) return;
     setEditing({ ...b });
   }
 
@@ -233,8 +234,9 @@ export default function WorkAdjustReservation() {
                     b.side === "right"
                       ? { left: b.barLeft + INSET, top: b.row * rowH, height: rowH }
                       : { right: trackW - b.barRight + INSET, top: b.row * rowH, height: rowH };
-                  // 確定後の通常予約はグレーアウト（スポットは対象外）
-                  const grayed = isConfirmed && !spot ? " confirmed" : "";
+                  // 確定済みの予約はグレーアウト（通常・スポット共通。確定後に追加した
+                  // 未確定スポットは対象外。重複の赤帯 .rsv-overlap には非適用）
+                  const grayed = b.confirmed ? " confirmed" : "";
                   return (
                     <Fragment key={b.id}>
                       {/* 予約バー（色のみ・テキストは重ねて表示） */}
@@ -272,14 +274,19 @@ export default function WorkAdjustReservation() {
       </div>
       </div>
 
-      {/* 確定（日付単位・全タブ共通） */}
+      {/* 確定（日付単位・全タブ共通）。その日の予約（通常・スポット）をまとめて確定 */}
       <div className="confirm-bar">
         {isConfirmed ? (
           <>
             <span className="badge-green">確定済</span>
             <button
               className="ghost-btn"
-              onClick={() => setConfirmedDays((d) => ({ ...d, [date]: false }))}
+              onClick={() => {
+                setConfirmedDays((d) => ({ ...d, [date]: false }));
+                setRows((rs) =>
+                  rs.map((r) => (r.date === date ? { ...r, confirmed: false } : r))
+                );
+              }}
             >
               確定解除
             </button>
@@ -287,7 +294,12 @@ export default function WorkAdjustReservation() {
         ) : (
           <button
             className="primary-btn big"
-            onClick={() => setConfirmedDays((d) => ({ ...d, [date]: true }))}
+            onClick={() => {
+              setConfirmedDays((d) => ({ ...d, [date]: true }));
+              setRows((rs) =>
+                rs.map((r) => (r.date === date ? { ...r, confirmed: true } : r))
+              );
+            }}
           >
             確定
           </button>
@@ -303,7 +315,7 @@ export default function WorkAdjustReservation() {
         <br />
         ※ スポット予約の所要時間は「予約時間間隔設定」に依存します（現在：{intervalLabel} → {spotDurs.map((d) => d + "分").join(" / ")}）。
         <br />
-        ※ 確定は<strong>すべてのタブ（揚重機／ゲート／資機材・その他）共通（日付単位）</strong>です。確定後は<strong>通常予約はできず、スポット予約のみ</strong>作成・編集できます。
+        ※ 確定は<strong>すべてのタブ（揚重機／ゲート／資機材・その他）共通（日付単位）</strong>です。確定すると<strong>通常予約・スポット予約ともグレーアウト（編集不可）</strong>になります。確定後は<strong>通常予約は作成できず、スポット予約のみ追加</strong>できます（追加したスポット予約は次回の確定まで編集可）。
       </p>
 
       {editing && (
