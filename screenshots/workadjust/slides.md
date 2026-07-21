@@ -66,7 +66,7 @@ style: |
 <!-- _class: divider -->
 <!-- _paginate: false -->
 
-<div class="kicker">SECTION 1 / 5</div>
+<div class="kicker">SECTION 1 / 6</div>
 
 # PC画面・元請ビュー
 
@@ -519,7 +519,7 @@ style: |
 <!-- _class: divider -->
 <!-- _paginate: false -->
 
-<div class="kicker">SECTION 2 / 5</div>
+<div class="kicker">SECTION 2 / 6</div>
 
 # PC画面・職長ビュー
 
@@ -647,7 +647,7 @@ style: |
 <!-- _class: divider -->
 <!-- _paginate: false -->
 
-<div class="kicker">SECTION 3 / 5</div>
+<div class="kicker">SECTION 3 / 6</div>
 
 # スマホ画面・元請ビュー
 
@@ -838,7 +838,7 @@ style: |
 <!-- _class: divider -->
 <!-- _paginate: false -->
 
-<div class="kicker">SECTION 4 / 5</div>
+<div class="kicker">SECTION 4 / 6</div>
 
 # スマホ画面・職長ビュー
 
@@ -929,7 +929,70 @@ style: |
 <!-- _class: divider -->
 <!-- _paginate: false -->
 
-<div class="kicker">SECTION 5 / 5</div>
+<div class="kicker">SECTION 5 / 6</div>
+
+# 作業実績入力（QR）
+
+QR発行 → スマホで読み取り → 現場で実績入力する流れ
+
+---
+
+##### QR-1. 作業実績入力用QR発行（元請・PC）
+
+<div class="row">
+<div class="shot">
+
+![](actual/01-qr-issue.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 説明</div><div class="spec-body"><ul>
+<li>元請が「作業実績入力用QR発行」から当日ぶんのQRを発行。</li>
+<li>印刷して現場に掲示、または画面提示。</li>
+<li>協力会社がスマホで読み取ると、作業実績入力ページへ遷移（デモではQRクリックでも遷移）。</li>
+</ul></div></div>
+</div>
+
+---
+
+##### QR-2. QR読み取り後 — 作業実績入力（アカウントなし）
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](actual/02-input-select.png)
+![](actual/03-input-form.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 説明</div><div class="spec-body"><ul>
+<li>アカウントが無い場合は、まず会社名を選択。</li>
+<li>選択した会社の作業について、作業人数（実績）・工数を入力して送信。</li>
+<li>入場人数は DNN（出面・日報管理）連携の値を表示。</li>
+</ul></div></div>
+</div>
+
+---
+
+##### QR-3. QR読み取り後 — 作業実績入力（アカウントあり）／送信完了
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](actual/04-input-account.png)
+![](actual/05-input-done.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 説明</div><div class="spec-body"><ul>
+<li>アカウントがある場合は会社選択を省略し、ログイン会社の実績入力へ直行。</li>
+<li>送信すると完了画面（ブラウザを閉じる案内）を表示。</li>
+</ul></div></div>
+</div>
+
+---
+
+<!-- _class: divider -->
+<!-- _paginate: false -->
+
+<div class="kicker">SECTION 6 / 6</div>
 
 # コメント
 
