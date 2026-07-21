@@ -45,6 +45,11 @@ style: |
   .qa-q { font-size: 15px; line-height: 1.45; }
   .qa-tag { display: inline-block; font-size: 11px; font-weight: 700; color: #1f6feb; background: #e8f1ff; border-radius: 6px; padding: 1px 8px; margin-right: 6px; }
   .qa-a { margin-top: 5px; border: 1px solid #cbd2dc; border-radius: 6px; min-height: 26px; background: #fff; padding: 5px 10px; font-size: 13px; color: #475467; }
+  /* セクション区切り（専用ページ） */
+  section.divider { align-items: center; justify-content: center; text-align: center; background: #1b2430; }
+  section.divider .kicker { color: #7fb0ff; font-weight: 700; letter-spacing: .14em; font-size: 15px; margin-bottom: 12px; }
+  section.divider h1 { color: #ffffff; font-size: 44px; margin: 0; }
+  section.divider p { color: #c5ced9; font-size: 18px; margin-top: 14px; }
 ---
 
 <!-- _class: title -->
@@ -52,9 +57,20 @@ style: |
 
 # 作業間調整pro 画面キャプチャ
 
-/workadjust の各画面（1枚1ページ・右側は詳細仕様の記入欄）
+/workadjust の各画面を「元請ビュー」「職長ビュー」に分けて掲載（1枚1ページ・右側は詳細仕様の記入欄）
 
 <small>デモ日付：2026年7月9日（木）／確定前は7月10日（金）</small>
+
+---
+
+<!-- _class: divider -->
+<!-- _paginate: false -->
+
+<div class="kicker">SECTION 1 / 5</div>
+
+# PC画面・元請ビュー
+
+パソコン画面／元請ユーザーが見る画面
 
 ---
 
@@ -500,6 +516,145 @@ style: |
 
 ---
 
+<!-- _class: divider -->
+<!-- _paginate: false -->
+
+<div class="kicker">SECTION 2 / 5</div>
+
+# PC画面・職長ビュー
+
+パソコン画面／職長ユーザーが見る画面（確定・出力・設定・配置図作成・QR発行・通知ベルは非表示）
+
+---
+
+##### 01-1. 作業予定一覧 — 確定後
+
+<div class="row">
+<div class="shot">
+
+![](foreman/01-1-作業予定一覧_確定後.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 01-2. 作業予定一覧 — 確定前
+
+<div class="row">
+<div class="shot">
+
+![](foreman/01-2-作業予定一覧_確定前.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 02-1. 作業予定一覧 — 新規作成（作業ブロックを複数登録）
+
+<div class="row">
+<div class="shot">
+
+![](foreman/02-1-作業予定一覧_新規作成.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 02-3. 作業予定一覧 — コピー作成（職長）
+
+<div class="row">
+<div class="shot">
+
+![](foreman/02-3-作業予定一覧_コピー作成職長.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 04-1. 予約 — ゲート（確定前）
+
+<div class="row">
+<div class="shot">
+
+![](foreman/04-1-予約_ゲート_確定前.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 05-1. 予約 — 揚重機（確定前）
+
+<div class="row">
+<div class="shot">
+
+![](foreman/05-1-予約_揚重機_確定前.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 06-1. 予約 — その他（確定前）
+
+<div class="row">
+<div class="shot">
+
+![](foreman/06-1-予約_その他_確定前.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 07-1. 予約 — 予約作成（ゲート）
+
+<div class="row">
+<div class="shot">
+
+![](foreman/07-1-予約_予約作成ゲート.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 07-2. 予約 — 予約作成（揚重機）
+
+<div class="row">
+<div class="shot">
+
+![](foreman/07-2-予約_予約作成揚重機.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+<!-- _class: divider -->
+<!-- _paginate: false -->
+
+<div class="kicker">SECTION 3 / 5</div>
+
+# スマホ画面・元請ビュー
+
+スマートフォン画面／元請ユーザーが見る画面
+
+---
+
 ##### 26. スマホ表示 — ナビゲーション／ベル通知
 
 <div class="row">
@@ -677,6 +832,108 @@ style: |
 </div>
 <div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
 </div>
+
+---
+
+<!-- _class: divider -->
+<!-- _paginate: false -->
+
+<div class="kicker">SECTION 4 / 5</div>
+
+# スマホ画面・職長ビュー
+
+スマートフォン画面／職長ユーザーが見る画面
+
+---
+
+##### 26. スマホ表示 — ナビゲーション
+
+<div class="row">
+<div class="shot">
+
+![](foreman/mobile/26-1-drawer.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 27. スマホ表示 — 作業予定一覧（確定前／確定後）
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](foreman/mobile/27-1-schedule-pending.png)
+![](foreman/mobile/27-2-schedule-confirmed.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 28. スマホ表示 — 作業予定の新規作成
+
+<div class="row">
+<div class="shot">
+
+![](foreman/mobile/28-1-schedule-create.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 29. スマホ表示 — コピー作成（職長）
+
+<div class="row">
+<div class="shot">
+
+![](foreman/mobile/29-1-copy-foreman.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 30. スマホ表示 — 予約一覧（確定前）
+
+<div class="row">
+<div class="shot">
+
+![](foreman/mobile/30-1-reservation-before.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+##### 31. スマホ表示 — 予約の新規作成／編集
+
+<div class="row">
+<div class="shot shot-phones">
+
+![](foreman/mobile/31-1-reservation-create.png)
+![](foreman/mobile/31-2-reservation-edit.png)
+
+</div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"></div></div>
+</div>
+
+---
+
+<!-- _class: divider -->
+<!-- _paginate: false -->
+
+<div class="kicker">SECTION 5 / 5</div>
+
+# コメント
+
+いただいたコメントへの回答
 
 ---
 

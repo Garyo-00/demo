@@ -72,7 +72,7 @@ function emptyRsv(kind, date, resvType = "normal", resource = "") {
 export default function WorkAdjustReservation() {
   // 共通の作業日／登録済みの資機材・ゲート／予約（共有）
   const {
-    interval, date, gates, lifts, equipment,
+    interval, date, gates, lifts, equipment, role,
     reservations: rows, setReservations: setRows,
   } = useWaSettings();
   const [kind, setKind] = useState("gate");
@@ -177,11 +177,13 @@ export default function WorkAdjustReservation() {
 
       <div className="toolbar">
         <span className="subtle">{visible.length} 件</span>
-        <button className="ghost-btn spacer" onClick={() => setShowPrint(true)}>
-          <img className="ic-btn" src={printIcon} alt="" />出力
-        </button>
+        {role === "prime" && (
+          <button className="ghost-btn spacer" onClick={() => setShowPrint(true)}>
+            <img className="ic-btn" src={printIcon} alt="" />出力
+          </button>
+        )}
         <button
-          className="primary-btn"
+          className={"primary-btn" + (role === "prime" ? "" : " spacer")}
           onClick={() => {
             const base = emptyRsv(kind, date, isConfirmed ? "spot" : "normal", resourceItems[0] || "");
             if (base.resvType === "spot") base.end = addMinutes(base.start, spotDurs[0]);
@@ -274,7 +276,8 @@ export default function WorkAdjustReservation() {
       </div>
       </div>
 
-      {/* 確定（日付単位・全タブ共通）。その日の予約（通常・スポット）をまとめて確定 */}
+      {/* 確定（日付単位・全タブ共通）。その日の予約（通常・スポット）をまとめて確定（元請ビューのみ） */}
+      {role === "prime" && (
       <div className="confirm-bar">
         {isConfirmed ? (
           <>
@@ -305,6 +308,7 @@ export default function WorkAdjustReservation() {
           </button>
         )}
       </div>
+      )}
 
       <div className="rsv-legend">
         <span className="lg-item"><span className="lg-chip normal" />通常予約</span>

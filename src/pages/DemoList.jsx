@@ -19,6 +19,12 @@ const DEMOS = [
     title: "作業予定一覧",
     ready: true,
   },
+  {
+    to: "/inspection-run",
+    badge: "点検",
+    title: "点検実施画面",
+    ready: true,
+  },
 ];
 
 export default function DemoList() {

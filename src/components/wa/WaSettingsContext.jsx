@@ -20,8 +20,30 @@ const DEFAULT_PERM = { lift: "アカウント必須", gate: "アカウント必�
 const DEFAULT_TYPE = { lift: "時間制", gate: "時間制", other: "時間制" };
 const DEFAULT_INTERVAL = { lift: "30分", gate: "30分", other: "30分" };
 
+// 閲覧ロール（元請 / 職長）。画面の出し分けはこの値を各ページで参照する想定。
+// 現状は切替の器のみで表示内容は共通。localStorageに保持しリロードしても維持。
+const ROLE_KEY = "wa-role";
+function initialRole() {
+  try {
+    const v = localStorage.getItem(ROLE_KEY);
+    if (v === "prime" || v === "foreman") return v;
+  } catch {
+    /* localStorage不可な環境は既定値 */
+  }
+  return "prime";
+}
+
 export function WaSettingsProvider({ children }) {
   const [date, setDate] = useState(WA_DEFAULT_DATE); // 全ページ共通の作業日
+  const [role, setRoleState] = useState(initialRole); // "prime" | "foreman"
+  function setRole(next) {
+    setRoleState(next);
+    try {
+      localStorage.setItem(ROLE_KEY, next);
+    } catch {
+      /* 保存失敗は無視（デモ用途） */
+    }
+  }
   const [time, setTime] = useState(DEFAULT_TIME);
   const [perm, setPerm] = useState(DEFAULT_PERM);
   const [rtype, setRtype] = useState(DEFAULT_TYPE);
@@ -37,6 +59,7 @@ export function WaSettingsProvider({ children }) {
   return (
     <Ctx.Provider
       value={{
+        role, setRole,
         date, setDate, time, setTime, perm, setPerm, rtype, setRtype,
         interval, setInterval, templates, setTemplates,
         gates, setGates, lifts, setLifts, equipment, setEquipment,

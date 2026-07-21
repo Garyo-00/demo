@@ -10,6 +10,7 @@ import {
   WA_STATUS_PILL,
   WA_PRIME_USERS,
   WA_MY_COMPANY,
+  WA_DNN_ATTENDANCE,
   formatDateStr,
 } from "../data.js";
 import Modal from "../components/wa/Modal.jsx";
@@ -22,6 +23,27 @@ import {
   ReadonlyField,
   TextAreaField,
 } from "../components/wa/Field.jsx";
+
+// 実績入力ダイアログ用：ドラフトを会社ごとにまとめる（元の並び順・indexは保持）。
+// 同一会社に複数作業があっても1つの会社グループにまとめて表示するため。
+function groupDraftByCompany(draft) {
+  const order = [];
+  const map = new Map();
+  draft.forEach((item, index) => {
+    if (!map.has(item.company)) {
+      map.set(item.company, []);
+      order.push(item.company);
+    }
+    map.get(item.company).push({ item, index });
+  });
+  return order.map((company) => {
+    const items = map.get(company);
+    const plannedTotal = items.reduce((s, { item }) => s + (item.planned || 0), 0);
+    // 入場人数：DNN連携があればその値、無ければ予定人数の合計を既定とする
+    const attendance = WA_DNN_ATTENDANCE[company] ?? plannedTotal;
+    return { company, items, plannedTotal, attendance };
+  });
+}
 
 // 作業ブロック（棟・階・エリア・工区・作業内容・作業人数・工数）
 function emptyBlock() {
@@ -74,7 +96,7 @@ function actualTotal(r) {
 }
 
 export default function WorkAdjustSchedule() {
-  const { date } = useWaSettings(); // 共通の作業日（ヘッダーで操作）
+  const { date, role } = useWaSettings(); // 共通の作業日（ヘッダーで操作）／閲覧ロール
   const [rows, setRows] = useState(WA_WORK_SCHEDULES);
   const [editing, setEditing] = useState(null); // 作成/編集中の行
   const [confirmDraft, setConfirmDraft] = useState(null); // 確定ダイアログ（全未確定の下書き）
@@ -272,6 +294,8 @@ export default function WorkAdjustSchedule() {
       approvedRows.map((r) => ({
         id: r.id, company: r.company, jobType: r.jobType, content: r.content,
         planned: totalWorkers(r),
+        plannedNormalWorkers: Number(r.normalWorkers) || 0,
+        plannedOvertimeWorkers: Number(r.overtimeWorkers) || 0,
         actualNormalWorkers: r.actualNormalWorkers ?? 0,
         actualNormalHours: r.actualNormalHours ?? 0,
         actualOvertimeWorkers: r.actualOvertimeWorkers ?? 0,
@@ -304,12 +328,19 @@ export default function WorkAdjustSchedule() {
   const setActualItem = setDraftItem(setActualDraft);
 
   // 作業人数・工数の1パターン分の行（任意のstateに対して）
-  function patternRow(obj, setObj, label, wKey, hKey) {
+  // plannedWorkers を渡すと、作業人数（実績）の左に「作業人数（予定）」列を表示する（実績入力用）
+  function patternRow(obj, setObj, label, wKey, hKey, plannedWorkers) {
     return (
-      <div className="wg-row" key={wKey}>
+      <div className={"wg-row" + (plannedWorkers != null ? " has-planned" : "")} key={wKey}>
         <span className="wg-label">{label}</span>
+        {plannedWorkers != null && (
+          <div className="wg-cell wg-planned">
+            <small>作業人数（予定）</small>
+            <span className="wg-planned-val">{plannedWorkers}</span>
+          </div>
+        )}
         <label className="wg-cell">
-          <small>作業人数</small>
+          <small>{plannedWorkers != null ? "作業人数（実績）" : "作業人数"}</small>
           <select
             value={obj[wKey] ?? 0}
             onChange={(e) => setObj((x) => ({ ...x, [wKey]: Number(e.target.value) }))}
@@ -343,19 +374,23 @@ export default function WorkAdjustSchedule() {
       <div className="crumb">作業予定一覧</div>
       <div className="toolbar">
         <span className="subtle">{dayRows.length} 件</span>
+        {role === "prime" && (
+          <button
+            className="ghost-btn spacer"
+            onClick={() => setShowPrint(true)}
+            disabled={approvedRows.length === 0}
+            title={approvedRows.length === 0 ? "確定済みの作業予定がありません" : "確定済みのみ出力します"}
+          >
+            <img className="ic-btn" src={printIcon} alt="" />出力
+          </button>
+        )}
+        {/* コピー作成はビューに応じて元請/職長のロジックを適用（ボタンは1つ）。
+            出力が非表示になる職長ビューでは右寄せ用のspacerを引き継ぐ */}
         <button
-          className="ghost-btn spacer"
-          onClick={() => setShowPrint(true)}
-          disabled={approvedRows.length === 0}
-          title={approvedRows.length === 0 ? "確定済みの作業予定がありません" : "確定済みのみ出力します"}
+          className={"ghost-btn" + (role === "prime" ? "" : " spacer")}
+          onClick={() => openCopy(role)}
         >
-          <img className="ic-btn" src={printIcon} alt="" />出力
-        </button>
-        <button className="ghost-btn" onClick={() => openCopy("prime")}>
-          コピー作成（元請）
-        </button>
-        <button className="ghost-btn" onClick={() => openCopy("foreman")}>
-          コピー作成（職長）
+          コピー作成
         </button>
         <button className="primary-btn" onClick={openCreate}>
           ＋ 新規作成
@@ -502,7 +537,8 @@ export default function WorkAdjustSchedule() {
             ))}
           </div>
 
-          {/* テーブル下：全作業共通の確定／確定解除／実績入力 */}
+          {/* テーブル下：全作業共通の確定／確定解除／実績入力（元請ビューのみ） */}
+          {role === "prime" && (
           <div className="confirm-bar">
             {allConfirmed ? (
               <>
@@ -523,6 +559,7 @@ export default function WorkAdjustSchedule() {
               </button>
             )}
           </div>
+          )}
         </>
       )}
 
@@ -799,15 +836,25 @@ export default function WorkAdjustSchedule() {
             確定済みの各作業について、作業人数（実績）を入力してください。
           </p>
           <div className="batch-list">
-            {actualDraft.map((d, i) => (
-              <div className="batch-item" key={d.id}>
-                <div className="batch-head">
-                  {d.company}／{d.jobType}／{d.content}（予定 {d.planned} 名）
+            {groupDraftByCompany(actualDraft).map((g) => (
+              <div className="batch-company" key={g.company}>
+                <div className="batch-company-head">
+                  <span className="bc-name">{g.company}</span>
+                  <span className="bc-attend" title="DNN（出面管理）連携の入場人数">
+                    入場人数 <strong>{g.attendance}</strong> 名
+                  </span>
                 </div>
-                <div className="worker-grid">
-                  {patternRow(d, setActualItem(i), "通常作業", "actualNormalWorkers", "actualNormalHours")}
-                  {patternRow(d, setActualItem(i), "早出・残業作業", "actualOvertimeWorkers", "actualOvertimeHours")}
-                </div>
+                {g.items.map(({ item: d, index: i }) => (
+                  <div className="batch-item" key={d.id}>
+                    <div className="batch-head">
+                      {d.jobType}／{d.content}
+                    </div>
+                    <div className="worker-grid">
+                      {patternRow(d, setActualItem(i), "通常作業", "actualNormalWorkers", "actualNormalHours", d.plannedNormalWorkers)}
+                      {patternRow(d, setActualItem(i), "早出・残業作業", "actualOvertimeWorkers", "actualOvertimeHours", d.plannedOvertimeWorkers)}
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>

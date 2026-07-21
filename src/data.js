@@ -138,6 +138,7 @@ export const WORKADJUST_NAV = [
   { label: "作業予定一覧" },
   { label: "予約" },
   { label: "配置図作成" },
+  { label: "作業実績入力用QR発行" },
   {
     label: "設定",
     children: ["作業配置図設定", "資機材・ゲート登録", "協力会社設定", "予約設定"],
@@ -516,6 +517,14 @@ export const WA_WORK_SCHEDULES = [
     safetyNote: "",
   },
   {
+    id: "W-006", date: "2026-07-09", status: "approved",
+    company: "青木工業", industry: "はつり・解体", jobType: "解体工（建造物）", foreman: "鈴木 一郎",
+    building: "A棟", floor: "2F", area: "南エリア", zone: "1工区",
+    content: "斫り作業",
+    normalWorkers: 1, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
+    safetyNote: "",
+  },
+  {
     id: "W-004", date: "2026-07-10", status: "pending",
     company: "渡辺工務店", industry: "とび", jobType: "足場組立工", foreman: "渡辺 浩",
     building: "C棟", floor: "1F", area: "中央", zone: "3工区",
@@ -611,6 +620,13 @@ export const WA_WORK_SCHEDULES = [
 
 // ログイン中の職長ユーザーが所属する協力会社（デモの「職長版」コピー作成で使用）
 export const WA_MY_COMPANY = "大和建設";
+
+// DNN（出面管理システム）から連携される「入場人数」（会社単位・当日の実入場者数）。
+// 元請はこの人数を参考に実績を入力する想定。
+// ここに無い会社は予定人数の合計をそのまま入場人数として扱う（デモの既定動作）。
+export const WA_DNN_ATTENDANCE = {
+  "青木工業": 5, // 仮の入場人数
+};
 
 // 作業員数の選択肢
 export const WA_WORKER_OPTIONS = Array.from({ length: 30 }, (_, i) => i + 1);

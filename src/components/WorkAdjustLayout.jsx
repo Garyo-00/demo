@@ -12,6 +12,29 @@ function HeaderDatePager() {
   return <DatePager value={date} onChange={setDate} />;
 }
 
+// 閲覧ロール切替（元請 / 職長）。現状は切替の器のみで表示内容は共通。
+function RoleSwitch() {
+  const { role, setRole } = useWaSettings();
+  return (
+    <div className="role-switch" role="group" aria-label="閲覧ロール切替">
+      <button
+        className={"role-seg" + (role === "prime" ? " active" : "")}
+        onClick={() => setRole("prime")}
+        aria-pressed={role === "prime"}
+      >
+        元請
+      </button>
+      <button
+        className={"role-seg" + (role === "foreman" ? " active" : "")}
+        onClick={() => setRole("foreman")}
+        aria-pressed={role === "foreman"}
+      >
+        職長
+      </button>
+    </div>
+  );
+}
+
 // 予約の重複通知ベル（通常予約のみ・スポットは対象外）
 function OverlapBell() {
   const { reservations, date } = useWaSettings();
@@ -74,6 +97,7 @@ const ROUTES = [
   ["/workadjust/reservation", "予約"],
   ["/workadjust/floor-plan-setting", "作業配置図設定"],
   ["/workadjust/floor-plan", "配置図作成"],
+  ["/workadjust/actual-qr", "作業実績入力用QR発行"],
   ["/workadjust/registry", "資機材・ゲート登録"],
   ["/workadjust/companies", "協力会社設定"],
   ["/workadjust/settings", "予約設定"],
@@ -86,10 +110,16 @@ function currentMenu(pathname) {
   return "作業予定一覧";
 }
 
-export default function WorkAdjustLayout() {
+function WorkAdjustLayoutInner() {
   const navigate = useNavigate();
   const location = useLocation();
   const active = currentMenu(location.pathname);
+  const { role } = useWaSettings();
+  // 職長ビューでは「設定」グループ（＝childrenを持つ項目）と「配置図作成」を非表示にする
+  const HIDDEN_FOR_FOREMAN = ["配置図作成", "作業実績入力用QR発行"];
+  const navItems = WORKADJUST_NAV.filter(
+    (n) => !(role === "foreman" && (n.children || HIDDEN_FOR_FOREMAN.includes(n.label)))
+  );
   // 「設定」アコーディオンの開閉（設定配下にいる時は初期展開）
   const settingsGroup = WORKADJUST_NAV.find((n) => n.children);
   const [settingsOpen, setSettingsOpen] = useState(
@@ -103,6 +133,7 @@ export default function WorkAdjustLayout() {
     if (m === "作業予定一覧") navigate("/workadjust");
     else if (m === "予約") navigate("/workadjust/reservation");
     else if (m === "配置図作成") navigate("/workadjust/floor-plan");
+    else if (m === "作業実績入力用QR発行") navigate("/workadjust/actual-qr");
     else if (m === "作業配置図設定") navigate("/workadjust/floor-plan-setting");
     else if (m === "資機材・ゲート登録") navigate("/workadjust/registry");
     else if (m === "協力会社設定") navigate("/workadjust/companies");
@@ -110,7 +141,6 @@ export default function WorkAdjustLayout() {
   }
 
   return (
-    <WaSettingsProvider>
     <div className="layout">
       {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
       <aside className={"side" + (navOpen ? " open" : "")}>
@@ -118,7 +148,7 @@ export default function WorkAdjustLayout() {
           作業間調整pro<small>新産業の森作業所</small>
         </Link>
         <nav>
-          {WORKADJUST_NAV.map((item) =>
+          {navItems.map((item) =>
             item.children ? (
               <div className="nav-group" key={item.label}>
                 <button
@@ -180,7 +210,8 @@ export default function WorkAdjustLayout() {
           </button>
           <h1>{active}</h1>
           <div className="topbar-right">
-            <OverlapBell />
+            <RoleSwitch />
+            {role === "prime" && <OverlapBell />}
             <HeaderDatePager />
           </div>
         </div>
@@ -189,6 +220,13 @@ export default function WorkAdjustLayout() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function WorkAdjustLayout() {
+  return (
+    <WaSettingsProvider>
+      <WorkAdjustLayoutInner />
     </WaSettingsProvider>
   );
 }
