@@ -61,7 +61,7 @@ export default function WorkAdjustFloorPlanSetting() {
   if (view === "register") {
     return (
       <div>
-        <div className="section-title first">作業配置図設定登録</div>
+        <div className="page-title">作業配置図設定登録</div>
 
         <div className="fps-section">
           <div className="fps-section-title">基本情報</div>
@@ -140,6 +140,7 @@ export default function WorkAdjustFloorPlanSetting() {
   // ===== 一覧 =====
   return (
     <div>
+      <div className="page-title">作業配置図設定</div>
       <div className="fps-listcard">
         <div className="fps-listhead">
           <strong>作業配置図設定一覧</strong>

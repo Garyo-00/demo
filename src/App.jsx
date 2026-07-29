@@ -21,12 +21,15 @@ import WorkAdjustCompanies from "./pages/WorkAdjustCompanies.jsx";
 import WorkAdjustSettings from "./pages/WorkAdjustSettings.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
 import InspectionRun from "./pages/InspectionRun.jsx";
+import WorkPlanOutputPreview from "./pages/WorkPlanOutputPreview.jsx";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<DemoList />} />
       <Route path="/inspection-run" element={<InspectionRun />} />
+      {/* 作業計画書 出力イメージ（A3横 改ページプレビュー・独立ページ） */}
+      <Route path="/workplan/output-preview" element={<WorkPlanOutputPreview />} />
       {/* QR読み取り後の作業実績入力（サイドバー無しの独立ページ） */}
       <Route path="/workadjust/actual-input" element={<WorkAdjustActualInput />} />
       <Route path="/app" element={<AppLayout />}>

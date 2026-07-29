@@ -20,17 +20,17 @@ const INTERVAL_OPTS = ["15分", "30分", "60分"];
 const PERM_ROWS = [
   { key: "lift", label: "揚重機", options: ["アカウント必須"] },
   { key: "gate", label: "ゲート", options: ["アカウント必須"] },
-  { key: "other", label: "その他", options: ["アカウント必須", "アカウント不要"] },
+  { key: "other", label: "資機材・その他", options: ["アカウント必須", "アカウント不要"] },
 ];
 const TYPE_ROWS = [
   { key: "lift", label: "揚重機", options: ["時間制"] },
   { key: "gate", label: "ゲート", options: ["時間制"] },
-  { key: "other", label: "その他", options: ["時間制", "2部制"] },
+  { key: "other", label: "資機材・その他", options: ["時間制", "2部制"] },
 ];
 const INTERVAL_ROWS = [
   { key: "lift", label: "揚重機", options: INTERVAL_OPTS },
   { key: "gate", label: "ゲート", options: INTERVAL_OPTS },
-  { key: "other", label: "その他", options: INTERVAL_OPTS },
+  { key: "other", label: "資機材・その他", options: INTERVAL_OPTS },
 ];
 
 // 選択式設定の共通表示（揚重機・ゲートは選択肢1つ＝固定、その他は選択式）
@@ -99,8 +99,7 @@ export default function WorkAdjustSettings() {
 
   return (
     <div>
-      <div className="crumb">設定 ／ 予約設定</div>
-      <strong style={{ fontSize: 15 }}>予約設定</strong>
+      <div className="page-title">予約設定</div>
 
       <div className="tabs">
         {TABS.map(([k, label]) => (

@@ -421,27 +421,27 @@ export const WA_COMPANY_LIST = [
   {
     id: "C-001", name: "テスト",
     entries: [
-      { industry: "土木・舗装", jobType: "アンカー工", show: true, foreman: "" },
-      { industry: "造園", jobType: "林道道付作業員", show: true, foreman: "" },
+      { industry: "土木・舗装", jobType: "アンカー工", show: true, foremen: [] },
+      { industry: "造園", jobType: "林道道付作業員", show: true, foremen: [] },
     ],
   },
   {
     id: "C-002", name: "七尾建設工業",
     entries: [
-      { industry: "はつり・解体", jobType: "解体工（建造物）", show: true, foreman: "" },
+      { industry: "はつり・解体", jobType: "解体工（建造物）", show: true, foremen: [] },
     ],
   },
   {
     id: "C-003", name: "星野畳店",
     entries: [
-      { industry: "畳", jobType: "畳屋", show: true, foreman: "" },
-      { industry: "床・内装", jobType: "じゅうたん張工", show: true, foreman: "" },
+      { industry: "畳", jobType: "畳屋", show: true, foremen: [] },
+      { industry: "床・内装", jobType: "じゅうたん張工", show: true, foremen: [] },
     ],
   },
   {
     id: "C-004", name: "星野組",
     entries: [
-      { industry: "とび", jobType: "とび", show: true, foreman: "星野 協力会社（株式会社Arch）" },
+      { industry: "とび", jobType: "とび", show: true, foremen: ["星野 協力会社（株式会社Arch）", "山田 太郎"] },
     ],
   },
 ];
@@ -456,16 +456,22 @@ export const WA_PRIME_USERS = [
 export function primeUserName(id) {
   return WA_PRIME_USERS.find((u) => u.id === id)?.name || id;
 }
-// 協力会社→職長（DNNの設定から自動反映される想定）
+// 協力会社→職長ユーザー（複数可。協力会社設定＝DNNの設定から自動反映される想定）。
+// 配列は表示順（昇順）で、作業予定フォームでは既定で先頭のユーザーを適用する。
 export const WA_FOREMEN = {
-  "大和建設": "佐藤 健",
-  "青木工業": "鈴木 一郎",
-  "みらい電気": "高橋 誠",
-  "東洋設備": "伊藤 大輔",
-  "渡辺工務店": "渡辺 浩",
-  "山本電気": "山本 健太",
-  "林基礎": "林 大樹",
+  "大和建設": ["佐藤 健", "田中 一郎"],
+  "青木工業": ["鈴木 一郎"],
+  "みらい電気": ["高橋 誠", "中村 敦"],
+  "東洋設備": ["伊藤 大輔"],
+  "渡辺工務店": ["渡辺 浩", "近藤 隆", "松本 実"],
+  "山本電気": ["山本 健太"],
+  "林基礎": ["林 大樹"],
 };
+// 協力会社の既定（先頭）の職長ユーザー
+export function defaultForeman(company) {
+  const list = WA_FOREMEN[company] || [];
+  return list[0] || "";
+}
 // 作業場所・作業内容の入力履歴（自由記述＋履歴から選択）
 export const WA_HISTORY = {
   building: ["A棟", "B棟", "C棟", "管理棟"],
@@ -623,10 +629,14 @@ export const WA_MY_COMPANY = "大和建設";
 
 // DNN（出面管理システム）から連携される「入場人数」（会社単位・当日の実入場者数）。
 // 元請はこの人数を参考に実績を入力する想定。
-// ここに無い会社は予定人数の合計をそのまま入場人数として扱う（デモの既定動作）。
+// ここに無い会社は DNN 連携が無いものとして、入場人数を表示しない。
 export const WA_DNN_ATTENDANCE = {
   "青木工業": 5, // 仮の入場人数
 };
+// DNN（出面管理）連携で入場人数が取得できるか（連携有無の判定フラグ）
+export function hasDnnAttendance(company) {
+  return Object.prototype.hasOwnProperty.call(WA_DNN_ATTENDANCE, company);
+}
 
 // 作業員数の選択肢
 export const WA_WORKER_OPTIONS = Array.from({ length: 30 }, (_, i) => i + 1);
@@ -650,16 +660,21 @@ export const WA_RESERVATIONS = [
   { id: "RSV-003", kind: "gate", resource: "西ゲート", company: "渡辺工務店", date: "2026-07-09", start: "09:00", end: "11:30", content: "足場材搬入", vehicleType: "ユニック車", resvType: "normal" },
   { id: "RSV-004", kind: "lift", resource: "タワークレーン1号", company: "大和建設", date: "2026-07-09", start: "08:00", end: "12:00", content: "鉄骨揚重", vehicleType: "", resvType: "normal" },
   { id: "RSV-005", kind: "lift", resource: "ラフター25t", company: "東洋設備", date: "2026-07-09", start: "13:00", end: "16:00", content: "設備機器揚重", vehicleType: "", resvType: "normal" },
-  { id: "RSV-006", kind: "aerial", resource: "高所作業車 12m", company: "みらい電気", date: "2026-07-09", start: "09:00", end: "15:00", content: "高所電気配線", vehicleType: "", resvType: "normal" },
+  { id: "RSV-006", kind: "aerial", resource: "高所作業車 4.5m-001号", company: "みらい電気", date: "2026-07-09", start: "09:00", end: "15:00", content: "高所電気配線", vehicleType: "", resvType: "normal" },
   // 同時刻の重なり（東ゲートで最大3件重複＝1.5倍高さの確認用）
   { id: "RSV-007", kind: "gate", resource: "東ゲート", company: "林基礎", date: "2026-07-09", start: "09:00", end: "11:00", content: "残土搬出", vehicleType: "大型トラック", resvType: "normal" },
   // スポット予約（オレンジ表示・30分）
   { id: "RSV-008", kind: "gate", resource: "東ゲート", company: "山本電気", date: "2026-07-09", start: "09:30", end: "10:00", content: "資材搬入", vehicleType: "4tトラック", resvType: "spot" },
+  // 西ゲートで3社バッティング（10:30〜11:00に渡辺・みらい・東洋が重複）
+  { id: "RSV-009", kind: "gate", resource: "西ゲート", company: "みらい電気", date: "2026-07-09", start: "10:00", end: "12:00", content: "資材搬入", vehicleType: "4tトラック", resvType: "normal" },
+  { id: "RSV-010", kind: "gate", resource: "西ゲート", company: "東洋設備", date: "2026-07-09", start: "10:30", end: "11:00", content: "設備搬入", vehicleType: "ユニック車", resvType: "normal" },
+  // タワークレーン1号で2社バッティング（10:00〜12:00）
+  { id: "RSV-011", kind: "lift", resource: "タワークレーン1号", company: "青木工業", date: "2026-07-09", start: "10:00", end: "13:00", content: "資材揚重", vehicleType: "", resvType: "normal" },
 ];
 
 // --- ゲート・資機材登録 ---
 export const WA_EQUIP_CATEGORIES = [
-  "揚重機", "運搬機械", "掘削機械", "高所作業車", "電動工具", "仮設機材",
+  "揚重機", "運搬機械", "掘削機械", "高所作業車", "電動工具", "仮設機材", "駐車場",
 ];
 // show: 予約ページに表示するか（元請が資機材・ゲート登録で切替）
 export const WA_GATE_REGISTRY = [
@@ -673,12 +688,32 @@ export const WA_LIFT_EQUIPMENT = [
   { id: "L-002", category: "揚重機", name: "ラフター25t", bringIn: "東洋設備", primary: "大和建設", show: true },
   { id: "L-003", category: "揚重機", name: "クローラークレーン50t", bringIn: "大和建設", primary: "大和建設", show: true },
 ];
-// 資機材登録
+// 資機材登録（その他）：高所作業車 4.5m を100台＋駐車場を100区画。
+// show=予約ページ（資機材・その他タブ）への表示。デモではタイムラインが長くなり
+// すぎないよう各カテゴリ先頭8件のみ表示ON（一覧のチェックで切替可能）。
 export const WA_EQUIPMENT = [
-  { id: "E-001", category: "高所作業車", name: "高所作業車 12m", bringIn: "みらい電気", primary: "大和建設", show: true },
-  { id: "E-002", category: "掘削機械", name: "油圧ショベル ZX120", bringIn: "林基礎", primary: "大和建設", show: true },
-  { id: "E-003", category: "運搬機械", name: "ダンプトラック 10t", bringIn: "渡辺工務店", primary: "青木工業", show: true },
-  { id: "E-004", category: "電動工具", name: "高速カッター", bringIn: "青木工業", primary: "青木工業", show: true },
+  ...Array.from({ length: 100 }, (_, i) => {
+    const n = String(i + 1).padStart(3, "0");
+    return {
+      id: "E-" + n,
+      category: "高所作業車",
+      name: `高所作業車 4.5m-${n}号`,
+      bringIn: WA_COMPANIES[i % WA_COMPANIES.length],
+      primary: "大和建設",
+      show: true,
+    };
+  }),
+  ...Array.from({ length: 100 }, (_, i) => {
+    const n = String(i + 1).padStart(3, "0");
+    return {
+      id: "P-" + n,
+      category: "駐車場",
+      name: `駐車場-${n}`,
+      bringIn: WA_COMPANIES[i % WA_COMPANIES.length],
+      primary: "大和建設",
+      show: true,
+    };
+  }),
 ];
 // 別サービス「安全セーフティ」の持込機械一覧（インポート元。デモ用の固定値）
 export const WA_SAFETY_MACHINES = [

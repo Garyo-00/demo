@@ -23,20 +23,24 @@ import {
   useWaSettings,
   settingsKeyOf,
   spotDurations,
+  intervalMinutes,
 } from "../components/wa/WaSettingsContext.jsx";
 import printIcon from "../assets/icons/print.svg";
+import TablePagination from "../components/wa/TablePagination.jsx";
 
 // タブ表示順（揚重機 → ゲート → その他）
 const KINDS = ["lift", "gate", "aerial"];
 const CONTENT_MAX = 25; // 作業内容の文字数上限
 
-// 予約時間は15分単位
-const TIME_OPTIONS = [];
-for (let h = DAY_START; h <= DAY_END; h++) {
-  for (const m of [0, 15, 30, 45]) {
-    if (h === DAY_END && m > 0) break;
-    TIME_OPTIONS.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+// 予約時刻の選択肢（「予約時間間隔設定」のステップ＝15/30/60分に従う）
+function makeTimeOptions(stepMin) {
+  const opts = [];
+  for (let t = DAY_START * 60; t <= DAY_END * 60; t += stepMin) {
+    const h = Math.floor(t / 60);
+    const m = t % 60;
+    opts.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
   }
+  return opts;
 }
 
 // "HH:MM" に分を加算（1日の終了時刻でクランプ）
@@ -69,16 +73,64 @@ function emptyRsv(kind, date, resvType = "normal", resource = "") {
   };
 }
 
+// ===== 2部制（AM/PM）予約グリッド用ヘルパー =====
+const pad2 = (n) => String(n).padStart(2, "0");
+const dayKey = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const WEEKDAY = ["日", "月", "火", "水", "木", "金", "土"];
+const dayLabel = (d) => `${d.getMonth() + 1}/${d.getDate()}（${WEEKDAY[d.getDay()]}）`;
+// 今日から7日間
+function computeWeek() {
+  const base = new Date();
+  base.setHours(0, 0, 0, 0);
+  return Array.from({ length: 7 }, (_, i) => {
+    const x = new Date(base);
+    x.setDate(base.getDate() + i);
+    return x;
+  });
+}
+const SELF_CO = "自社"; // 2部制で自社が予約した枠
+
 export default function WorkAdjustReservation() {
   // 共通の作業日／登録済みの資機材・ゲート／予約（共有）
   const {
-    interval, date, gates, lifts, equipment, role,
+    interval, rtype, date, gates, lifts, equipment, role,
     reservations: rows, setReservations: setRows,
   } = useWaSettings();
   const [kind, setKind] = useState("gate");
   const [editing, setEditing] = useState(null);
   const [seq, setSeq] = useState(rows.length);
   const [showPrint, setShowPrint] = useState(false);
+  // 資機材・その他タブのカテゴリ絞り込み（"すべて" は全カテゴリ）
+  const [catFilter, setCatFilter] = useState("すべて");
+  // 予約テーブル（機械の行）のページネーション（50件ずつ）
+  const [rsvPage, setRsvPage] = useState(0);
+  const [rsvPageSize, setRsvPageSize] = useState(50);
+  // 2部制（AM/PM）の予約枠。今日から7日間。key = 資源|日付|am/pm → 予約者
+  const [week] = useState(computeWeek);
+  const [slots, setSlots] = useState(() => {
+    const s = {};
+    const set = (res, di, p, co) => { s[`${res}|${dayKey(week[di])}|${p}`] = co; };
+    // 他社の既存予約（重複予約できないことの確認用サンプル）
+    set("高所作業車 4.5m-001号", 0, "am", "大和建設");
+    set("高所作業車 4.5m-002号", 1, "pm", "みらい電気");
+    set("高所作業車 4.5m-003号", 0, "am", "青木工業");
+    set("高所作業車 4.5m-005号", 2, "pm", "山本電気");
+    set("駐車場-001", 0, "pm", "東洋設備");
+    set("駐車場-002", 3, "am", "渡辺工務店");
+    set("駐車場-004", 1, "am", "林基礎");
+    return s;
+  });
+  // 枠のクリック（空き→自社予約／自社予約→取消／他社予約→不可）
+  function toggleSlot(res, d, p, who) {
+    if (who && who !== SELF_CO) return; // 他社予約はブロック
+    const key = `${res}|${dayKey(d)}|${p}`;
+    setSlots((s) => {
+      const next = { ...s };
+      if (next[key] === SELF_CO) delete next[key];
+      else next[key] = SELF_CO;
+      return next;
+    });
+  }
   // 確定は日付単位・全タブ（揚重機/ゲート/その他）共通
   const [confirmedDays, setConfirmedDays] = useState({});
   const isConfirmed = !!confirmedDays[date];
@@ -100,17 +152,41 @@ export default function WorkAdjustReservation() {
   }, []);
 
   const isGate = kind === "gate";
+  const isAerial = kind === "aerial";
   // タブに対応する登録一覧（揚重機/ゲート/資機材）→ 予約表示ONのものだけを資源として表示
   const registryForKind = kind === "lift" ? lifts : kind === "gate" ? gates : equipment;
-  const resourceItems = registryForKind.filter((x) => x.show).map((x) => x.name);
+  const shownRegistry = registryForKind.filter((x) => x.show);
+  // 資機材・その他はカテゴリで絞り込み可能（他タブは対象外）
+  const catList = isAerial
+    ? ["すべて", ...new Set(shownRegistry.map((x) => x.category))]
+    : [];
+  const filteredRegistry =
+    isAerial && catFilter !== "すべて"
+      ? shownRegistry.filter((x) => x.category === catFilter)
+      : shownRegistry;
+  const resourceItems = filteredRegistry.map((x) => x.name);
   const resource = { label: KIND_LABEL[kind], items: resourceItems };
   // 表示中の日付・資源種別の予約のみ
   const visible = rows.filter((r) => r.kind === kind && r.date === date);
 
-  // スポット予約の所要時間候補（時間間隔設定に依存）
+  // スポット予約の所要時間候補・予約時刻の選択肢（時間間隔設定に依存）
   const intervalLabel = interval[settingsKeyOf(kind)];
   const spotDurs = spotDurations(intervalLabel);
+  const TIME_OPTIONS = makeTimeOptions(intervalMinutes(intervalLabel));
   const isSpot = editing?.resvType === "spot";
+  // 予約種類設定が「2部制」の資機材・その他は、AM/PMの週間グリッドで予約する
+  const twoShift = isAerial && rtype[settingsKeyOf(kind)] === "2部制";
+  // 機械の行を50件ずつページ表示（縦に長い場合はページ送り）
+  const rsvPageCount = Math.max(1, Math.ceil(resourceItems.length / rsvPageSize));
+  const rsvSafePage = Math.min(rsvPage, rsvPageCount - 1);
+  const pagedItems = resourceItems.slice(
+    rsvSafePage * rsvPageSize,
+    rsvSafePage * rsvPageSize + rsvPageSize
+  );
+  // タブ・カテゴリを切り替えたら1ページ目に戻す
+  useEffect(() => {
+    setRsvPage(0);
+  }, [kind, catFilter]);
 
   // 予約種別の切替（スポットにしたら所要時間を先頭候補に合わせる）
   function setResvType(t) {
@@ -160,8 +236,7 @@ export default function WorkAdjustReservation() {
 
   return (
     <div>
-      <div className="crumb">予約</div>
-      <strong style={{ fontSize: 15 }}>予約</strong>
+      <div className="page-title">予約</div>
 
       <div className="tabs">
         {KINDS.map((k) => (
@@ -176,26 +251,97 @@ export default function WorkAdjustReservation() {
       </div>
 
       <div className="toolbar">
-        <span className="subtle">{visible.length} 件</span>
-        {role === "prime" && (
+        <span className="subtle">
+          {twoShift ? `${resourceItems.length} 台` : `${visible.length} 件`}
+        </span>
+        {!twoShift && role === "prime" && (
           <button className="ghost-btn spacer" onClick={() => setShowPrint(true)}>
             <img className="ic-btn" src={printIcon} alt="" />出力
           </button>
         )}
-        <button
-          className={"primary-btn" + (role === "prime" ? "" : " spacer")}
-          onClick={() => {
-            const base = emptyRsv(kind, date, isConfirmed ? "spot" : "normal", resourceItems[0] || "");
-            if (base.resvType === "spot") base.end = addMinutes(base.start, spotDurs[0]);
-            setEditing(base);
-          }}
-          disabled={resourceItems.length === 0}
-          title={isConfirmed ? "確定後はスポット予約のみ作成できます" : ""}
-        >
-          ＋ {isConfirmed ? "スポット予約作成" : "予約作成"}
-        </button>
+        {!twoShift && (
+          <button
+            className={"primary-btn" + (role === "prime" ? "" : " spacer")}
+            onClick={() => {
+              const base = emptyRsv(kind, date, isConfirmed ? "spot" : "normal", resourceItems[0] || "");
+              if (base.resvType === "spot") base.end = addMinutes(base.start, spotDurs[0]);
+              setEditing(base);
+            }}
+            disabled={resourceItems.length === 0}
+            title={isConfirmed ? "確定後はスポット予約のみ作成できます" : ""}
+          >
+            ＋ {isConfirmed ? "スポット予約作成" : "予約作成"}
+          </button>
+        )}
       </div>
 
+      {isAerial && (
+        <div className="filters">
+          <span className="subtle" style={{ fontSize: 12 }}>カテゴリ：</span>
+          {catList.map((c) => (
+            <button
+              key={c}
+              className={"chip" + (catFilter === c ? " on" : "")}
+              onClick={() => setCatFilter(c)}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {twoShift ? (
+        <div className="rsv-scroll">
+          <table className="shift-grid">
+            <thead>
+              <tr>
+                <th className="shift-res-h" rowSpan={2}>機械名・現場内呼称</th>
+                {week.map((d, i) => (
+                  <th
+                    key={i}
+                    colSpan={2}
+                    className={"shift-day" + (d.getDay() === 0 || d.getDay() === 6 ? " wend" : "")}
+                  >
+                    {dayLabel(d)}
+                  </th>
+                ))}
+              </tr>
+              <tr>
+                {week.flatMap((d, i) => [
+                  <th key={i + "a"} className="shift-ap">AM</th>,
+                  <th key={i + "p"} className="shift-ap">PM</th>,
+                ])}
+              </tr>
+            </thead>
+            <tbody>
+              {pagedItems.map((res) => (
+                <tr key={res}>
+                  <td className="shift-res">{res}</td>
+                  {week.flatMap((d, i) =>
+                    ["am", "pm"].map((p) => {
+                      const who = slots[`${res}|${dayKey(d)}|${p}`];
+                      const mine = who === SELF_CO;
+                      return (
+                        <td key={`${i}-${p}`} className="shift-cell">
+                          {who && !mine ? (
+                            <span className="shift-slot other" title={`${who} 予約済`}>{who}</span>
+                          ) : (
+                            <button
+                              className={"shift-slot" + (mine ? " self" : "")}
+                              onClick={() => toggleSlot(res, d, p, who)}
+                              title={mine ? "自社予約（クリックで取消）" : "空き（クリックで予約）"}
+                            />
+                          )}
+                        </td>
+                      );
+                    })
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
       <div className="rsv-scroll">
       <div className="rsv-board" ref={boardRef}>
         <div className="rsv-corner">{resource.label}＼時刻</div>
@@ -206,7 +352,7 @@ export default function WorkAdjustReservation() {
             </div>
           ))}
         </div>
-        {resource.items.map((item) => {
+        {pagedItems.map((item) => {
           const blocks = visible.filter((r) => r.resource === item);
           const { height, rowH, barH, placed } = layoutLabeled(blocks, trackW, isGate);
           // 通常予約が重複している時間帯（薄い赤の背景）
@@ -275,10 +421,19 @@ export default function WorkAdjustReservation() {
         })}
       </div>
       </div>
+      )}
 
-      {/* 確定（日付単位・全タブ共通）。その日の予約（通常・スポット）をまとめて確定（元請ビューのみ） */}
-      {role === "prime" && (
-      <div className="confirm-bar">
+      <TablePagination
+        total={resourceItems.length}
+        page={rsvSafePage}
+        pageSize={rsvPageSize}
+        onPage={setRsvPage}
+        onPageSize={(n) => { setRsvPageSize(n); setRsvPage(0); }}
+      />
+
+      {/* 確定（日付単位・全タブ共通）。その日の予約（通常・スポット）をまとめて確定（元請ビューのみ）。2部制は対象外 */}
+      {!twoShift && role === "prime" && (
+      <div className="confirm-bar bare">
         {isConfirmed ? (
           <>
             <span className="badge-green">確定済</span>
@@ -310,17 +465,32 @@ export default function WorkAdjustReservation() {
       </div>
       )}
 
-      <div className="rsv-legend">
-        <span className="lg-item"><span className="lg-chip normal" />通常予約</span>
-        <span className="lg-item"><span className="lg-chip spot" />スポット予約（15〜60分）</span>
-      </div>
-      <p className="rsv-note">
-        ※ デモでは枠をクリックして編集・削除できます（実運用ではドラッグで新規作成）。予約時間は15分単位です。
-        <br />
-        ※ スポット予約の所要時間は「予約時間間隔設定」に依存します（現在：{intervalLabel} → {spotDurs.map((d) => d + "分").join(" / ")}）。
-        <br />
-        ※ 確定は<strong>すべてのタブ（揚重機／ゲート／資機材・その他）共通（日付単位）</strong>です。確定すると<strong>通常予約・スポット予約ともグレーアウト（編集不可）</strong>になります。確定後は<strong>通常予約は作成できず、スポット予約のみ追加</strong>できます（追加したスポット予約は次回の確定まで編集可）。
-      </p>
+      {twoShift ? (
+        <>
+          <div className="rsv-legend">
+            <span className="lg-item"><span className="shift-slot" />空き</span>
+            <span className="lg-item"><span className="shift-slot self" />自社予約</span>
+            <span className="lg-item"><span className="shift-slot other">他社</span>他社予約（不可）</span>
+          </div>
+          <p className="rsv-note">
+            ※ <strong>予約種類設定＝2部制</strong>のため、各機械について<strong>今日から7日間</strong>の午前（AM）／午後（PM）枠を選択して予約します。
+            <br />
+            ※ 空き枠（〇）をクリックで自社予約（青）、もう一度クリックで取消。<strong>他社が予約済みの枠は選択できません（重複予約不可）</strong>。
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="rsv-legend">
+            <span className="lg-item"><span className="lg-chip normal" />通常予約</span>
+            <span className="lg-item"><span className="lg-chip spot" />スポット予約（15〜60分）</span>
+          </div>
+          <p className="rsv-note">
+            ※ デモでは枠をクリックして編集・削除できます（実運用ではドラッグで新規作成）。予約時間の間隔は<strong>「予約時間間隔設定」の設定</strong>に従います（現在：{intervalLabel}）。
+            <br />
+            ※ 確定は<strong>すべてのタブ（揚重機／ゲート／資機材・その他）共通（日付単位）</strong>です。確定すると<strong>通常予約・スポット予約ともグレーアウト（編集不可）</strong>になります。確定後は<strong>通常予約は作成できず、スポット予約のみ追加</strong>できます（追加したスポット予約は次回の確定まで編集可）。
+          </p>
+        </>
+      )}
 
       {editing && (
         <Modal

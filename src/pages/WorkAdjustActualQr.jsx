@@ -14,6 +14,7 @@ export default function WorkAdjustActualQr() {
 
   return (
     <div className="qr-page">
+      <div className="page-title">作業実績入力用QR発行</div>
       <div className="qr-toolbar">
         <button className="ghost-btn spacer" onClick={() => window.print()}>
           印刷

@@ -25,6 +25,12 @@ const DEMOS = [
     title: "点検実施画面",
     ready: true,
   },
+  {
+    to: "/workplan/output-preview",
+    badge: "作業計画書",
+    title: "作業計画書出力イメージ",
+    ready: true,
+  },
 ];
 
 export default function DemoList() {

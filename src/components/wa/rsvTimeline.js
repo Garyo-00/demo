@@ -42,7 +42,9 @@ export function overlapBands(blocks) {
   return bands;
 }
 
-// 指定日の「通常予約」の重複ペア一覧（ヘッダー通知用）。スポットは除外。
+// 指定日の「通常予約」の重複一覧（ヘッダー通知用）。スポットは除外。
+// 同一資源で通常予約が2件以上重なる時間帯（バンド）ごとに、
+// その時間帯に該当する会社を優劣なく列挙する（3社以上のバッティングにも対応）。
 export function listOverlaps(reservations, date) {
   const day = reservations.filter((r) => r.date === date && r.resvType !== "spot");
   const groups = {};
@@ -52,15 +54,13 @@ export function listOverlaps(reservations, date) {
   });
   const out = [];
   Object.values(groups).forEach((arr) => {
-    const s = [...arr].sort((a, b) => toHour(a.start) - toHour(b.start));
-    for (let i = 0; i < s.length; i++) {
-      for (let j = i + 1; j < s.length; j++) {
-        const a = s[i], b = s[j];
-        const os = Math.max(toHour(a.start), toHour(b.start));
-        const oe = Math.min(toHour(a.end), toHour(b.end));
-        if (os < oe) out.push({ kind: a.kind, resource: a.resource, a, b, os, oe });
-      }
-    }
+    // ≥2件が重なる時間帯を抽出し、各時間帯に関わる予約をすべて列挙
+    overlapBands(arr).forEach(([bs, be]) => {
+      const members = arr
+        .filter((r) => toHour(r.start) < be && toHour(r.end) > bs)
+        .sort((a, b) => toHour(a.start) - toHour(b.start));
+      out.push({ kind: arr[0].kind, resource: arr[0].resource, os: bs, oe: be, members });
+    });
   });
   return out;
 }

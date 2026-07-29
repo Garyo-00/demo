@@ -5,12 +5,14 @@ import {
   WA_INDUSTRIES,
   WA_JOBTYPES_BY_INDUSTRY,
   WA_FOREMEN,
+  defaultForeman,
   WA_HISTORY,
   WA_STATUS_LABEL,
   WA_STATUS_PILL,
   WA_PRIME_USERS,
   WA_MY_COMPANY,
   WA_DNN_ATTENDANCE,
+  hasDnnAttendance,
   formatDateStr,
 } from "../data.js";
 import Modal from "../components/wa/Modal.jsx";
@@ -18,8 +20,10 @@ import PrintPreview from "../components/wa/PrintPreview.jsx";
 import SchedulePrint from "../components/wa/SchedulePrint.jsx";
 import { useWaSettings } from "../components/wa/WaSettingsContext.jsx";
 import printIcon from "../assets/icons/print.svg";
+import TablePagination from "../components/wa/TablePagination.jsx";
 import {
   SuggestField,
+  SelectField,
   ReadonlyField,
   TextAreaField,
 } from "../components/wa/Field.jsx";
@@ -39,9 +43,10 @@ function groupDraftByCompany(draft) {
   return order.map((company) => {
     const items = map.get(company);
     const plannedTotal = items.reduce((s, { item }) => s + (item.planned || 0), 0);
-    // 入場人数：DNN連携があればその値、無ければ予定人数の合計を既定とする
-    const attendance = WA_DNN_ATTENDANCE[company] ?? plannedTotal;
-    return { company, items, plannedTotal, attendance };
+    // 入場人数：DNN連携がある会社のみ表示（無ければ非表示）
+    const hasAttendance = hasDnnAttendance(company);
+    const attendance = hasAttendance ? WA_DNN_ATTENDANCE[company] : null;
+    return { company, items, plannedTotal, hasAttendance, attendance };
   });
 }
 
@@ -105,12 +110,19 @@ export default function WorkAdjustSchedule() {
   const [showPrint, setShowPrint] = useState(false);
   const [copyMode, setCopyMode] = useState(null); // "prime" | "foreman" | null
   const [copySel, setCopySel] = useState(() => new Set()); // 複製元として選択したID
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(50);
 
   // 表示中の日付の作業予定のみ。並び順は業種を基準にする
   const dayRows = rows
     .filter((r) => r.date === date)
     .slice()
     .sort((a, b) => a.industry.localeCompare(b.industry, "ja"));
+
+  // ページネーション（表示行のみ切り出し。確定・実績・出力は全行が対象）
+  const pageCount = Math.max(1, Math.ceil(dayRows.length / pageSize));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageRows = dayRows.slice(safePage * pageSize, safePage * pageSize + pageSize);
 
   // 確定状態の集計（確定・実績・出力は全作業共通）
   const pendingRows = dayRows.filter((r) => r.status !== "approved");
@@ -134,6 +146,23 @@ export default function WorkAdjustSchedule() {
 
   function save() {
     const f = editing;
+    // 必須：協力会社名・業種・職種・職長名
+    if (!f.company || !f.company.trim()) {
+      window.alert("協力会社名を入力してください。");
+      return;
+    }
+    if (!f.industry) {
+      window.alert("業種を選択してください。");
+      return;
+    }
+    if (!f.jobType) {
+      window.alert("職種を選択してください。");
+      return;
+    }
+    if (!f.foreman) {
+      window.alert("職長を選択してください。");
+      return;
+    }
     if (f.id) {
       // 編集：既存レコードを更新（ステータス・安全指示・実績は保持）
       const b = f.blocks[0];
@@ -174,9 +203,9 @@ export default function WorkAdjustSchedule() {
     setEditing(null);
   }
 
-  // 職長は協力会社から自動反映
+  // 協力会社を選ぶと職長の選択肢を自動で埋め、既定で表示順の先頭を適用（複数いる場合は選択可）
   function setCompany(company) {
-    setEditing((e) => ({ ...e, company, foreman: WA_FOREMEN[company] || "" }));
+    setEditing((e) => ({ ...e, company, foreman: defaultForeman(company) }));
   }
   // 作業ブロックの操作
   function setBlock(i, patch) {
@@ -251,7 +280,7 @@ export default function WorkAdjustSchedule() {
       return {
         ...r,
         id: "W-" + String(n).padStart(3, "0"),
-        date, // 本日（表示中の日付）ぶんとして登録
+        date, // 表示中の日付ぶんとして登録
         status: "pending", // 未確定でコピー（元請の確定はこれから）
         safetyNote: "", // 元請安全指示事項は確定時に入力
         actualNormalWorkers: null, actualNormalHours: null,
@@ -371,7 +400,7 @@ export default function WorkAdjustSchedule() {
 
   return (
     <div>
-      <div className="crumb">作業予定一覧</div>
+      <div className="page-title">作業予定一覧</div>
       <div className="toolbar">
         <span className="subtle">{dayRows.length} 件</span>
         {role === "prime" && (
@@ -426,7 +455,7 @@ export default function WorkAdjustSchedule() {
               </tr>
             </thead>
             <tbody>
-              {dayRows.map((r) => (
+              {pageRows.map((r) => (
                 <tr key={r.id} className={r.status === "approved" ? "row-confirmed" : ""}>
                   <td>
                     <span className={"pill " + WA_STATUS_PILL[r.status]}>
@@ -479,7 +508,7 @@ export default function WorkAdjustSchedule() {
 
           {/* モバイル：カード表示（横スクロールなしで全項目を表示） */}
           <div className="wa-card-list">
-            {dayRows.map((r) => (
+            {pageRows.map((r) => (
               <div
                 key={r.id}
                 className={"wa-card" + (r.status === "approved" ? " confirmed" : "")}
@@ -537,9 +566,17 @@ export default function WorkAdjustSchedule() {
             ))}
           </div>
 
+          <TablePagination
+            total={dayRows.length}
+            page={safePage}
+            pageSize={pageSize}
+            onPage={setPage}
+            onPageSize={(n) => { setPageSize(n); setPage(0); }}
+          />
+
           {/* テーブル下：全作業共通の確定／確定解除／実績入力（元請ビューのみ） */}
           {role === "prime" && (
-          <div className="confirm-bar">
+          <div className="confirm-bar bare">
             {allConfirmed ? (
               <>
                 <button className="ghost-btn" onClick={releaseAll}>
@@ -595,31 +632,52 @@ export default function WorkAdjustSchedule() {
               options={WA_COMPANIES}
               hint="選択式＋自由記述（DNNの設定を参照）"
             />
-            <SuggestField
+            <SelectField
               label="業種"
+              required
               value={editing.industry}
               onChange={(v) =>
                 setEditing((x) => ({ ...x, industry: v, jobType: "" }))
               }
-              options={WA_INDUSTRIES}
-              hint="選択式＋自由記述（上位階層）"
+              options={[
+                { value: "", label: "業種を選択してください" },
+                ...WA_INDUSTRIES.map((v) => ({ value: v, label: v })),
+              ]}
+              hint="一覧から選択してください（自由記述不可）"
             />
-            <SuggestField
+            <SelectField
               label="職種"
               required
               value={editing.jobType}
               onChange={(v) => setEditing((x) => ({ ...x, jobType: v }))}
-              options={WA_JOBTYPES_BY_INDUSTRY[editing.industry] || []}
+              options={
+                editing.industry
+                  ? [
+                      { value: "", label: "職種を選択してください" },
+                      ...(WA_JOBTYPES_BY_INDUSTRY[editing.industry] || []).map((v) => ({
+                        value: v,
+                        label: v,
+                      })),
+                    ]
+                  : [{ value: "", label: "先に業種を選択してください" }]
+              }
               hint={
                 editing.industry
-                  ? "選択中の業種に紐づく職種から選択＋自由記述"
-                  : "先に業種を選択してください（自由記述も可）"
+                  ? "選択中の業種に紐づく職種から選択してください（自由記述不可）"
+                  : "先に業種を選択してください"
               }
             />
-            <ReadonlyField
+            <SelectField
               label="職長"
+              required
               value={editing.foreman}
-              hint="協力会社名から自動反映（DNNの設定を参照）"
+              onChange={(v) => setEditing((x) => ({ ...x, foreman: v }))}
+              options={
+                (WA_FOREMEN[editing.company] || []).length
+                  ? (WA_FOREMEN[editing.company] || []).map((v) => ({ value: v, label: v }))
+                  : [{ value: "", label: "先に協力会社を選択してください" }]
+              }
+              hint="協力会社の職長ユーザーから選択（自動反映。既定は表示順の先頭）"
             />
           </div>
 
@@ -840,9 +898,11 @@ export default function WorkAdjustSchedule() {
               <div className="batch-company" key={g.company}>
                 <div className="batch-company-head">
                   <span className="bc-name">{g.company}</span>
-                  <span className="bc-attend" title="DNN（出面管理）連携の入場人数">
-                    入場人数 <strong>{g.attendance}</strong> 名
-                  </span>
+                  {g.hasAttendance && (
+                    <span className="bc-attend" title="DNN（出面管理）連携の入場人数">
+                      入場人数 <strong>{g.attendance}</strong> 名
+                    </span>
+                  )}
                 </div>
                 {g.items.map(({ item: d, index: i }) => (
                   <div className="batch-item" key={d.id}>

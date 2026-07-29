@@ -8,7 +8,7 @@ import {
 import Modal from "../components/wa/Modal.jsx";
 
 function emptyEntry() {
-  return { industry: "", jobType: "", show: true, foreman: "" };
+  return { industry: "", jobType: "", show: true, foremen: [] };
 }
 function emptyCompany() {
   return { id: "", name: "", entries: [emptyEntry()] };
@@ -153,7 +153,7 @@ export default function WorkAdjustCompanies() {
           const dup = c.entries.some(
             (e) => e.industry === industry && e.jobType === jobType
           );
-          if (!dup) c.entries.push({ industry, jobType, show: true, foreman: "" });
+          if (!dup) c.entries.push({ industry, jobType, show: true, foremen: [] });
         });
         setSeq(n);
         return next;
@@ -167,7 +167,7 @@ export default function WorkAdjustCompanies() {
   if (view === "form") {
     return (
       <div>
-        <div className="crumb">協力会社設定</div>
+        <div className="page-title">協力会社設定</div>
         <div className="section-title first">{isEdit ? "編集" : "新規作成"}</div>
 
         <div className="cmp-form">
@@ -243,16 +243,28 @@ export default function WorkAdjustCompanies() {
               )}
               <div className="cmp-form-row">
                 <label className="cmp-label">職長ユーザー</label>
-                <select
-                  className="cmp-input"
-                  value={en.foreman}
-                  onChange={(e) => setEntry(i, { foreman: e.target.value })}
-                >
-                  <option value="">未設定</option>
-                  {WA_FOREMAN_USERS.map((v) => (
-                    <option key={v} value={v}>{v}</option>
+                <div className="cmp-check-group">
+                  {WA_FOREMAN_USERS.map((u) => (
+                    <label className="cmp-check" key={u}>
+                      <input
+                        type="checkbox"
+                        checked={en.foremen.includes(u)}
+                        onChange={(e) => {
+                          const next = e.target.checked
+                            ? [...en.foremen, u]
+                            : en.foremen.filter((x) => x !== u);
+                          // 表示順（マスタ順）の昇順で保持＝先頭が既定の職長になる
+                          next.sort(
+                            (a, b) => WA_FOREMAN_USERS.indexOf(a) - WA_FOREMAN_USERS.indexOf(b)
+                          );
+                          setEntry(i, { foremen: next });
+                        }}
+                      />
+                      {u}
+                    </label>
                   ))}
-                </select>
+                  <span className="cmp-hint">複数選択可能（先頭が既定の職長）</span>
+                </div>
               </div>
             </div>
           ))}
@@ -292,7 +304,7 @@ export default function WorkAdjustCompanies() {
   // ===== 一覧画面 =====
   return (
     <div>
-      <div className="section-title first">協力会社設定</div>
+      <div className="page-title">協力会社設定</div>
       <p className="lead" style={{ margin: "0 0 18px" }}>
         出面・日報管理および他サービスで共通利用する協力会社設定
       </p>

@@ -7,11 +7,12 @@ import {
 import Modal from "../components/wa/Modal.jsx";
 import { SuggestField } from "../components/wa/Field.jsx";
 import { useWaSettings } from "../components/wa/WaSettingsContext.jsx";
+import TablePagination from "../components/wa/TablePagination.jsx";
 
 // 表示名（現場内呼称）サジェスト候補
 const EQUIP_NAMES = [
-  "タワークレーン1号", "ラフター25t", "高所作業車 12m", "油圧ショベル ZX120",
-  "ダンプトラック 10t", "高速カッター", "発電機 25kVA",
+  "タワークレーン1号", "ラフター25t", "高所作業車 4.5m", "駐車場",
+  "発電機 25kVA",
 ];
 
 function emptyEquip() {
@@ -40,6 +41,13 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
   const [edit, setEdit] = useState(null);
   const [bulk, setBulk] = useState(null); // 一括登録の行配列
   const [importSel, setImportSel] = useState(null); // 持込機械インポート（選択id集合）
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(50);
+
+  // ページネーション（ページ範囲外になったら丸める）
+  const pageCount = Math.max(1, Math.ceil(list.length / pageSize));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageRows = list.slice(safePage * pageSize, safePage * pageSize + pageSize);
 
   const valid = (e) => e.category && e.name && e.bringIn && e.primary;
 
@@ -145,7 +153,7 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
           </tr>
         </thead>
         <tbody>
-          {list.map((e) => (
+          {pageRows.map((e) => (
             <tr key={e.id}>
               <td>{e.id}</td>
               <td>{e.category}</td>
@@ -175,7 +183,7 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
 
       {/* モバイル：カード表示（横スクロール不要） */}
       <div className="wa-card-list">
-        {list.map((e) => (
+        {pageRows.map((e) => (
           <div className="wa-card" key={e.id}>
             <div className="wa-card-top">
               <span className="wa-card-id">{e.id}</span>
@@ -213,6 +221,14 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
           </div>
         ))}
       </div>
+
+      <TablePagination
+        total={list.length}
+        page={safePage}
+        pageSize={pageSize}
+        onPage={setPage}
+        onPageSize={(n) => { setPageSize(n); setPage(0); }}
+      />
 
       {/* 新規／編集 */}
       {edit && (
@@ -390,6 +406,11 @@ export default function WorkAdjustRegistry() {
   const { gates, setGates, lifts, setLifts, equipment, setEquipment } = useWaSettings();
   const [tab, setTab] = useState("lift");
   const [gateEdit, setGateEdit] = useState(null);
+  const [gPage, setGPage] = useState(0);
+  const [gPageSize, setGPageSize] = useState(50);
+  const gPageCount = Math.max(1, Math.ceil(gates.length / gPageSize));
+  const gSafePage = Math.min(gPage, gPageCount - 1);
+  const gatePageRows = gates.slice(gSafePage * gPageSize, gSafePage * gPageSize + gPageSize);
 
   function saveGate() {
     const g = gateEdit;
@@ -409,8 +430,7 @@ export default function WorkAdjustRegistry() {
 
   return (
     <div>
-      <div className="crumb">資機材・ゲート登録</div>
-      <strong style={{ fontSize: 15 }}>資機材・ゲート登録</strong>
+      <div className="page-title">資機材・ゲート登録</div>
 
       <div className="tabs">
         <button className={"tab" + (tab === "lift" ? " on" : "")} onClick={() => setTab("lift")}>
@@ -445,7 +465,7 @@ export default function WorkAdjustRegistry() {
               </tr>
             </thead>
             <tbody>
-              {gates.map((g) => (
+              {gatePageRows.map((g) => (
                 <tr key={g.id}>
                   <td>{g.id}</td>
                   <td>{g.name}</td>
@@ -474,7 +494,7 @@ export default function WorkAdjustRegistry() {
 
           {/* モバイル：カード表示（横スクロール不要） */}
           <div className="wa-card-list">
-            {gates.map((g) => (
+            {gatePageRows.map((g) => (
               <div className="wa-card" key={g.id}>
                 <div className="wa-card-top">
                   <span className="wa-card-id">{g.id}</span>
@@ -508,6 +528,14 @@ export default function WorkAdjustRegistry() {
               </div>
             ))}
           </div>
+
+          <TablePagination
+            total={gates.length}
+            page={gSafePage}
+            pageSize={gPageSize}
+            onPage={setGPage}
+            onPageSize={(n) => { setGPageSize(n); setGPage(0); }}
+          />
         </>
       )}
 

@@ -6,10 +6,18 @@ import DatePager from "./wa/DatePager.jsx";
 import { listOverlaps, KIND_LABEL, fmtHour } from "./wa/rsvTimeline.js";
 import bellIcon from "../assets/icons/notifications.svg";
 
-// ヘッダーの共通日付送り（全ページで作業日を共有）
+// ヘッダーの共通日付送り（作業日を共有）。
+// 日付が意味を持つ「予約」「作業予定一覧」以外のページでは非アクティブにする。
 function HeaderDatePager() {
   const { date, setDate } = useWaSettings();
-  return <DatePager value={date} onChange={setDate} />;
+  const { pathname } = useLocation();
+  const dateActive =
+    pathname === "/workadjust" ||
+    pathname === "/workadjust/" ||
+    pathname.startsWith("/workadjust/reservation") ||
+    pathname === "/workadjust/floor-plan" ||
+    pathname.startsWith("/workadjust/floor-plan/");
+  return <DatePager value={date} onChange={setDate} disabled={!dateActive} />;
 }
 
 // 閲覧ロール切替（元請 / 職長）。現状は切替の器のみで表示内容は共通。
@@ -58,18 +66,20 @@ function OverlapBell() {
           ) : (
             <>
               <div className="bell-count">
-                通常予約が <strong>{n}</strong> 件重複しています。
+                通常予約の重複が <strong>{n}</strong> 件あります。
               </div>
               <ul className="bell-list">
                 {overlaps.map((o, i) => (
                   <li key={i}>
                     <span className="bell-kind">{KIND_LABEL[o.kind]}／{o.resource}</span>
-                    <div className="bell-pair">
-                      {o.a.company}（{o.a.start}〜{o.a.end}）
-                      <span className="bell-x2">×</span>
-                      {o.b.company}（{o.b.start}〜{o.b.end}）
-                    </div>
-                    <div className="bell-range">重複 {fmtHour(o.os)}〜{fmtHour(o.oe)}</div>
+                    <ul className="bell-members">
+                      {o.members.map((m, k) => (
+                        <li key={k}>
+                          {m.company}（{m.start}〜{m.end}）
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="bell-range">重複時間帯 {fmtHour(o.os)}〜{fmtHour(o.oe)}</div>
                   </li>
                 ))}
               </ul>
@@ -127,6 +137,8 @@ function WorkAdjustLayoutInner() {
   );
   // モバイル：サイドメニュー（ドロワー）の開閉
   const [navOpen, setNavOpen] = useState(false);
+  // サイドバー最下部のアカウントメニューの開閉（遷移先はデモのため未実装）
+  const [userOpen, setUserOpen] = useState(false);
 
   function selectMenu(m) {
     setNavOpen(false); // 遷移したらドロワーを閉じる
@@ -202,13 +214,101 @@ function WorkAdjustLayoutInner() {
           ))}
         </nav>
         <Link to="/" className="back-link" onClick={() => setNavOpen(false)}>← デモ画面一覧へ戻る</Link>
+
+        {/* 最下部：アカウント（クリックで上方向にメニューを展開。遷移先はデモのため未実装） */}
+        <div className="side-account">
+          <button
+            className="side-user"
+            onClick={() => setUserOpen((o) => !o)}
+            aria-expanded={userOpen}
+          >
+            <span className="side-user-avatar">A</span>
+            <span className="side-user-info">
+              <strong>Arch管理者</strong>
+              <small>テストプロジェクト</small>
+            </span>
+            <span className={"side-user-caret" + (userOpen ? " open" : "")}>⌄</span>
+          </button>
+
+          {userOpen && (
+            <>
+              <div className="side-user-backdrop" onClick={() => setUserOpen(false)} />
+              <div className="side-user-menu">
+                <div className="side-user-head">
+                  <span className="side-user-avatar lg">A</span>
+                  <div className="side-user-head-txt">
+                    <div className="su-sub">株式会社Arch</div>
+                    <div className="su-sub">テストプロジェクト</div>
+                    <div className="su-sub">Arch管理者</div>
+                    <div className="su-name">Arch管理者</div>
+                  </div>
+                </div>
+
+                <div className="side-user-sec">
+                  <button className="su-item" type="button">
+                    <span className="su-ico">🪪</span>
+                    <span className="su-label">アカウント設定</span>
+                    <ExternalIcon />
+                  </button>
+                  <button className="su-item" type="button">
+                    <span className="su-ico">👥</span>
+                    <span className="su-label">ユーザー一覧</span>
+                    <ExternalIcon />
+                  </button>
+                  <button className="su-item" type="button">
+                    <span className="su-ico">📋</span>
+                    <span className="su-label">現場情報</span>
+                  </button>
+                  <button className="su-item" type="button">
+                    <span className="su-ico">🗂️</span>
+                    <span className="su-label">現場選択</span>
+                  </button>
+                </div>
+
+                <div className="side-user-sec">
+                  <button className="su-item" type="button">
+                    <span className="su-ico">📄</span>
+                    <span className="su-label">見積依頼サービス</span>
+                    <ExternalIcon />
+                  </button>
+                  <button className="su-item" type="button">
+                    <span className="su-ico">🛒</span>
+                    <span className="su-label">発注サービス</span>
+                    <ExternalIcon />
+                  </button>
+                  <button className="su-item" type="button">
+                    <span className="su-ico">📦</span>
+                    <span className="su-label">在庫管理サービス</span>
+                    <ExternalIcon />
+                  </button>
+                  <button className="su-item" type="button">
+                    <span className="su-ico">📝</span>
+                    <span className="su-label">利用規約</span>
+                    <ExternalIcon />
+                  </button>
+                  <button className="su-item" type="button">
+                    <span className="su-ico">🛡️</span>
+                    <span className="su-label">プライバシーポリシー</span>
+                    <ExternalIcon />
+                  </button>
+                </div>
+
+                <div className="side-user-sec">
+                  <button className="su-logout" type="button">
+                    🔒 ログアウト
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </aside>
       <div className="main">
         <div className="topbar">
           <button className="nav-toggle" onClick={() => setNavOpen(true)} aria-label="メニューを開く">
             ☰
           </button>
-          <h1>{active}</h1>
+          <span className="topbar-project">新産業の森作業所</span>
           <div className="topbar-right">
             <RoleSwitch />
             {role === "prime" && <OverlapBell />}
@@ -216,7 +316,9 @@ function WorkAdjustLayoutInner() {
           </div>
         </div>
         <div className="content">
-          <Outlet />
+          <div className="content-card">
+            <Outlet />
+          </div>
         </div>
       </div>
     </div>
