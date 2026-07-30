@@ -53,21 +53,6 @@ export default function WorkAdjustCompanies() {
     ? companies.filter((c) => c.name.includes(applied))
     : companies;
 
-  // 一覧の表示設定チェック切替
-  function toggleShow(companyId, idx) {
-    setCompanies((cs) =>
-      cs.map((c) =>
-        c.id === companyId
-          ? {
-              ...c,
-              entries: c.entries.map((e, i) =>
-                i === idx ? { ...e, show: !e.show } : e
-              ),
-            }
-          : c
-      )
-    );
-  }
 
   // フォーム操作
   function openCreate() {
@@ -228,19 +213,6 @@ export default function WorkAdjustCompanies() {
                   ))}
                 </select>
               </div>
-              {isEdit && (
-                <div className="cmp-form-row">
-                  <label className="cmp-label">表示設定</label>
-                  <label className="cmp-check">
-                    <input
-                      type="checkbox"
-                      checked={en.show}
-                      onChange={(e) => setEntry(i, { show: e.target.checked })}
-                    />
-                    入退場システムの選択肢として表示する。
-                  </label>
-                </div>
-              )}
               <div className="cmp-form-row">
                 <label className="cmp-label">職長ユーザー</label>
                 <div className="cmp-check-group">
@@ -352,7 +324,6 @@ export default function WorkAdjustCompanies() {
             <tr>
               <th>協力会社</th>
               <th>職種</th>
-              <th>表示設定</th>
               <th style={{ textAlign: "right" }}>操作</th>
             </tr>
           </thead>
@@ -366,16 +337,6 @@ export default function WorkAdjustCompanies() {
                     </td>
                   )}
                   <td>{e.jobType}</td>
-                  <td>
-                    <label className="cmp-check">
-                      <input
-                        type="checkbox"
-                        checked={e.show}
-                        onChange={() => toggleShow(c.id, i)}
-                      />
-                      表示する
-                    </label>
-                  </td>
                   {i === 0 && (
                     <td rowSpan={c.entries.length} style={{ textAlign: "right" }}>
                       <button className="linklike" onClick={() => openEdit(c)}>編集 ›</button>

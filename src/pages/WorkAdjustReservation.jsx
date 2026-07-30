@@ -123,11 +123,13 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
   // 2部制（AM/PM）の予約枠。今日から7日間（日付送りの影響を受けず固定）。key = 資源|日付|am/pm → {company, user}
   const [week] = useState(computeWeek);
   const nowHour = new Date().getHours(); // 当日枠の予約可否判定に使用
-  const [slotDialog, setSlotDialog] = useState(null); // 自社予約の詳細・取消ダイアログ {res,d,p}
+  const [slotDialog, setSlotDialog] = useState(null); // 予約の詳細・取消ダイアログ {res,d,p}
+  const [bookForm, setBookForm] = useState(null); // アカウントなし予約の入力ダイアログ {res,d,p,name,company}
   const [slots, setSlots] = useState(() => {
     const s = {};
     const set = (res, di, p, co, user) => {
-      s[`${res}|${dayKey(week[di])}|${p}`] = { company: co, user: user || "" };
+      // self=自分（このユーザー/端末）が予約した枠かどうか。他社サンプルは self:false
+      s[`${res}|${dayKey(week[di])}|${p}`] = { company: co, user: user || "", self: false };
     };
     // 他社の既存予約（重複予約できないことの確認用サンプル）
     set("高所作業車 4.5m-001号", 0, "am", "青木工業", "鈴木 一郎");
@@ -144,12 +146,27 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
     if (dayIndex !== 0) return false;
     return p === "am" || (p === "pm" && nowHour >= 12);
   }
-  // 空き枠を自社（ログイン会社）で予約
-  function bookSlot(res, d, p) {
-    const key = `${res}|${dayKey(d)}|${p}`;
-    setSlots((s) => ({ ...s, [key]: { company: MY_COMPANY, user: MY_USER } }));
+  // 空き枠のクリック。アカウントあり＝ログイン会社で即予約／アカウントなし＝予約者・会社名を入力
+  function onEmptySlot(res, d, p) {
+    if (guest) {
+      setBookForm({ res, d, p, name: "", company: "" });
+    } else {
+      const key = `${res}|${dayKey(d)}|${p}`;
+      setSlots((s) => ({ ...s, [key]: { company: MY_COMPANY, user: MY_USER, self: true } }));
+    }
   }
-  // 自社予約の取消（詳細ダイアログから）
+  // アカウントなし予約の確定（予約者名・会社名を入力して予約）
+  function submitBook() {
+    if (!bookForm.company.trim() || !bookForm.name.trim()) {
+      window.alert("会社名と予約者名を入力してください。");
+      return;
+    }
+    const { res, d, p } = bookForm;
+    const key = `${res}|${dayKey(d)}|${p}`;
+    setSlots((s) => ({ ...s, [key]: { company: bookForm.company.trim(), user: bookForm.name.trim(), self: true } }));
+    setBookForm(null);
+  }
+  // 予約の取消（詳細ダイアログから。自分の予約のみ取消可）
   function cancelSlot() {
     const { res, d, p } = slotDialog;
     const key = `${res}|${dayKey(d)}|${p}`;
@@ -415,7 +432,7 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
                   {week.flatMap((d, i) =>
                     ["am", "pm"].map((p) => {
                       const val = slots[`${res}|${dayKey(d)}|${p}`];
-                      const mine = val && val.company === MY_COMPANY;
+                      const mine = val && val.self;
                       const disabled = slotDisabled(i, p);
                       return (
                         <td key={`${i}-${p}`} className="shift-cell">
@@ -425,14 +442,14 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
                             <button
                               className="shift-slot self"
                               onClick={() => setSlotDialog({ res, d, p })}
-                              title="自社予約（クリックで詳細・取消）"
+                              title="自分の予約（クリックで詳細・取消）"
                             />
                           ) : disabled ? (
                             <span className="shift-slot disabled" title="当日のため予約できません" />
                           ) : (
                             <button
                               className="shift-slot"
-                              onClick={() => bookSlot(res, d, p)}
+                              onClick={() => onEmptySlot(res, d, p)}
                               title="空き（クリックで予約）"
                             />
                           )}
@@ -573,14 +590,19 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
         <>
           <div className="rsv-legend">
             <span className="lg-item"><span className="shift-slot" />空き</span>
-            <span className="lg-item"><span className="shift-slot self" />自社予約</span>
+            <span className="lg-item"><span className="shift-slot self" />自分の予約</span>
             <span className="lg-item"><span className="shift-slot other">他社</span>他社予約（不可）</span>
             <span className="lg-item"><span className="shift-slot disabled" />予約不可（当日）</span>
           </div>
           <p className="rsv-note">
-            ※ <strong>2部制</strong>表示（予約方法＝2部制の資機材。予約方法は<strong>資機材・ゲート登録</strong>で資機材ごとに設定）。各機械について<strong>今日から7日間（固定・日付送りの影響なし）</strong>の午前（AM）／午後（PM）枠を選択して予約します。予約者の会社名はログインアカウントから自動反映されます（デモ：{MY_COMPANY}／{MY_USER}）。
+            ※ <strong>2部制</strong>表示（予約方法＝2部制の資機材。予約方法は<strong>資機材・ゲート登録</strong>で資機材ごとに設定）。各機械について<strong>今日から7日間（固定・日付送りの影響なし）</strong>の午前（AM）／午後（PM）枠を選択して予約します。
+            {guest ? (
+              <>予約時に<strong>会社名・予約者名</strong>を入力します（アカウントなし）。</>
+            ) : (
+              <>予約者の会社名はログインアカウントから自動反映されます（デモ：{MY_COMPANY}／{MY_USER}）。</>
+            )}
             <br />
-            ※ 空き枠をクリックで自社予約（青）。自社予約をクリックすると<strong>予約者・会社名の詳細と取消</strong>ができます（取消は予約者・元請のみ）。<strong>他社が予約済みの枠は選択できません（重複予約不可）</strong>。
+            ※ 空き枠をクリックで予約（青）。自分の予約をクリックすると<strong>予約者・会社名の詳細と取消</strong>ができます（取消は予約者・元請のみ）。<strong>他社が予約済みの枠は選択できません（重複予約不可）</strong>。
             <br />
             ※ <strong>当日はAM予約不可</strong>、<strong>当日12時以降はPM予約不可</strong>です。
           </p>
@@ -703,28 +725,70 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
         </Modal>
       )}
 
-      {/* 2部制：自社予約の詳細・取消ダイアログ */}
-      {slotDialog && (
+      {/* 2部制：自分の予約の詳細・取消ダイアログ */}
+      {slotDialog && (() => {
+        const sv = slots[`${slotDialog.res}|${dayKey(slotDialog.d)}|${slotDialog.p}`] || {};
+        return (
+          <Modal
+            title="2部制予約の詳細"
+            onClose={() => setSlotDialog(null)}
+            footer={
+              <>
+                <button className="mini-btn danger" onClick={cancelSlot}>
+                  取消
+                </button>
+                <button className="ghost-btn spacer" onClick={() => setSlotDialog(null)}>
+                  キャンセル
+                </button>
+              </>
+            }
+          >
+            <div className="form-grid">
+              <ReadonlyField label="機械・現場内呼称" value={slotDialog.res} />
+              <ReadonlyField label="日付" value={dayLabel(slotDialog.d)} />
+              <ReadonlyField label="区分" value={slotDialog.p === "am" ? "午前（AM）" : "午後（PM）"} />
+              <ReadonlyField label="予約者" value={sv.user} />
+              <ReadonlyField label="会社名" value={sv.company} />
+            </div>
+          </Modal>
+        );
+      })()}
+
+      {/* 2部制：アカウントなし予約の入力ダイアログ（予約者名・会社名） */}
+      {bookForm && (
         <Modal
-          title="2部制予約の詳細"
-          onClose={() => setSlotDialog(null)}
+          title="予約者情報の入力"
+          onClose={() => setBookForm(null)}
           footer={
             <>
-              <button className="mini-btn danger" onClick={cancelSlot}>
-                取消
-              </button>
-              <button className="ghost-btn spacer" onClick={() => setSlotDialog(null)}>
+              <button className="ghost-btn spacer" onClick={() => setBookForm(null)}>
                 キャンセル
+              </button>
+              <button className="primary-btn" onClick={submitBook}>
+                予約する
               </button>
             </>
           }
         >
+          <p className="subtle" style={{ marginTop: 0 }}>
+            {bookForm.res}／{dayLabel(bookForm.d)}／{bookForm.p === "am" ? "午前（AM）" : "午後（PM）"} を予約します。
+          </p>
           <div className="form-grid">
-            <ReadonlyField label="機械・現場内呼称" value={slotDialog.res} />
-            <ReadonlyField label="日付" value={dayLabel(slotDialog.d)} />
-            <ReadonlyField label="区分" value={slotDialog.p === "am" ? "午前（AM）" : "午後（PM）"} />
-            <ReadonlyField label="予約者" value={MY_USER} />
-            <ReadonlyField label="会社名" value={MY_COMPANY} />
+            <SuggestField
+              label="会社名"
+              required
+              value={bookForm.company}
+              onChange={(v) => setBookForm((x) => ({ ...x, company: v }))}
+              options={WA_COMPANIES}
+            />
+            <div className="field">
+              <label>予約者名<span className="req">*</span></label>
+              <input
+                value={bookForm.name}
+                onChange={(e) => setBookForm((x) => ({ ...x, name: e.target.value }))}
+                placeholder="予約者名を入力"
+              />
+            </div>
           </div>
         </Modal>
       )}
