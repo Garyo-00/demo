@@ -9,7 +9,7 @@ import bellIcon from "../assets/icons/notifications.svg";
 // ヘッダーの共通日付送り（作業日を共有）。
 // 日付が意味を持つ「予約」「作業予定一覧」以外のページでは非アクティブにする。
 function HeaderDatePager() {
-  const { date, setDate } = useWaSettings();
+  const { date, setDate, confirmLeave } = useWaSettings();
   const { pathname } = useLocation();
   const dateActive =
     pathname === "/workadjust" ||
@@ -17,7 +17,15 @@ function HeaderDatePager() {
     pathname.startsWith("/workadjust/reservation") ||
     pathname === "/workadjust/floor-plan" ||
     pathname.startsWith("/workadjust/floor-plan/");
-  return <DatePager value={date} onChange={setDate} disabled={!dateActive} />;
+  return (
+    <DatePager
+      value={date}
+      onChange={(d) => {
+        if (confirmLeave()) setDate(d);
+      }}
+      disabled={!dateActive}
+    />
+  );
 }
 
 // 閲覧ロール切替（元請 / 職長）。現状は切替の器のみで表示内容は共通。
@@ -108,6 +116,7 @@ const ROUTES = [
   ["/workadjust/floor-plan-setting", "作業配置図設定"],
   ["/workadjust/floor-plan", "配置図作成"],
   ["/workadjust/actual-qr", "作業実績入力用QR発行"],
+  ["/workadjust/reserve-qr", "資機材・ゲート予約用QR発行"],
   ["/workadjust/registry", "資機材・ゲート登録"],
   ["/workadjust/companies", "協力会社設定"],
   ["/workadjust/settings", "予約設定"],
@@ -124,28 +133,35 @@ function WorkAdjustLayoutInner() {
   const navigate = useNavigate();
   const location = useLocation();
   const active = currentMenu(location.pathname);
-  const { role } = useWaSettings();
+  const { role, confirmLeave } = useWaSettings();
   // 職長ビューでは「設定」グループ（＝childrenを持つ項目）と「配置図作成」を非表示にする
   const HIDDEN_FOR_FOREMAN = ["配置図作成", "作業実績入力用QR発行"];
   const navItems = WORKADJUST_NAV.filter(
     (n) => !(role === "foreman" && (n.children || HIDDEN_FOR_FOREMAN.includes(n.label)))
   );
-  // 「設定」アコーディオンの開閉（設定配下にいる時は初期展開）
-  const settingsGroup = WORKADJUST_NAV.find((n) => n.children);
-  const [settingsOpen, setSettingsOpen] = useState(
-    settingsGroup ? settingsGroup.children.includes(active) : false
-  );
+  // アコーディオン（children を持つグループ）の開閉。配下にいるグループは初期展開
+  const [openGroups, setOpenGroups] = useState(() => {
+    const init = {};
+    WORKADJUST_NAV.forEach((n) => {
+      if (n.children) init[n.label] = n.children.includes(active);
+    });
+    return init;
+  });
+  const toggleGroup = (label) =>
+    setOpenGroups((o) => ({ ...o, [label]: !o[label] }));
   // モバイル：サイドメニュー（ドロワー）の開閉
   const [navOpen, setNavOpen] = useState(false);
   // サイドバー最下部のアカウントメニューの開閉（遷移先はデモのため未実装）
   const [userOpen, setUserOpen] = useState(false);
 
   function selectMenu(m) {
+    if (!confirmLeave()) return; // 未保存の編集があれば確認
     setNavOpen(false); // 遷移したらドロワーを閉じる
     if (m === "作業予定一覧") navigate("/workadjust");
     else if (m === "予約") navigate("/workadjust/reservation");
     else if (m === "配置図作成") navigate("/workadjust/floor-plan");
     else if (m === "作業実績入力用QR発行") navigate("/workadjust/actual-qr");
+    else if (m === "資機材・ゲート予約用QR発行") navigate("/workadjust/reserve-qr");
     else if (m === "作業配置図設定") navigate("/workadjust/floor-plan-setting");
     else if (m === "資機材・ゲート登録") navigate("/workadjust/registry");
     else if (m === "協力会社設定") navigate("/workadjust/companies");
@@ -156,7 +172,17 @@ function WorkAdjustLayoutInner() {
     <div className="layout">
       {navOpen && <div className="nav-backdrop" onClick={() => setNavOpen(false)} />}
       <aside className={"side" + (navOpen ? " open" : "")}>
-        <Link to="/workadjust" className="brand" onClick={() => setNavOpen(false)}>
+        <Link
+          to="/workadjust"
+          className="brand"
+          onClick={(e) => {
+            if (!confirmLeave()) {
+              e.preventDefault();
+              return;
+            }
+            setNavOpen(false);
+          }}
+        >
           作業間調整pro<small>新産業の森作業所</small>
         </Link>
         <nav>
@@ -168,14 +194,14 @@ function WorkAdjustLayoutInner() {
                     "item accordion" +
                     (item.children.includes(active) ? " active-parent" : "")
                   }
-                  onClick={() => setSettingsOpen((o) => !o)}
-                  aria-expanded={settingsOpen}
+                  onClick={() => toggleGroup(item.label)}
+                  aria-expanded={!!openGroups[item.label]}
                 >
                   <span className="dot" />
                   {item.label}
-                  <span className={"acc-caret" + (settingsOpen ? " open" : "")}>▾</span>
+                  <span className={"acc-caret" + (openGroups[item.label] ? " open" : "")}>▾</span>
                 </button>
-                {settingsOpen &&
+                {openGroups[item.label] &&
                   item.children.map((c) => (
                     <button
                       key={c}
@@ -213,7 +239,19 @@ function WorkAdjustLayoutInner() {
             </a>
           ))}
         </nav>
-        <Link to="/" className="back-link" onClick={() => setNavOpen(false)}>← デモ画面一覧へ戻る</Link>
+        <Link
+          to="/"
+          className="back-link"
+          onClick={(e) => {
+            if (!confirmLeave()) {
+              e.preventDefault();
+              return;
+            }
+            setNavOpen(false);
+          }}
+        >
+          ← デモ画面一覧へ戻る
+        </Link>
 
         {/* 最下部：アカウント（クリックで上方向にメニューを展開。遷移先はデモのため未実装） */}
         <div className="side-account">

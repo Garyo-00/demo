@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useRef } from "react";
 import {
   WA_DEFAULT_DATE,
   WA_FLOORPLAN_SETTINGS,
@@ -56,6 +56,19 @@ export function WaSettingsProvider({ children }) {
   const [equipment, setEquipment] = useState(WA_EQUIPMENT);
   // 予約（ヘッダーの重複通知でも参照するため共有）
   const [reservations, setReservations] = useState(WA_RESERVATIONS);
+  // 画面遷移ガード（未保存の編集がある画面が dirty を立て、遷移前に確認する）
+  const navDirtyRef = useRef(false);
+  function setNavDirty(v) {
+    navDirtyRef.current = !!v;
+  }
+  function confirmLeave() {
+    if (navDirtyRef.current) {
+      return window.confirm(
+        "未保存の編集内容があります。移動すると変更は破棄されます。移動しますか？"
+      );
+    }
+    return true;
+  }
   return (
     <Ctx.Provider
       value={{
@@ -64,6 +77,7 @@ export function WaSettingsProvider({ children }) {
         interval, setInterval, templates, setTemplates,
         gates, setGates, lifts, setLifts, equipment, setEquipment,
         reservations, setReservations,
+        setNavDirty, confirmLeave,
       }}
     >
       {children}

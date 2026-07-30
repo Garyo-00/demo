@@ -10,11 +10,17 @@ export function toHour(hhmm) {
   const [h, m] = hhmm.split(":").map(Number);
   return h + m / 60;
 }
-export function pct(hhmm) {
-  return ((toHour(hhmm) - DAY_START) / (DAY_END - DAY_START)) * 100;
+// 予約時間設定に応じて表示範囲（start〜end 時）を可変にする。既定は 7〜19 時。
+export function makeHours(start = DAY_START, end = DAY_END) {
+  const s = Math.floor(start);
+  const e = Math.ceil(end);
+  return Array.from({ length: Math.max(1, e - s + 1) }, (_, i) => s + i);
 }
-export function pctHour(h) {
-  return ((h - DAY_START) / (DAY_END - DAY_START)) * 100;
+export function pct(hhmm, start = DAY_START, end = DAY_END) {
+  return ((toHour(hhmm) - start) / (end - start)) * 100;
+}
+export function pctHour(h, start = DAY_START, end = DAY_END) {
+  return ((h - start) / (end - start)) * 100;
 }
 
 // 予約タブ（資源種別）のラベル
@@ -98,7 +104,7 @@ export function estWidth(text) {
 // テキスト（会社名・車種・作業内容・時間）はバー左端から表示し、
 // 幅が足りなければ枠外（右）へ流す。右端で収まらない場合は左へ流す。
 // 重なる場合は後の予約から下段へずらす（クリップは一切しない）。
-export function layoutLabeled(blocks, W, isGate) {
+export function layoutLabeled(blocks, W, isGate, start = DAY_START, end = DAY_END) {
   const width = Math.max(W || 0, 1);
   const RH = rowHeight(isGate);
   const sorted = [...blocks].sort(
@@ -106,8 +112,8 @@ export function layoutLabeled(blocks, W, isGate) {
   );
   const rowEnds = []; // 各段のフットプリント右端px
   const placed = sorted.map((b) => {
-    const barLeft = (pct(b.start) / 100) * width;
-    const barRight = (pct(b.end) / 100) * width;
+    const barLeft = (pct(b.start, start, end) / 100) * width;
+    const barRight = (pct(b.end, start, end) / 100) * width;
     const barW = Math.max(barRight - barLeft, 6);
     const time = `${b.start}〜${b.end}`;
     // 1行目: 会社名＋作業内容＋時間。ゲートは車種を2行目に改行するため幅に含めない

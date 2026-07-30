@@ -24,8 +24,8 @@ import TablePagination from "../components/wa/TablePagination.jsx";
 import {
   SuggestField,
   SelectField,
-  ReadonlyField,
   TextAreaField,
+  DateField,
 } from "../components/wa/Field.jsx";
 
 // 実績入力ダイアログ用：ドラフトを会社ごとにまとめる（元の並び順・indexは保持）。
@@ -112,23 +112,56 @@ export default function WorkAdjustSchedule() {
   const [copySel, setCopySel] = useState(() => new Set()); // 複製元として選択したID
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(50);
+  const [search, setSearch] = useState(""); // 協力会社名での検索
+  const [sortKey, setSortKey] = useState("industry"); // 初期は業種ソート
+  const [sortDir, setSortDir] = useState("asc");
 
-  // 表示中の日付の作業予定のみ。並び順は業種を基準にする
-  const dayRows = rows
-    .filter((r) => r.date === date)
+  // 列ごとの比較（全カラムでソート可能）
+  function cmpBy(a, b, key) {
+    switch (key) {
+      case "status": return a.status.localeCompare(b.status);
+      case "company": return a.company.localeCompare(b.company, "ja");
+      case "industry": return a.industry.localeCompare(b.industry, "ja");
+      case "jobType": return a.jobType.localeCompare(b.jobType, "ja");
+      case "location": return (a.building || "").localeCompare(b.building || "", "ja");
+      case "content": return (a.content || "").localeCompare(b.content || "", "ja");
+      case "planned": return totalWorkers(a) - totalWorkers(b);
+      case "actual": return (actualTotal(a) ?? -1) - (actualTotal(b) ?? -1);
+      case "safety": return (a.safetyNote || "").localeCompare(b.safetyNote || "", "ja");
+      default: return 0;
+    }
+  }
+  function toggleSort(key) {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+    setPage(0);
+  }
+  function sortMark(key) {
+    if (sortKey !== key) return "";
+    return sortDir === "asc" ? " ▲" : " ▼";
+  }
+
+  // 表示中の日付の作業予定（確定・実績・出力はこの全件が対象）
+  const dateRows = rows.filter((r) => r.date === date);
+  // 一覧表示用：協力会社名で検索し、指定カラムでソート
+  const dayRows = dateRows
+    .filter((r) => !search.trim() || r.company.includes(search.trim()))
     .slice()
-    .sort((a, b) => a.industry.localeCompare(b.industry, "ja"));
+    .sort((a, b) => {
+      const c = cmpBy(a, b, sortKey);
+      return sortDir === "asc" ? c : -c;
+    });
 
-  // ページネーション（表示行のみ切り出し。確定・実績・出力は全行が対象）
+  // ページネーション（表示行のみ切り出し）
   const pageCount = Math.max(1, Math.ceil(dayRows.length / pageSize));
   const safePage = Math.min(page, pageCount - 1);
   const pageRows = dayRows.slice(safePage * pageSize, safePage * pageSize + pageSize);
 
-  // 確定状態の集計（確定・実績・出力は全作業共通）
-  const pendingRows = dayRows.filter((r) => r.status !== "approved");
-  const approvedRows = dayRows.filter((r) => r.status === "approved");
+  // 確定状態の集計（確定・実績・出力は当日の全作業が対象）
+  const pendingRows = dateRows.filter((r) => r.status !== "approved");
+  const approvedRows = dateRows.filter((r) => r.status === "approved");
   const hasPending = pendingRows.length > 0;
-  const allConfirmed = dayRows.length > 0 && !hasPending;
+  const allConfirmed = dateRows.length > 0 && !hasPending;
 
   function openCreate() {
     setEditing(emptyForm(date));
@@ -304,6 +337,11 @@ export default function WorkAdjustSchedule() {
     );
   }
   function commitConfirm() {
+    // 元請安全指示事項は必須（全件入力されていること）
+    if (confirmDraft.some((d) => !d.safetyNote || !d.safetyNote.trim())) {
+      window.alert("すべての作業の元請安全指示事項を入力してください（必須）。");
+      return;
+    }
     const map = new Map(confirmDraft.map((d) => [d.id, d.safetyNote]));
     setRows((rs) =>
       rs.map((r) =>
@@ -316,6 +354,35 @@ export default function WorkAdjustSchedule() {
   function releaseAll() {
     const ids = new Set(approvedRows.map((r) => r.id));
     setRows((rs) => rs.map((r) => (ids.has(r.id) ? { ...r, status: "pending" } : r)));
+  }
+  // 協力会社単位の元請安全指示事項の履歴（重複排除・最新5件・新しい作成データ優先）
+  function safetyHistoryFor(company) {
+    const seen = new Set();
+    const out = [];
+    for (let i = rows.length - 1; i >= 0 && out.length < 5; i--) {
+      const r = rows[i];
+      const note = (r.safetyNote || "").trim();
+      if (r.company === company && note && !seen.has(note)) {
+        seen.add(note);
+        out.push(note);
+      }
+    }
+    return out;
+  }
+  // 1レコードだけを対象に実績入力ダイアログを開く（職長画面の各レコードのボタン用）
+  function openActualOne(r) {
+    setActualDraft([
+      {
+        id: r.id, company: r.company, jobType: r.jobType, content: r.content,
+        planned: totalWorkers(r),
+        plannedNormalWorkers: Number(r.normalWorkers) || 0,
+        plannedOvertimeWorkers: Number(r.overtimeWorkers) || 0,
+        actualNormalWorkers: r.actualNormalWorkers ?? 0,
+        actualNormalHours: r.actualNormalHours ?? 0,
+        actualOvertimeWorkers: r.actualOvertimeWorkers ?? 0,
+        actualOvertimeHours: r.actualOvertimeHours ?? 0,
+      },
+    ]);
   }
   // 実績入力（全確定済みを対象にダイアログを開く）
   function openActual() {
@@ -403,6 +470,15 @@ export default function WorkAdjustSchedule() {
       <div className="page-title">作業予定一覧</div>
       <div className="toolbar">
         <span className="subtle">{dayRows.length} 件</span>
+        <input
+          className="wa-search"
+          placeholder="協力会社名で検索"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
+        />
         {role === "prime" && (
           <button
             className="ghost-btn spacer"
@@ -427,9 +503,9 @@ export default function WorkAdjustSchedule() {
       </div>
 
       <p className="wa-note">
-        ※ 並び順は業種を基準に並べます。
+        ※ 各カラムのヘッダークリックでソートできます（初期は業種順）。協力会社名で検索できます。
         <br />
-        ※ 運用フロー：職長が予定を作成 → 元請が確定（元請安全指示事項を入力）→ 元請が実績を入力。
+        ※ 運用フロー：職長が予定を作成 → 元請が確定（元請安全指示事項を入力）→ 元請または職長が実績を入力。
         <br />
         ※ 確定後のレコードは「編集」で確定を解除するまで編集・削除できません。
       </p>
@@ -442,15 +518,15 @@ export default function WorkAdjustSchedule() {
           <table className="wa-schedule-table">
             <thead>
               <tr>
-                <th>ステータス</th>
-                <th>協力会社名</th>
-                <th>業種</th>
-                <th>職種</th>
-                <th>作業場所（棟/階/エリア/工区）</th>
-                <th>作業内容</th>
-                <th>作業人数（予定）</th>
-                <th>作業人数（実績）</th>
-                <th>元請安全指示事項</th>
+                <th className="sortable" onClick={() => toggleSort("status")}>ステータス{sortMark("status")}</th>
+                <th className="sortable" onClick={() => toggleSort("company")}>協力会社名{sortMark("company")}</th>
+                <th className="sortable" onClick={() => toggleSort("industry")}>業種{sortMark("industry")}</th>
+                <th className="sortable" onClick={() => toggleSort("jobType")}>職種{sortMark("jobType")}</th>
+                <th className="sortable" onClick={() => toggleSort("location")}>作業場所（棟/階/エリア/工区）{sortMark("location")}</th>
+                <th className="sortable" onClick={() => toggleSort("content")}>作業内容{sortMark("content")}</th>
+                <th className="sortable" onClick={() => toggleSort("planned")}>作業人数（予定）{sortMark("planned")}</th>
+                <th className="sortable" onClick={() => toggleSort("actual")}>作業人数（実績）{sortMark("actual")}</th>
+                <th className="sortable" onClick={() => toggleSort("safety")}>元請安全指示事項{sortMark("safety")}</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -499,6 +575,16 @@ export default function WorkAdjustSchedule() {
                       >
                         削除
                       </button>
+                      {role === "foreman" && (
+                        <button
+                          className="mini-btn accent"
+                          onClick={() => openActualOne(r)}
+                          disabled={r.status !== "approved"}
+                          title={r.status !== "approved" ? "確定後に実績入力できます" : "実績を入力"}
+                        >
+                          実績入力
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -561,6 +647,16 @@ export default function WorkAdjustSchedule() {
                   >
                     削除
                   </button>
+                  {role === "foreman" && (
+                    <button
+                      className="mini-btn accent"
+                      onClick={() => openActualOne(r)}
+                      disabled={r.status !== "approved"}
+                      title={r.status !== "approved" ? "確定後に実績入力できます" : "実績を入力"}
+                    >
+                      実績入力
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -619,10 +715,12 @@ export default function WorkAdjustSchedule() {
         >
           {/* 共通項目 */}
           <div className="form-grid">
-            <ReadonlyField
+            <DateField
               label="日付"
-              value={formatDateStr(editing.date)}
-              hint="ページの日付送りで管理"
+              required
+              value={editing.date}
+              onChange={(v) => setEditing((x) => ({ ...x, date: v }))}
+              hint="この日付の作業予定として登録されます"
             />
             <SuggestField
               label="協力会社名"
@@ -860,12 +958,15 @@ export default function WorkAdjustSchedule() {
                 </div>
                 <TextAreaField
                   full
+                  required
+                  maxLength={255}
                   label="元請安全指示事項"
                   value={d.safetyNote}
                   onChange={(v) =>
                     setConfirmItem(i)((x) => ({ ...x, safetyNote: v }))
                   }
-                  placeholder="確定にあたっての安全指示を記入"
+                  placeholder="確定にあたっての安全指示を記入（必須・255文字まで）"
+                  history={safetyHistoryFor(d.company)}
                 />
               </div>
             ))}

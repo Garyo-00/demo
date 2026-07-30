@@ -14,6 +14,8 @@ import WorkAdjustSchedule from "./pages/WorkAdjustSchedule.jsx";
 import WorkAdjustReservation from "./pages/WorkAdjustReservation.jsx";
 import WorkAdjustFloorPlan from "./pages/WorkAdjustFloorPlan.jsx";
 import WorkAdjustActualQr from "./pages/WorkAdjustActualQr.jsx";
+import WorkAdjustReserveQr from "./pages/WorkAdjustReserveQr.jsx";
+import WorkAdjustReservePortal from "./pages/WorkAdjustReservePortal.jsx";
 import WorkAdjustActualInput from "./pages/WorkAdjustActualInput.jsx";
 import WorkAdjustRegistry from "./pages/WorkAdjustRegistry.jsx";
 import WorkAdjustFloorPlanSetting from "./pages/WorkAdjustFloorPlanSetting.jsx";
@@ -32,6 +34,8 @@ export default function App() {
       <Route path="/workplan/output-preview" element={<WorkPlanOutputPreview />} />
       {/* QR読み取り後の作業実績入力（サイドバー無しの独立ページ） */}
       <Route path="/workadjust/actual-input" element={<WorkAdjustActualInput />} />
+      {/* 資機材・ゲート予約用QR読み取り後の予約ポータル（サイドバー無しの独立ページ） */}
+      <Route path="/workadjust/reserve" element={<WorkAdjustReservePortal />} />
       <Route path="/app" element={<AppLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="inspection" element={<InspectionRecords />} />
@@ -51,6 +55,7 @@ export default function App() {
         <Route path="reservation" element={<WorkAdjustReservation />} />
         <Route path="floor-plan" element={<WorkAdjustFloorPlan />} />
         <Route path="actual-qr" element={<WorkAdjustActualQr />} />
+        <Route path="reserve-qr" element={<WorkAdjustReserveQr />} />
         <Route path="floor-plan-setting" element={<WorkAdjustFloorPlanSetting />} />
         <Route path="registry" element={<WorkAdjustRegistry />} />
         <Route path="companies" element={<WorkAdjustCompanies />} />

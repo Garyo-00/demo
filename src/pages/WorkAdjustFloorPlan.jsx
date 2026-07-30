@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { WA_SAMPLE_PLAN_IMAGE, shiftDate, formatDateStr } from "../data.js";
+import { useState, useRef, useEffect } from "react";
+import { WA_SAMPLE_PLAN_IMAGE, WA_SAMPLE_PLAN_IMAGE_2F, WA_PROJECT, shiftDate, formatDateStr } from "../data.js";
 import { useWaSettings } from "../components/wa/WaSettingsContext.jsx";
 
 // ===== スタンプ（右側パレット。クリックで台紙に配置→ドラッグで移動） =====
@@ -42,6 +42,8 @@ const STAMP_GROUPS = [
 // 配置図（デモ用の初期プラン。日付ごと・台紙を選んで作成）
 const INITIAL_PLANS = [
   { id: "F-001", date: "2026-07-09", templateId: "FP-001", name: "1F平面図", image: WA_SAMPLE_PLAN_IMAGE, saved: true },
+  // 前日（7/8）の2F平面図の配置図。7/9に「2F平面図」を選ぶと「前日からコピー」がアクティブになる
+  { id: "F-000", date: "2026-07-08", templateId: "FP-002", name: "2F平面図", image: WA_SAMPLE_PLAN_IMAGE_2F, saved: true },
 ];
 const INITIAL_MARKERS = {
   "F-001": [
@@ -50,20 +52,39 @@ const INITIAL_MARKERS = {
     { id: "m3", name: "東ゲート", icon: "🚧", color: "#b54708", x: 15, y: 70 },
     { id: "m4", name: "上下作業注意", icon: "⚠️", color: "#b42318", x: 55, y: 60 },
   ],
+  "F-000": [
+    { id: "n1", name: "内装ボード貼り", icon: "👷", color: "#1f6feb", x: 40, y: 40 },
+    { id: "n2", name: "資材置場", icon: "📦", color: "#137a4b", x: 68, y: 30 },
+    { id: "n3", name: "高所作業注意", icon: "⚠️", color: "#b42318", x: 30, y: 65 },
+  ],
 };
 
 // 元請連絡事項（日付ごと。デモ用の初期値）
 const INITIAL_NOTES = {
   "2026-07-09": "本日は北エリアで上下作業あり。11:00〜生コン打設のため東ゲートを優先とする。",
 };
+// 元請連絡事項の更新メタ（最終更新者・時刻・版番号。楽観的ロックに使用）
+const INITIAL_NOTES_META = {
+  "2026-07-09": { by: "田中 太郎", at: "2026/07/09 08:12", version: 1 },
+};
+// ログイン中の元請ユーザー（デモ用の固定値）
+const CURRENT_USER = "田中 太郎";
 
 const clampPct = (v) => Math.min(100, Math.max(0, v));
+// 現在時刻を "YYYY/MM/DD HH:MM" で返す
+function fmtNow() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
 export default function WorkAdjustFloorPlan() {
-  const { date, templates } = useWaSettings(); // 共通の作業日／登録済みの台紙
+  const { date, templates, setNavDirty } = useWaSettings(); // 共通の作業日／登録済みの台紙／遷移ガード
   const [plans, setPlans] = useState(INITIAL_PLANS);
   const [markers, setMarkers] = useState(INITIAL_MARKERS);
   const [notes, setNotes] = useState(INITIAL_NOTES); // 元請連絡事項（日付ごと）
+  const [notesMeta, setNotesMeta] = useState(INITIAL_NOTES_META); // 最終更新者・時刻・版
+  const [editBaseVersion, setEditBaseVersion] = useState(0); // 編集開始時の版（楽観的ロック）
   const [selectedTemplateId, setSelectedTemplateId] = useState(""); // 初期は未選択（プルダウンのみ）
   const [editor, setEditor] = useState(null); // 作成/編集ダイアログ { mode, planId, templateId, name, image, markers }
   const [draggingId, setDraggingId] = useState(null);
@@ -83,6 +104,10 @@ export default function WorkAdjustFloorPlan() {
     ? plans.find((p) => p.date === date && p.templateId === selectedTemplateId) || null
     : null;
   const currentMarkers = currentPlan ? markers[currentPlan.id] || [] : [];
+  // 前日の同一平面図の配置図があるか（無ければ「前日からコピー」を非アクティブ）
+  const hasPrevPlan =
+    !!selectedTemplateId &&
+    plans.some((p) => p.date === shiftDate(date, -1) && p.templateId === selectedTemplateId);
 
   // ===== 新規作成 / 編集（いずれもダイアログ内でのみスタンプ配置可能） =====
   function openEditor(base) {
@@ -210,15 +235,45 @@ export default function WorkAdjustFloorPlan() {
   // ===== 元請連絡事項の編集（鉛筆→編集→保存/キャンセル） =====
   function startEditNotes() {
     setNoteDraft(notes[date] || "");
+    setEditBaseVersion(notesMeta[date]?.version ?? 0); // 編集開始時点の版を記録
     setEditingNotes(true);
   }
   function saveNotes() {
+    // 楽観的ロック：編集開始後に他ユーザーが更新していたら上書きしない
+    const curVersion = notesMeta[date]?.version ?? 0;
+    if (curVersion !== editBaseVersion) {
+      window.alert("他のユーザーが更新しました。内容を破棄して再読込してください。");
+      return;
+    }
     setNotes((n) => ({ ...n, [date]: noteDraft }));
+    setNotesMeta((m) => ({ ...m, [date]: { by: CURRENT_USER, at: fmtNow(), version: curVersion + 1 } }));
     setEditingNotes(false);
   }
   function cancelNotes() {
     setEditingNotes(false);
   }
+
+  // 元請連絡事項の編集中に離脱（リロード/タブを閉じる/外部遷移）しようとしたら警告
+  useEffect(() => {
+    if (!editingNotes) return;
+    const handler = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [editingNotes]);
+
+  // 編集中はアプリ内遷移（サイドバー/日付送り）でも確認する（遷移ガード）
+  useEffect(() => {
+    setNavDirty(editingNotes);
+    return () => setNavDirty(false);
+  }, [editingNotes, setNavDirty]);
+
+  // 日付が変わったら連絡事項の編集モードを解除（別日の内容に切替）
+  useEffect(() => {
+    setEditingNotes(false);
+  }, [date]);
 
   return (
     <div>
@@ -271,7 +326,12 @@ export default function WorkAdjustFloorPlan() {
           ) : (
             <>
               <span className="badge-red">本日の配置図：未作成</span>
-              <button className="ghost-btn spacer" onClick={copyFromPrevDay}>
+              <button
+                className="ghost-btn spacer"
+                onClick={copyFromPrevDay}
+                disabled={!hasPrevPlan}
+                title={hasPrevPlan ? "前日の配置図を複製" : "前日に同じ平面図の配置図がありません"}
+              >
                 ⧉ 前日からコピー
               </button>
               <button className="primary-btn" onClick={openCreate}>
@@ -333,12 +393,27 @@ export default function WorkAdjustFloorPlan() {
             ) : (
               <div className="fp-notes-view">{notes[date] ? notes[date] : "（連絡事項は未記入です）"}</div>
             )}
+            {notesMeta[date] && (
+              <div className="fp-notes-meta">
+                最終更新：{notesMeta[date].by}（{notesMeta[date].at}）
+              </div>
+            )}
           </div>
 
-          {/* 印刷用レイアウト（画面では非表示、出力ボタン＝window.print で出力） */}
+          {/* 印刷用レイアウト（A4縦・画面では非表示、出力ボタン＝window.print で出力。
+              ヘッダーは作業予定の印刷プレビューを踏襲。押印欄は無し） */}
           <div className="fp-print" aria-hidden="true">
-            <div className="fp-print-title">
-              作業配置図　{currentPlan.name}（{formatDateStr(date)}）
+            <div className="pf-topline">
+              <span>工事番号 {WA_PROJECT.number}</span>
+              <span>工事名称 {WA_PROJECT.name}</span>
+            </div>
+            <div className="pf-headrow">
+              <div className="pf-titleblock">
+                <h2>作業配置図</h2>
+                <div className="pf-meta">
+                  対象日：{formatDateStr(date)}／平面図：{currentPlan.name}
+                </div>
+              </div>
             </div>
             <div className="fp-print-canvas">
               {currentPlan.image && <img src={currentPlan.image} alt={currentPlan.name} />}

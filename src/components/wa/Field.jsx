@@ -67,16 +67,55 @@ export function ReadonlyField({ label, value, hint, full }) {
   );
 }
 
-// 複数行テキスト
-export function TextAreaField({ label, value, onChange, hint, full, placeholder }) {
+// 日付（編集可能）
+export function DateField({ label, value, onChange, required, hint, full }) {
   return (
     <div className={"field" + (full ? " full" : "")}>
-      <label>{label}</label>
+      <label>
+        {label}
+        {required && <span className="req">*</span>}
+      </label>
+      <input type="date" value={value || ""} onChange={(e) => onChange(e.target.value)} />
+      {hint && <span className="hint">{hint}</span>}
+    </div>
+  );
+}
+
+// 複数行テキスト（必須・文字数上限・履歴サジェスト対応）
+export function TextAreaField({ label, value, onChange, hint, full, placeholder, required, maxLength, history }) {
+  return (
+    <div className={"field" + (full ? " full" : "")}>
+      <label>
+        {label}
+        {required && <span className="req">*</span>}
+      </label>
+      {history && history.length > 0 && (
+        <div className="field-history">
+          <span className="field-history-label">履歴：</span>
+          {history.map((h) => (
+            <button
+              type="button"
+              className="field-history-chip"
+              key={h}
+              onClick={() => onChange(h)}
+              title="クリックで入力"
+            >
+              {h}
+            </button>
+          ))}
+        </div>
+      )}
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        maxLength={maxLength}
       />
+      {maxLength && (
+        <span className="field-count">
+          {(value || "").length} / {maxLength}
+        </span>
+      )}
       {hint && <span className="hint">{hint}</span>}
     </div>
   );

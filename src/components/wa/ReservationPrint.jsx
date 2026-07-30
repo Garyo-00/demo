@@ -1,11 +1,12 @@
 import { Fragment } from "react";
 import { WA_PROJECT, formatDateStr } from "../../data.js";
-import { HOURS, layoutLabeled, INSET } from "./rsvTimeline.js";
+import { DAY_START, DAY_END, makeHours, layoutLabeled, INSET } from "./rsvTimeline.js";
 
 const RES_PER_PAGE = 8; // 1ページに載せる資源（台数）。増えたらページ追加
 const PRINT_TRACK_W = 900; // 用紙（横）でのトラック幅の目安px
 
-export default function ReservationPrint({ date, label, isGate, items, reservations }) {
+export default function ReservationPrint({ date, label, isGate, items, reservations, dayStart = DAY_START, dayEnd = DAY_END }) {
+  const hours = makeHours(dayStart, dayEnd);
   // 資源（台数）をページ単位に分割
   const pages = [];
   for (let i = 0; i < Math.max(items.length, 1); i += RES_PER_PAGE) {
@@ -34,8 +35,8 @@ export default function ReservationPrint({ date, label, isGate, items, reservati
 
           <div className="rsv-board">
             <div className="rsv-corner">{label}＼時刻</div>
-            <div className="rsv-hours" style={{ gridTemplateColumns: `repeat(${HOURS.length}, 1fr)` }}>
-              {HOURS.map((h) => (
+            <div className="rsv-hours" style={{ gridTemplateColumns: `repeat(${hours.length}, 1fr)` }}>
+              {hours.map((h) => (
                 <div key={h} className="rsv-hour">
                   {h}:00
                 </div>
@@ -43,7 +44,7 @@ export default function ReservationPrint({ date, label, isGate, items, reservati
             </div>
             {pageItems.map((item) => {
               const blocks = reservations.filter((r) => r.resource === item);
-              const { height, rowH, barH, placed } = layoutLabeled(blocks, PRINT_TRACK_W, isGate);
+              const { height, rowH, barH, placed } = layoutLabeled(blocks, PRINT_TRACK_W, isGate, dayStart, dayEnd);
               return (
                 <div className="rsv-head" key={item}>
                   <div className="rsv-reslabel">{item}</div>
