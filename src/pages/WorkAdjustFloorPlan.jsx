@@ -281,7 +281,7 @@ export default function WorkAdjustFloorPlan() {
 
       {/* 平面図（台紙）の選択：作業配置図設定に登録された図面をすべて表示 */}
       <div className="toolbar">
-        <label className="fp-select-label">平面図</label>
+        <label className="fp-select-label">図面</label>
         <select
           value={selectedTemplateId}
           onChange={(e) => setSelectedTemplateId(e.target.value)}
@@ -299,7 +299,7 @@ export default function WorkAdjustFloorPlan() {
       {/* 未選択 */}
       {!selectedTemplateId && (
         <div className="fp-bg-empty" style={{ position: "static", height: 260, borderRadius: 10, border: "1px dashed var(--line)" }}>
-          平面図を選択してください。
+          図面を選択してください。
         </div>
       )}
 
@@ -330,7 +330,7 @@ export default function WorkAdjustFloorPlan() {
                 className="ghost-btn spacer"
                 onClick={copyFromPrevDay}
                 disabled={!hasPrevPlan}
-                title={hasPrevPlan ? "前日の配置図を複製" : "前日に同じ平面図の配置図がありません"}
+                title={hasPrevPlan ? "前日の配置図を複製" : "前日に同じ図面の配置図がありません"}
               >
                 ⧉ 前日からコピー
               </button>
@@ -349,7 +349,7 @@ export default function WorkAdjustFloorPlan() {
             {currentPlan.image ? (
               <img className="fp-bg" src={currentPlan.image} alt={currentPlan.name} />
             ) : (
-              <div className="fp-bg-empty">この台紙には平面図画像が未登録です（作業配置図設定でアップロード）。</div>
+              <div className="fp-bg-empty">この台紙には図面画像が未登録です（作業配置図設定でアップロード）。</div>
             )}
             {currentMarkers.map((m) => (
               <div key={m.id} className="fp-stamp-marker" style={{ left: m.x + "%", top: m.y + "%" }}>
@@ -411,7 +411,7 @@ export default function WorkAdjustFloorPlan() {
               <div className="pf-titleblock">
                 <h2>作業配置図</h2>
                 <div className="pf-meta">
-                  対象日：{formatDateStr(date)}／平面図：{currentPlan.name}
+                  対象日：{formatDateStr(date)}／図面：{currentPlan.name}
                 </div>
               </div>
             </div>
@@ -439,7 +439,7 @@ export default function WorkAdjustFloorPlan() {
         <div className="fp-dlg-overlay">
           <div className="fp-dlg">
             <div className="fp-dlg-head">
-              <h3>作業平面図の{editor.mode === "new" ? "作成" : "編集"}</h3>
+              <h3>作業図面の{editor.mode === "new" ? "作成" : "編集"}</h3>
               <button className="x" onClick={() => setEditor(null)} aria-label="閉じる">
                 ×
               </button>
@@ -484,7 +484,7 @@ export default function WorkAdjustFloorPlan() {
                   {editor.image ? (
                     <img className="fp-bg" src={editor.image} alt={editor.name} draggable={false} />
                   ) : (
-                    <div className="fp-bg-empty">この台紙には平面図画像が未登録です。</div>
+                    <div className="fp-bg-empty">この台紙には図面画像が未登録です。</div>
                   )}
                   {editor.markers.length === 0 && (
                     <div className="fp-hint">右のスタンプをクリックして配置し、ドラッグで移動します。</div>

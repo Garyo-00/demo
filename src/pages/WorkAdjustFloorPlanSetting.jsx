@@ -86,7 +86,7 @@ export default function WorkAdjustFloorPlanSetting() {
         </div>
 
         <div className="fps-section">
-          <div className="fps-section-title">平面図</div>
+          <div className="fps-section-title">図面</div>
           <button className="fps-filebtn" onClick={() => fileRef.current?.click()}>
             ファイルを選択
           </button>
@@ -98,7 +98,7 @@ export default function WorkAdjustFloorPlanSetting() {
             onChange={onFile}
           />
           {form.image && (
-            <img className="fps-preview" src={form.image} alt="平面図プレビュー" />
+            <img className="fps-preview" src={form.image} alt="図面プレビュー" />
           )}
         </div>
 
@@ -130,7 +130,7 @@ export default function WorkAdjustFloorPlanSetting() {
           {detail.image ? (
             <img className="fps-preview" src={detail.image} alt={detail.floorName} />
           ) : (
-            <div className="fps-planbox">平面図（アップロードした画像を表示します）</div>
+            <div className="fps-planbox">図面（アップロードした画像を表示します）</div>
           )}
         </div>
       </div>
