@@ -315,9 +315,11 @@ tr:last-child td{border-bottom:none;}
 .qr-code-btn:hover{transform:scale(1.02);box-shadow:0 6px 24px rgba(31,111,235,.18);}
 .qr-code-btn:focus-visible{outline:3px solid var(--accent);outline-offset:6px;}
 .qr-hint{margin:24px 0 0;color:var(--sub);font-size:13px;}
-/* 印刷時はツールバー等を隠しQRシートのみ */
+/* 印刷は掲示用にA4横。ツールバー等を隠しQRシートのみ */
+@page qrLandscape{size:A4 landscape;margin:12mm;}
 @media print{
   .side,.topbar,.qr-toolbar,.qr-hint{display:none !important;}
+  .qr-page{page:qrLandscape;}
   .qr-sheet{border:0;}
 }
 
