@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   WA_PROJECT,
@@ -14,22 +14,21 @@ import {
 // - アカウントあり：会社選択は省略し、ログインユーザーの会社（今回は青木工業と仮定）の実績入力
 // 送信後は「ブラウザを閉じてください」の完了画面へ遷移する。
 
-const TARGET_DATE = WA_DEFAULT_DATE; // デモは7/9固定
+// デモの「当日」（既定表示日）。前日以前は選択可・未来日は不可
+const TODAY = WA_DEFAULT_DATE; // 7/9
 const WORKER_OPTS = Array.from({ length: 31 }, (_, i) => i); // 0〜30名
 // アカウントありビューでログイン中と仮定する会社
 const ACCOUNT_COMPANY = "青木工業";
 
-// 対象日に作業登録のある会社（重複なし）
-const COMPANIES = [
-  ...new Set(
-    WA_WORK_SCHEDULES.filter((w) => w.date === TARGET_DATE).map((w) => w.company)
-  ),
-];
+// 指定日に作業登録のある会社（重複なし）
+function companiesForDate(date) {
+  return [
+    ...new Set(WA_WORK_SCHEDULES.filter((w) => w.date === date).map((w) => w.company)),
+  ];
+}
 
-function worksForCompany(company) {
-  return WA_WORK_SCHEDULES.filter(
-    (w) => w.date === TARGET_DATE && w.company === company
-  );
+function worksForCompany(company, date) {
+  return WA_WORK_SCHEDULES.filter((w) => w.date === date && w.company === company);
 }
 
 // 通常作業／早出・残業作業 の1パターン分（予定を左に表示し、実績を入力）
@@ -72,9 +71,9 @@ function PatternRow({ label, planned, item, patch, wKey, hKey }) {
 }
 
 // 1社ぶんの実績入力フォーム（元請の実績入力画面と同じ構成を単一会社に絞ったもの）
-function CompanyActualForm({ company, onSubmit, onBack }) {
+function CompanyActualForm({ company, date, onSubmit, onBack }) {
   const [rows, setRows] = useState(() =>
-    worksForCompany(company).map((w) => ({
+    worksForCompany(company, date).map((w) => ({
       id: w.id,
       jobType: w.jobType,
       content: w.content,
@@ -93,6 +92,21 @@ function CompanyActualForm({ company, onSubmit, onBack }) {
 
   const patchItem = (i) => (partial) =>
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...partial } : r)));
+
+  if (rows.length === 0) {
+    return (
+      <div className="ai-step">
+        <div className="empty">この日（{formatDateStr(date)}）の {company} の作業予定はありません。</div>
+        <div className="ai-actions">
+          {onBack && (
+            <button className="ghost-btn" onClick={onBack}>
+              ← 会社を選び直す
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="ai-step">
@@ -145,27 +159,38 @@ function CompanyActualForm({ company, onSubmit, onBack }) {
 }
 
 // アカウントなし：会社選択 → 実績入力
-function NoAccountView({ onSubmit }) {
+function NoAccountView({ date, onSubmit }) {
   const [company, setCompany] = useState(null);
+  // 対象日を変えたら会社選択に戻す（その日の会社一覧から選び直し）
+  useEffect(() => {
+    setCompany(null);
+  }, [date]);
+  const companies = companiesForDate(date);
 
   if (!company) {
     return (
       <div className="ai-step">
         <h3 className="ai-step-title">会社名を選択してください</h3>
-        <div className="ai-company-list">
-          {COMPANIES.map((c) => (
-            <button key={c} className="ai-company-btn" onClick={() => setCompany(c)}>
-              {c}
-            </button>
-          ))}
-        </div>
+        {companies.length === 0 ? (
+          <div className="empty">この日（{formatDateStr(date)}）の作業予定はありません。</div>
+        ) : (
+          <div className="ai-company-list">
+            {companies.map((c) => (
+              <button key={c} className="ai-company-btn" onClick={() => setCompany(c)}>
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
   return (
     <CompanyActualForm
+      key={company + date}
       company={company}
+      date={date}
       onSubmit={onSubmit}
       onBack={() => setCompany(null)}
     />
@@ -173,8 +198,8 @@ function NoAccountView({ onSubmit }) {
 }
 
 // アカウントあり：会社選択を省略し、ログインユーザーの会社の実績入力のみ
-function WithAccountView({ onSubmit }) {
-  return <CompanyActualForm company={ACCOUNT_COMPANY} onSubmit={onSubmit} />;
+function WithAccountView({ date, onSubmit }) {
+  return <CompanyActualForm key={ACCOUNT_COMPANY + date} company={ACCOUNT_COMPANY} date={date} onSubmit={onSubmit} />;
 }
 
 // 送信後の完了画面
@@ -195,6 +220,7 @@ function DoneScreen() {
 export default function WorkAdjustActualInput() {
   const [view, setView] = useState("none"); // "none" | "with"
   const [submitted, setSubmitted] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(TODAY); // 対象作業日（既定＝当日）
 
   if (submitted) return <DoneScreen />;
 
@@ -224,16 +250,24 @@ export default function WorkAdjustActualInput() {
         <div className="ai-head">
           <h1 className="ai-project">{WA_PROJECT.name}</h1>
           <h2 className="ai-title">作業実績入力</h2>
-          <div className="ai-date">
-            {formatDateStr(TARGET_DATE)}
-            {view === "with" && <>／{ACCOUNT_COMPANY}</>}
+          <div className="ai-datepick">
+            <label htmlFor="ai-date-input">対象作業日</label>
+            <input
+              id="ai-date-input"
+              type="date"
+              value={selectedDate}
+              max={TODAY}
+              onChange={(e) => setSelectedDate(e.target.value || TODAY)}
+            />
+            {view === "with" && <span className="ai-date-co">／{ACCOUNT_COMPANY}</span>}
           </div>
+          <div className="ai-date-note">当日を既定表示。前日以前も選択して記入できます（未来日は不可）。</div>
         </div>
 
         {view === "none" ? (
-          <NoAccountView onSubmit={submit} />
+          <NoAccountView date={selectedDate} onSubmit={submit} />
         ) : (
-          <WithAccountView onSubmit={submit} />
+          <WithAccountView date={selectedDate} onSubmit={submit} />
         )}
 
         <Link to="/workadjust/actual-qr" className="ai-back">

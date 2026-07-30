@@ -339,6 +339,13 @@ tr:last-child td{border-bottom:none;}
 .ai-project{margin:0;font-size:18px;color:var(--ink);}
 .ai-title{margin:6px 0 0;font-size:20px;color:#1e2a5a;}
 .ai-date{margin-top:6px;color:var(--sub);font-size:13px;}
+.ai-datepick{margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;}
+.ai-datepick label{font-size:13px;font-weight:600;color:var(--ink);}
+.ai-datepick input{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:14px;
+  font-family:inherit;color:var(--ink);}
+.ai-datepick input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak);}
+.ai-date-co{font-size:13px;color:var(--sub);}
+.ai-date-note{margin-top:6px;font-size:11.5px;color:var(--sub);}
 /* ステップ共通 */
 .ai-step-title{font-size:15px;margin:0 0 14px;text-align:center;color:var(--ink);}
 .ai-company-list{display:flex;flex-direction:column;gap:10px;}
