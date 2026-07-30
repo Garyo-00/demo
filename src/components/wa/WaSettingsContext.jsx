@@ -17,7 +17,6 @@ const DEFAULT_TIME = {
   material: { start: 6, end: 24 },
 };
 const DEFAULT_PERM = { lift: "アカウント必須", gate: "アカウント必須", other: "アカウント必須" };
-const DEFAULT_TYPE = { lift: "時間制", gate: "時間制", other: "時間制" };
 const DEFAULT_INTERVAL = { lift: "30分", gate: "30分", other: "30分" };
 
 // 閲覧ロール（元請 / 職長）。画面の出し分けはこの値を各ページで参照する想定。
@@ -46,7 +45,6 @@ export function WaSettingsProvider({ children }) {
   }
   const [time, setTime] = useState(DEFAULT_TIME);
   const [perm, setPerm] = useState(DEFAULT_PERM);
-  const [rtype, setRtype] = useState(DEFAULT_TYPE);
   const [interval, setInterval] = useState(DEFAULT_INTERVAL);
   // 作業配置図設定で登録した台紙（配置図作成で共通利用）
   const [templates, setTemplates] = useState(WA_FLOORPLAN_SETTINGS);
@@ -73,7 +71,7 @@ export function WaSettingsProvider({ children }) {
     <Ctx.Provider
       value={{
         role, setRole,
-        date, setDate, time, setTime, perm, setPerm, rtype, setRtype,
+        date, setDate, time, setTime, perm, setPerm,
         interval, setInterval, templates, setTemplates,
         gates, setGates, lifts, setLifts, equipment, setEquipment,
         reservations, setReservations,

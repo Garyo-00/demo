@@ -704,6 +704,7 @@ export const WA_EQUIPMENT = [
       bringIn: WA_COMPANIES[i % WA_COMPANIES.length],
       primary: "大和建設",
       show: true,
+      reserveType: "2部制", // 予約方法（既定＝2部制。資機材ごとに時間制/2部制を選択）
     };
   }),
   ...Array.from({ length: 100 }, (_, i) => {
@@ -715,6 +716,7 @@ export const WA_EQUIPMENT = [
       bringIn: WA_COMPANIES[i % WA_COMPANIES.length],
       primary: "大和建設",
       show: true,
+      reserveType: "2部制",
     };
   }),
 ];

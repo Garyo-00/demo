@@ -22,11 +22,6 @@ const PERM_ROWS = [
   { key: "gate", label: "ゲート", options: ["アカウント必須"] },
   { key: "other", label: "資機材・その他", options: ["アカウント必須", "アカウント不要"] },
 ];
-const TYPE_ROWS = [
-  { key: "lift", label: "揚重機", options: ["時間制"] },
-  { key: "gate", label: "ゲート", options: ["時間制"] },
-  { key: "other", label: "資機材・その他", options: ["時間制", "2部制"] },
-];
 const INTERVAL_ROWS = [
   { key: "lift", label: "揚重機", options: INTERVAL_OPTS },
   { key: "gate", label: "ゲート", options: INTERVAL_OPTS },
@@ -66,7 +61,7 @@ function ChoiceSettings({ rows, values, onChange }) {
 }
 
 export default function WorkAdjustSettings() {
-  const { time, setTime, perm, setPerm, rtype, setRtype, interval, setInterval } = useWaSettings();
+  const { time, setTime, perm, setPerm, interval, setInterval } = useWaSettings();
   const [tab, setTab] = useState("time");
   const [saved, setSaved] = useState(false);
 
@@ -93,7 +88,6 @@ export default function WorkAdjustSettings() {
   const TABS = [
     ["time", "予約時間設定"],
     ["auth", "予約権限設定"],
-    ["type", "予約種類設定"],
     ["interval", "予約時間間隔設定"],
   ];
 
@@ -160,15 +154,6 @@ export default function WorkAdjustSettings() {
             ※ 予約時のアカウント要否を設定します。揚重機・ゲートは「アカウント必須」で固定です。
           </p>
           <ChoiceSettings rows={PERM_ROWS} values={perm} onChange={setChoice(setPerm)} />
-        </>
-      )}
-
-      {tab === "type" && (
-        <>
-          <p className="wa-note">
-            ※ 予約方式を設定します。揚重機・ゲートは「時間制」で固定です。
-          </p>
-          <ChoiceSettings rows={TYPE_ROWS} values={rtype} onChange={setChoice(setRtype)} />
         </>
       )}
 

@@ -37,7 +37,9 @@ const cellInput = {
 };
 
 // 揚重機登録・資機材登録の共通セクション（テーブル構成は同一）。list/setListは共有状態
-function EquipmentSection({ label, list, setList, idPrefix }) {
+const RESERVE_TYPES = ["2部制", "時間制"]; // 予約方法（既定は2部制）
+
+function EquipmentSection({ label, list, setList, idPrefix, withReserveType = false }) {
   const [edit, setEdit] = useState(null);
   const [bulk, setBulk] = useState(null); // 一括登録の行配列
   const [importSel, setImportSel] = useState(null); // 持込機械インポート（選択id集合）
@@ -59,7 +61,7 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
     }
     if (e.id) setList((es) => es.map((x) => (x.id === e.id ? e : x)));
     else {
-      setList((es) => [...es, { ...e, id: nextIds(es, idPrefix, 1)[0], show: true }]);
+      setList((es) => [...es, { ...e, id: nextIds(es, idPrefix, 1)[0], show: true, reserveType: e.reserveType || "2部制" }]);
     }
     setEdit(null);
   }
@@ -70,6 +72,10 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
   // 予約ページへの表示／非表示の切替
   function toggleShow(e) {
     setList((es) => es.map((x) => (x.id === e.id ? { ...x, show: !x.show } : x)));
+  }
+  // 予約方法（時間制／2部制）の変更。値が変わるたびに即時更新
+  function setReserveType(e, val) {
+    setList((es) => es.map((x) => (x.id === e.id ? { ...x, reserveType: val } : x)));
   }
 
   // 一括登録
@@ -87,7 +93,7 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
     }
     setList((es) => {
       const ids = nextIds(es, idPrefix, rows.length);
-      return [...es, ...rows.map((r, i) => ({ ...r, id: ids[i], show: true }))];
+      return [...es, ...rows.map((r, i) => ({ ...r, id: ids[i], show: true, reserveType: "2部制" }))];
     });
     setBulk(null);
   }
@@ -114,7 +120,7 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
       return [
         ...es,
         ...picks.map((m, i) => ({
-          id: ids[i], category: m.category, name: m.name, bringIn: m.bringIn, primary: m.primary, show: true,
+          id: ids[i], category: m.category, name: m.name, bringIn: m.bringIn, primary: m.primary, show: true, reserveType: "2部制",
         })),
       ];
     });
@@ -143,11 +149,12 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
       <table className="reg-table">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>ArchID</th>
             <th>カテゴリ</th>
             <th>表示名（現場内呼称）</th>
             <th>持込会社名</th>
             <th>一次会社</th>
+            {withReserveType && <th>予約方法</th>}
             <th>予約表示</th>
             <th>操作</th>
           </tr>
@@ -160,6 +167,22 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
               <td>{e.name}</td>
               <td>{e.bringIn}</td>
               <td>{e.primary}</td>
+              {withReserveType && (
+                <td>
+                  <select
+                    className="reg-rtype"
+                    value={e.reserveType || "2部制"}
+                    onChange={(ev) => setReserveType(e, ev.target.value)}
+                    title="予約方法（時間制／2部制）"
+                  >
+                    {RESERVE_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+              )}
               <td>
                 <label className="cmp-check" title="予約ページへの表示／非表示">
                   <input type="checkbox" checked={e.show} onChange={() => toggleShow(e)} />
@@ -186,7 +209,7 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
         {pageRows.map((e) => (
           <div className="wa-card" key={e.id}>
             <div className="wa-card-top">
-              <span className="wa-card-id">{e.id}</span>
+              <span className="wa-card-id">ArchID {e.id}</span>
               <strong className="wa-card-co">{e.name}</strong>
             </div>
             <div className="wa-card-grid">
@@ -202,6 +225,22 @@ function EquipmentSection({ label, list, setList, idPrefix }) {
                 <span className="wa-card-label">一次会社</span>
                 <span>{e.primary}</span>
               </div>
+              {withReserveType && (
+                <div className="wa-card-field">
+                  <span className="wa-card-label">予約方法</span>
+                  <select
+                    className="reg-rtype"
+                    value={e.reserveType || "2部制"}
+                    onChange={(ev) => setReserveType(e, ev.target.value)}
+                  >
+                    {RESERVE_TYPES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="wa-card-field">
                 <span className="wa-card-label">予約表示</span>
                 <label className="cmp-check">
@@ -543,7 +582,7 @@ export default function WorkAdjustRegistry() {
         <EquipmentSection label="揚重機" list={lifts} setList={setLifts} idPrefix="L" />
       )}
       {tab === "equip" && (
-        <EquipmentSection label="資機材・その他" list={equipment} setList={setEquipment} idPrefix="E" />
+        <EquipmentSection label="資機材・その他" list={equipment} setList={setEquipment} idPrefix="E" withReserveType />
       )}
 
       {/* 共通 datalist */}

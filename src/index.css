@@ -193,6 +193,9 @@ a.demo:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color
 /* 検索・ソート（作業予定一覧） */
 .wa-search{padding:7px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;
   font-family:inherit;color:var(--ink);min-width:200px;background:#fff;}
+.reg-rtype{padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;
+  font-family:inherit;color:var(--ink);background:#fff;cursor:pointer;}
+.reg-rtype:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak);}
 .wa-search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak);}
 th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
 th.sortable:hover{color:var(--accent);}
@@ -205,6 +208,8 @@ th.sortable:hover{color:var(--accent);}
 .field-history-chip:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-weak);}
 .field-count{display:block;font-size:11px;color:var(--sub);text-align:right;margin-top:2px;}
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;align-items:center;}
+/* 予約方法の表示切替を右端へ */
+.filters-view{display:flex;align-items:center;gap:8px;margin-left:auto;}
 /* 資機材・ゲート予約ポータル（QR読み取り先・サイドバー無し） */
 .rp-page{min-height:100vh;background:var(--bg);display:flex;flex-direction:column;}
 .rp-head{background:#fff;border-bottom:1px solid var(--line);padding:12px 20px;display:flex;

@@ -109,8 +109,8 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
   // aerial限定時は常に資機材・その他タブを表示
   const kind = restrictAerial ? "aerial" : kindState;
   // 資機材・その他タブの表示（時間制／2部制）。デモ用のビュー切替。
-  // ※要件上は「予約種類設定」の内容に応じて出し分ける（デモでは設定と紐づけずトグルで切替）。
-  const [aerialView, setAerialView] = useState("時間制");
+  // 予約方法は資機材ごとに「資機材・ゲート登録」で設定。ここのトグルは表示中の予約方法の切替。
+  const [aerialView, setAerialView] = useState("2部制");
   const [editing, setEditing] = useState(null);
   const [seq, setSeq] = useState(rows.length);
   const [showPrint, setShowPrint] = useState(false);
@@ -197,7 +197,14 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
     isAerial && cats.length
       ? shownRegistry.filter((x) => cats.includes(x.category))
       : shownRegistry;
-  const resourceItems = filteredRegistry.map((x) => x.name);
+  // 資機材・その他は、資機材ごとの「予約方法」（資機材・ゲート登録で設定）に一致するものだけ表示。
+  // 表示中の予約方法は下部のトグル（時間制／2部制）で切替える。他タブは全て時間制。
+  const methodRegistry = isAerial
+    ? filteredRegistry.filter(
+        (x) => ((x.reserveType || "2部制") === "2部制") === (aerialView === "2部制")
+      )
+    : filteredRegistry;
+  const resourceItems = methodRegistry.map((x) => x.name);
   const resource = { label: KIND_LABEL[kind], items: resourceItems };
   // 表示中の日付・資源種別の予約のみ
   const visible = rows.filter((r) => r.kind === kind && r.date === date);
@@ -207,7 +214,7 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
   const spotDurs = spotDurations(intervalLabel);
   const TIME_OPTIONS = makeTimeOptions(intervalMinutes(intervalLabel), dayStart, dayEnd);
   const isSpot = editing?.resvType === "spot";
-  // 予約種類設定が「2部制」の資機材・その他は、AM/PMの週間グリッドで予約する
+  // 予約方法（資機材ごとの設定）が「2部制」の資機材・その他は、AM/PMの週間グリッドで予約する
   const twoShift = isAerial && aerialView === "2部制";
   // 機械の行を50件ずつページ表示（縦に長い場合はページ送り）
   const rsvPageCount = Math.max(1, Math.ceil(resourceItems.length / rsvPageSize));
@@ -219,7 +226,7 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
   // タブ・カテゴリを切り替えたら1ページ目に戻す
   useEffect(() => {
     setRsvPage(0);
-  }, [kind, cats]);
+  }, [kind, cats, aerialView]);
 
   // 予約種別の切替（スポットにしたら所要時間を先頭候補に合わせる）
   function setResvType(t) {
@@ -316,22 +323,7 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
 
       {isAerial && (
         <div className="filters">
-          <span className="subtle" style={{ fontSize: 12 }}>表示：</span>
-          <div className="role-switch" role="group" aria-label="予約種類の表示切替">
-            <button
-              className={"role-seg" + (aerialView === "時間制" ? " active" : "")}
-              onClick={() => setAerialView("時間制")}
-            >
-              時間制
-            </button>
-            <button
-              className={"role-seg" + (aerialView === "2部制" ? " active" : "")}
-              onClick={() => setAerialView("2部制")}
-            >
-              2部制
-            </button>
-          </div>
-          <span className="subtle" style={{ fontSize: 12, marginLeft: 8 }}>カテゴリ：</span>
+          <span className="subtle" style={{ fontSize: 12 }}>カテゴリ：</span>
           <div className="ms-dd">
             <button
               type="button"
@@ -370,6 +362,25 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
                 </div>
               </>
             )}
+          </div>
+
+          {/* 予約方法の表示切替（右端・2部制→時間制の順） */}
+          <div className="filters-view">
+            <span className="subtle" style={{ fontSize: 12 }}>表示：</span>
+            <div className="role-switch" role="group" aria-label="予約方法の表示切替">
+              <button
+                className={"role-seg" + (aerialView === "2部制" ? " active" : "")}
+                onClick={() => setAerialView("2部制")}
+              >
+                2部制
+              </button>
+              <button
+                className={"role-seg" + (aerialView === "時間制" ? " active" : "")}
+                onClick={() => setAerialView("時間制")}
+              >
+                時間制
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -567,7 +578,7 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
             <span className="lg-item"><span className="shift-slot disabled" />予約不可（当日）</span>
           </div>
           <p className="rsv-note">
-            ※ <strong>2部制</strong>表示（デモの表示切替。要件上は「予約種類設定＝2部制」で出し分け）。各機械について<strong>今日から7日間（固定・日付送りの影響なし）</strong>の午前（AM）／午後（PM）枠を選択して予約します。予約者の会社名はログインアカウントから自動反映されます（デモ：{MY_COMPANY}／{MY_USER}）。
+            ※ <strong>2部制</strong>表示（予約方法＝2部制の資機材。予約方法は<strong>資機材・ゲート登録</strong>で資機材ごとに設定）。各機械について<strong>今日から7日間（固定・日付送りの影響なし）</strong>の午前（AM）／午後（PM）枠を選択して予約します。予約者の会社名はログインアカウントから自動反映されます（デモ：{MY_COMPANY}／{MY_USER}）。
             <br />
             ※ 空き枠をクリックで自社予約（青）。自社予約をクリックすると<strong>予約者・会社名の詳細と取消</strong>ができます（取消は予約者・元請のみ）。<strong>他社が予約済みの枠は選択できません（重複予約不可）</strong>。
             <br />
