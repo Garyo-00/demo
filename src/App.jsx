@@ -12,6 +12,7 @@ import WorkPlanApprovalFlowSetting from "./pages/WorkPlanApprovalFlowSetting.jsx
 import WorkAdjustLayout from "./components/WorkAdjustLayout.jsx";
 import WorkAdjustSchedule from "./pages/WorkAdjustSchedule.jsx";
 import WorkAdjustReservation from "./pages/WorkAdjustReservation.jsx";
+import WorkAdjustReserveExport from "./pages/WorkAdjustReserveExport.jsx";
 import WorkAdjustFloorPlan from "./pages/WorkAdjustFloorPlan.jsx";
 import WorkAdjustActualQr from "./pages/WorkAdjustActualQr.jsx";
 import WorkAdjustReserveQr from "./pages/WorkAdjustReserveQr.jsx";
@@ -53,6 +54,7 @@ export default function App() {
       <Route path="/workadjust" element={<WorkAdjustLayout />}>
         <Route index element={<WorkAdjustSchedule />} />
         <Route path="reservation" element={<WorkAdjustReservation />} />
+        <Route path="reserve-export" element={<WorkAdjustReserveExport />} />
         <Route path="floor-plan" element={<WorkAdjustFloorPlan />} />
         <Route path="actual-qr" element={<WorkAdjustActualQr />} />
         <Route path="reserve-qr" element={<WorkAdjustReserveQr />} />

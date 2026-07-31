@@ -3,6 +3,7 @@ import {
   WA_EQUIP_CATEGORIES,
   WA_COMPANIES,
   WA_SAFETY_MACHINES,
+  WA_RENTAL_MACHINES,
 } from "../data.js";
 import Modal from "../components/wa/Modal.jsx";
 import { SuggestField } from "../components/wa/Field.jsx";
@@ -42,7 +43,8 @@ const RESERVE_TYPES = ["2部制", "時間制"]; // 予約方法（既定は2部�
 function EquipmentSection({ label, list, setList, idPrefix, withReserveType = false }) {
   const [edit, setEdit] = useState(null);
   const [bulk, setBulk] = useState(null); // 一括登録の行配列
-  const [importSel, setImportSel] = useState(null); // 持込機械インポート（選択id集合）
+  const [importSel, setImportSel] = useState(null); // 同期インポート（選択id集合。null=閉）
+  const [importKind, setImportKind] = useState("safety"); // "safety"（持込機械）| "rental"（レンタル品）
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(50);
 
@@ -98,8 +100,16 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
     setBulk(null);
   }
 
-  // 持込機械から登録（安全セーフティの持込機械一覧からインポート）
-  function openImport() {
+  // 同期の取込元（持込機械＝安全セーフティ／レンタル品）
+  const importSource = importKind === "rental" ? WA_RENTAL_MACHINES : WA_SAFETY_MACHINES;
+  const importMeta =
+    importKind === "rental"
+      ? { title: "レンタル品から同期", label: "レンタル品", desc: <>レンタル管理の一覧から選択して取り込みます。</> }
+      : { title: "持込機械から同期", label: "持込機械", desc: <>別サービス「<strong>安全セーフティ</strong>」の持込機械一覧から選択して取り込みます。</> };
+
+  // 持込機械／レンタル品から登録（archIdをArchIDとしてそのまま採用）
+  function openImport(kind) {
+    setImportKind(kind);
     setImportSel(new Set());
   }
   function toggleImport(id) {
@@ -110,19 +120,19 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
     });
   }
   function commitImport() {
-    const picks = WA_SAFETY_MACHINES.filter((m) => importSel.has(m.id));
+    const picks = importSource.filter((m) => importSel.has(m.id));
     if (picks.length === 0) {
-      window.alert("取り込む持込機械を選択してください。");
+      window.alert(`取り込む${importMeta.label}を選択してください。`);
       return;
     }
     setList((es) => {
-      const ids = nextIds(es, idPrefix, picks.length);
-      return [
-        ...es,
-        ...picks.map((m, i) => ({
-          id: ids[i], category: m.category, name: m.name, bringIn: m.bringIn, primary: m.primary, show: true, reserveType: "2部制",
-        })),
-      ];
+      const existing = new Set(es.map((e) => e.id));
+      const rows = picks
+        .filter((m) => !existing.has(m.archId)) // 既に取込済み（同一ArchID）は重複追加しない
+        .map((m) => ({
+          id: m.archId, category: m.category, name: m.name, bringIn: m.bringIn, primary: m.primary, show: true, reserveType: "2部制",
+        }));
+      return [...es, ...rows];
     });
     setImportSel(null);
   }
@@ -132,9 +142,14 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
       <div className="toolbar">
         <span className="subtle">全 {list.length} 件</span>
         <div className="stack-actions spacer">
-          <button className="ghost-btn accent-outline" onClick={openImport}>
-            ⭳ 持込機械から同期
-          </button>
+          <div className="stack-row">
+            <button className="ghost-btn accent-outline" onClick={() => openImport("safety")}>
+              ⭳ 持込機械から同期
+            </button>
+            <button className="ghost-btn accent-outline" onClick={() => openImport("rental")}>
+              ⭳ レンタル品から同期
+            </button>
+          </div>
           <div className="stack-row">
             <button className="ghost-btn" onClick={openBulk}>
               一括登録
@@ -383,11 +398,11 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
         </Modal>
       )}
 
-      {/* 持込機械から登録（安全セーフティ連携） */}
+      {/* 持込機械／レンタル品から同期（取込元は importKind で切替） */}
       {importSel && (
         <Modal
           wide
-          title="持込機械から同期"
+          title={importMeta.title}
           onClose={() => setImportSel(null)}
           footer={
             <>
@@ -401,12 +416,13 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
           }
         >
           <p className="subtle" style={{ marginTop: 0 }}>
-            別サービス「<strong>安全セーフティ</strong>」の持込機械一覧から選択して取り込みます。
+            {importMeta.desc}
           </p>
           <table className="import-table">
             <thead>
               <tr>
                 <th className="col-check"></th>
+                <th>ArchID</th>
                 <th>カテゴリ</th>
                 <th>表示名（現場内呼称）</th>
                 <th>持込会社名</th>
@@ -414,7 +430,7 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
               </tr>
             </thead>
             <tbody>
-              {WA_SAFETY_MACHINES.map((m) => (
+              {importSource.map((m) => (
                 <tr key={m.id}>
                   <td className="col-check" data-label="選択">
                     <input
@@ -423,6 +439,7 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
                       onChange={() => toggleImport(m.id)}
                     />
                   </td>
+                  <td data-label="ArchID">{m.archId}</td>
                   <td data-label="カテゴリ">{m.category}</td>
                   <td data-label="表示名（現場内呼称）">{m.name}</td>
                   <td data-label="持込会社名">{m.bringIn}</td>

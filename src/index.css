@@ -196,6 +196,30 @@ a.demo:hover{box-shadow:var(--shadow-md);transform:translateY(-2px);border-color
 .reg-rtype{padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;
   font-family:inherit;color:var(--ink);background:#fff;cursor:pointer;}
 .reg-rtype:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak);}
+/* 予約実績出力 */
+.rex-search{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);
+  padding:22px 24px;margin-bottom:16px;}
+.rex-search-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center;}
+.rex-cat{min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;font-size:14px;
+  font-family:inherit;color:var(--ink);background:#fff;}
+.rex-search-field{flex:1;min-width:240px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);
+  border-radius:8px;padding:8px 12px;background:#fff;}
+.rex-search-field input{flex:1;border:none;outline:none;font-size:14px;font-family:inherit;color:var(--ink);background:none;}
+.rex-search-icon{color:var(--sub);}
+.rex-search-btns{display:flex;gap:10px;justify-content:center;margin-top:14px;}
+.rex-search-btns .primary-btn,.rex-search-btns .ghost-btn{padding:9px 28px;border-radius:8px;font-weight:600;}
+.rex-list{background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);
+  padding:16px 18px;}
+.rex-list-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+.rex-month{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);}
+.rex-mbtn{width:32px;height:32px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;
+  font-size:16px;color:var(--ink);}
+.rex-mbtn:hover{background:#f0f3f7;}
+.rex-month-input{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;color:var(--ink);}
+.rex-table{width:100%;}
+.rex-table .col-check{width:44px;text-align:center;}
+.rex-table .col-check input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;}
+.rex-row-on td{background:var(--accent-weak);}
 .wa-search:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak);}
 th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
 th.sortable:hover{color:var(--accent);}

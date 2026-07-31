@@ -112,6 +112,7 @@ function ExternalIcon() {
 // パス → メニュー名（画面タイトル／アクティブ判定に使用）
 // ルート（/workadjust）は作業予定一覧
 const ROUTES = [
+  ["/workadjust/reserve-export", "予約実績出力"],
   ["/workadjust/reservation", "予約"],
   ["/workadjust/floor-plan-setting", "作業配置図設定"],
   ["/workadjust/floor-plan", "配置図作成"],
@@ -159,6 +160,7 @@ function WorkAdjustLayoutInner() {
     setNavOpen(false); // 遷移したらドロワーを閉じる
     if (m === "作業予定一覧") navigate("/workadjust");
     else if (m === "予約") navigate("/workadjust/reservation");
+    else if (m === "予約実績出力") navigate("/workadjust/reserve-export");
     else if (m === "配置図作成") navigate("/workadjust/floor-plan");
     else if (m === "作業実績入力用QR発行") navigate("/workadjust/actual-qr");
     else if (m === "資機材・ゲート予約用QR発行") navigate("/workadjust/reserve-qr");

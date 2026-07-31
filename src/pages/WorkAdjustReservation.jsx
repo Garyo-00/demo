@@ -69,6 +69,7 @@ function emptyRsv(kind, date, resvType = "normal", resource = "") {
     start: "08:00",
     end: "10:00",
     content: "",
+    workPlace: "",
     remark: "",
     vehicleType: kind === "gate" ? WA_VEHICLE_TYPES[0] : "",
     resvType,
@@ -713,6 +714,16 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
               maxLength={CONTENT_MAX}
               hint={`最大 ${CONTENT_MAX} 文字（必須）`}
             />
+            {!isGate && (
+              <SuggestField
+                full
+                label="作業場所"
+                value={editing.workPlace || ""}
+                onChange={(v) => setEditing((x) => ({ ...x, workPlace: v }))}
+                options={["外観整備", "塔屋1階", "北エリア", "南エリア", "1F", "2F", "東ゲート前"]}
+                hint="任意"
+              />
+            )}
             <div className="field full">
               <label>備考</label>
               <textarea

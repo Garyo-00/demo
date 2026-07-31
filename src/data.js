@@ -137,6 +137,7 @@ export const WA_PROJECT = {
 export const WORKADJUST_NAV = [
   { label: "作業予定一覧" },
   { label: "予約" },
+  { label: "予約実績出力" },
   { label: "配置図作成" },
   {
     label: "QRコード発行",
@@ -661,9 +662,9 @@ export const WA_RESERVATIONS = [
   { id: "RSV-001", kind: "gate", resource: "東ゲート", company: "大和建設", date: "2026-07-09", start: "08:00", end: "10:00", content: "生コン搬入", vehicleType: "大型トラック", resvType: "normal" },
   { id: "RSV-002", kind: "gate", resource: "東ゲート", company: "青木工業", date: "2026-07-09", start: "13:00", end: "14:00", content: "型枠材搬入", vehicleType: "4tトラック", resvType: "normal" },
   { id: "RSV-003", kind: "gate", resource: "西ゲート", company: "渡辺工務店", date: "2026-07-09", start: "09:00", end: "11:30", content: "足場材搬入", vehicleType: "ユニック車", resvType: "normal" },
-  { id: "RSV-004", kind: "lift", resource: "タワークレーン1号", company: "大和建設", date: "2026-07-09", start: "08:00", end: "12:00", content: "鉄骨揚重", vehicleType: "", resvType: "normal" },
+  { id: "RSV-004", kind: "lift", resource: "タワークレーン1号", company: "大和建設", date: "2026-07-09", start: "08:00", end: "12:00", content: "鉄骨揚重", workPlace: "塔屋1階", vehicleType: "", resvType: "normal" },
   { id: "RSV-005", kind: "lift", resource: "ラフター25t", company: "東洋設備", date: "2026-07-09", start: "13:00", end: "16:00", content: "設備機器揚重", vehicleType: "", resvType: "normal" },
-  { id: "RSV-006", kind: "aerial", resource: "高所作業車 4.5m-001号", company: "みらい電気", date: "2026-07-09", start: "09:00", end: "15:00", content: "高所電気配線", vehicleType: "", resvType: "normal" },
+  { id: "RSV-006", kind: "aerial", resource: "高所作業車 4.5m-001号", company: "みらい電気", date: "2026-07-09", start: "09:00", end: "15:00", content: "高所電気配線", workPlace: "外観整備", vehicleType: "", resvType: "normal" },
   // 同時刻の重なり（東ゲートで最大3件重複＝1.5倍高さの確認用）
   { id: "RSV-007", kind: "gate", resource: "東ゲート", company: "林基礎", date: "2026-07-09", start: "09:00", end: "11:00", content: "残土搬出", vehicleType: "大型トラック", resvType: "normal" },
   // スポット予約（オレンジ表示・30分）
@@ -720,14 +721,23 @@ export const WA_EQUIPMENT = [
     };
   }),
 ];
-// 別サービス「安全セーフティ」の持込機械一覧（インポート元。デモ用の固定値）
+// 別サービス「安全セーフティ」の持込機械一覧（インポート元。デモ用の固定値）。
+// archId＝Arch側のID（同期ダイアログ・取込後のArchID列に表示）。
 export const WA_SAFETY_MACHINES = [
-  { id: "SS-101", category: "掘削機械", name: "バックホウ SK75", bringIn: "林基礎", primary: "大和建設" },
-  { id: "SS-102", category: "高所作業車", name: "高所作業車 8m", bringIn: "みらい電気", primary: "大和建設" },
-  { id: "SS-103", category: "運搬機械", name: "ダンプトラック 4t", bringIn: "渡辺工務店", primary: "青木工業" },
-  { id: "SS-104", category: "揚重機", name: "ユニック車 4t", bringIn: "東洋設備", primary: "東洋設備" },
-  { id: "SS-105", category: "電動工具", name: "エンジン発電機 25kVA", bringIn: "青木工業", primary: "青木工業" },
-  { id: "SS-106", category: "仮設機材", name: "仮設ゴンドラ", bringIn: "大和建設", primary: "大和建設" },
+  { id: "SS-101", archId: "AS-0101", category: "掘削機械", name: "バックホウ SK75", bringIn: "林基礎", primary: "大和建設" },
+  { id: "SS-102", archId: "AS-0102", category: "高所作業車", name: "高所作業車 8m", bringIn: "みらい電気", primary: "大和建設" },
+  { id: "SS-103", archId: "AS-0103", category: "運搬機械", name: "ダンプトラック 4t", bringIn: "渡辺工務店", primary: "青木工業" },
+  { id: "SS-104", archId: "AS-0104", category: "揚重機", name: "ユニック車 4t", bringIn: "東洋設備", primary: "東洋設備" },
+  { id: "SS-105", archId: "AS-0105", category: "電動工具", name: "エンジン発電機 25kVA", bringIn: "青木工業", primary: "青木工業" },
+  { id: "SS-106", archId: "AS-0106", category: "仮設機材", name: "仮設ゴンドラ", bringIn: "大和建設", primary: "大和建設" },
+];
+// レンタル品一覧（持込機械とは別テーブル。インポート元。デモ用の固定値）
+export const WA_RENTAL_MACHINES = [
+  { id: "RT-201", archId: "RT-0201", category: "高所作業車", name: "高所作業車 4.5m（レンタル）", bringIn: "レンタル", primary: "大和建設" },
+  { id: "RT-202", archId: "RT-0202", category: "掘削機械", name: "ミニバックホウ（レンタル）", bringIn: "レンタル", primary: "青木工業" },
+  { id: "RT-203", archId: "RT-0203", category: "運搬機械", name: "不整地運搬車（レンタル）", bringIn: "レンタル", primary: "大和建設" },
+  { id: "RT-204", archId: "RT-0204", category: "電動工具", name: "投光器セット（レンタル）", bringIn: "レンタル", primary: "東洋設備" },
+  { id: "RT-205", archId: "RT-0205", category: "仮設機材", name: "仮設トイレ（レンタル）", bringIn: "レンタル", primary: "大和建設" },
 ];
 
 const WEEK = ["日", "月", "火", "水", "木", "金", "土"];
