@@ -40,7 +40,10 @@ const cellInput = {
 // 揚重機登録・資機材登録の共通セクション（テーブル構成は同一）。list/setListは共有状態
 const RESERVE_TYPES = ["2部制", "時間制"]; // 予約方法（既定は2部制）
 
-function EquipmentSection({ label, list, setList, idPrefix, withReserveType = false }) {
+function EquipmentSection({
+  label, list, setList, idPrefix, withReserveType = false,
+  safetyPool, setSafetyPool, rentalPool, setRentalPool,
+}) {
   const [edit, setEdit] = useState(null);
   const [bulk, setBulk] = useState(null); // 一括登録の行配列
   const [importSel, setImportSel] = useState(null); // 同期インポート（選択id集合。null=閉）
@@ -63,13 +66,20 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
     }
     if (e.id) setList((es) => es.map((x) => (x.id === e.id ? e : x)));
     else {
-      setList((es) => [...es, { ...e, id: nextIds(es, idPrefix, 1)[0], show: true, reserveType: e.reserveType || "2部制" }]);
+      // 新規登録したアイテムは「持込機械」として扱う（同期解除で持込機械プールに戻る）
+      setList((es) => [...es, { ...e, id: nextIds(es, idPrefix, 1)[0], show: true, reserveType: e.reserveType || "2部制", source: "safety" }]);
     }
     setEdit(null);
   }
-  function remove(e) {
-    if (window.confirm(`「${e.name}」を削除しますか？`))
-      setList((es) => es.filter((x) => x.id !== e.id));
+  // 同期解除：一覧から外し、同期元プール（持込機械／レンタル）へ戻す（＝再同期できる状態に）
+  function unsync(e) {
+    if (!window.confirm(`「${e.name}」の同期を解除しますか？（同期元リストに戻り、いつでも再同期できます）`)) return;
+    setList((es) => es.filter((x) => x.id !== e.id));
+    const poolItem = {
+      id: e.id, archId: e.id, category: e.category, name: e.name, bringIn: e.bringIn, primary: e.primary,
+    };
+    const setPool = e.source === "rental" ? setRentalPool : setSafetyPool;
+    setPool((p) => (p.some((m) => m.id === poolItem.id) ? p : [...p, poolItem]));
   }
   // 予約ページへの表示／非表示の切替
   function toggleShow(e) {
@@ -95,19 +105,20 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
     }
     setList((es) => {
       const ids = nextIds(es, idPrefix, rows.length);
-      return [...es, ...rows.map((r, i) => ({ ...r, id: ids[i], show: true, reserveType: "2部制" }))];
+      // 一括登録したアイテムも「持込機械」として扱う
+      return [...es, ...rows.map((r, i) => ({ ...r, id: ids[i], show: true, reserveType: "2部制", source: "safety" }))];
     });
     setBulk(null);
   }
 
-  // 同期の取込元（持込機械＝安全セーフティ／レンタル品）
-  const importSource = importKind === "rental" ? WA_RENTAL_MACHINES : WA_SAFETY_MACHINES;
+  // 同期の取込元（持込機械＝安全セーフティ／レンタル品）。プールはWorkAdjustRegistryで共有管理
+  const importSource = importKind === "rental" ? rentalPool : safetyPool;
   const importMeta =
     importKind === "rental"
       ? { title: "レンタル品から同期", label: "レンタル品", desc: <>レンタル管理の一覧から選択して取り込みます。</> }
       : { title: "持込機械から同期", label: "持込機械", desc: <>別サービス「<strong>安全セーフティ</strong>」の持込機械一覧から選択して取り込みます。</> };
 
-  // 持込機械／レンタル品から登録（archIdをArchIDとしてそのまま採用）
+  // 持込機械／レンタル品から登録（archIdをArchIDとして採用。取込元プールからは除外＝重複登録なし）
   function openImport(kind) {
     setImportKind(kind);
     setImportSel(new Set());
@@ -130,10 +141,15 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
       const rows = picks
         .filter((m) => !existing.has(m.archId)) // 既に取込済み（同一ArchID）は重複追加しない
         .map((m) => ({
-          id: m.archId, category: m.category, name: m.name, bringIn: m.bringIn, primary: m.primary, show: true, reserveType: "2部制",
+          id: m.archId, category: m.category, name: m.name, bringIn: m.bringIn, primary: m.primary,
+          show: true, reserveType: "2部制", source: importKind,
         }));
       return [...es, ...rows];
     });
+    // 取込元プールから除去（＝同一機械が同時に複数登録されない）
+    const pickIds = new Set(picks.map((m) => m.id));
+    const setPool = importKind === "rental" ? setRentalPool : setSafetyPool;
+    setPool((p) => p.filter((m) => !pickIds.has(m.id)));
     setImportSel(null);
   }
 
@@ -209,8 +225,8 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
                   <button className="mini-btn" onClick={() => setEdit({ ...e })}>
                     編集
                   </button>
-                  <button className="mini-btn danger" onClick={() => remove(e)}>
-                    削除
+                  <button className="mini-btn danger" onClick={() => unsync(e)}>
+                    同期解除
                   </button>
                 </div>
               </td>
@@ -268,8 +284,8 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
               <button className="mini-btn" onClick={() => setEdit({ ...e })}>
                 編集
               </button>
-              <button className="mini-btn danger" onClick={() => remove(e)}>
-                削除
+              <button className="mini-btn danger" onClick={() => unsync(e)}>
+                同期解除
               </button>
             </div>
           </div>
@@ -300,6 +316,11 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
             </>
           }
         >
+          {!edit.id && (
+            <p className="wa-note" style={{ marginTop: 0 }}>
+              ※ 登録したアイテムは<strong>持込機械</strong>として登録されます。
+            </p>
+          )}
           <div className="form-grid">
             <SuggestField
               label="カテゴリ"
@@ -362,6 +383,9 @@ function EquipmentSection({ label, list, setList, idPrefix, withReserveType = fa
         >
           <p className="subtle" style={{ marginTop: 0 }}>
             4項目すべて入力された行のみ登録されます（カテゴリ／表示名（現場内呼称）／持込会社名／一次会社）。
+          </p>
+          <p className="wa-note" style={{ marginTop: 0 }}>
+            ※ 登録したアイテムは<strong>持込機械</strong>として登録されます。
           </p>
           <table className="bulk-table">
             <thead>
@@ -460,6 +484,11 @@ function emptyGate() {
 
 export default function WorkAdjustRegistry() {
   const { gates, setGates, lifts, setLifts, equipment, setEquipment } = useWaSettings();
+  // 同期元プール（持込機械／レンタル）。揚重機・資機材で共通利用。同期で取り込むとプールから外れ、
+  // 同期解除で戻る（＝同一機械が同時に複数登録されない）。
+  const [safetyPool, setSafetyPool] = useState(WA_SAFETY_MACHINES);
+  const [rentalPool, setRentalPool] = useState(WA_RENTAL_MACHINES);
+  const poolProps = { safetyPool, setSafetyPool, rentalPool, setRentalPool };
   const [tab, setTab] = useState("lift");
   const [gateEdit, setGateEdit] = useState(null);
   const [gPage, setGPage] = useState(0);
@@ -596,10 +625,10 @@ export default function WorkAdjustRegistry() {
       )}
 
       {tab === "lift" && (
-        <EquipmentSection label="揚重機" list={lifts} setList={setLifts} idPrefix="L" />
+        <EquipmentSection label="揚重機" list={lifts} setList={setLifts} idPrefix="L" {...poolProps} />
       )}
       {tab === "equip" && (
-        <EquipmentSection label="資機材・その他" list={equipment} setList={setEquipment} idPrefix="E" withReserveType />
+        <EquipmentSection label="資機材・その他" list={equipment} setList={setEquipment} idPrefix="E" withReserveType {...poolProps} />
       )}
 
       {/* 共通 datalist */}
