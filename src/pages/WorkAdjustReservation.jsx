@@ -468,8 +468,9 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
         <div className="rsv-corner">{resource.label}＼時刻</div>
         <div className="rsv-hours" style={{ gridTemplateColumns: `repeat(${HOURS_DYN.length}, 1fr)` }}>
           {HOURS_DYN.map((h) => (
-            <div key={h} className="rsv-hour">
+            <div key={h} className="rsv-hour" title={h >= 24 ? `翌${h - 24}時` : undefined}>
               {h}:00
+              {h >= 24 && <small className="rsv-hour-next">翌{h - 24}</small>}
             </div>
           ))}
         </div>

@@ -5,7 +5,7 @@ import { useWaSettings } from "../components/wa/WaSettingsContext.jsx";
 const TIME_RESOURCES = [
   { key: "lift", label: "揚重機" },
   { key: "gate", label: "ゲート" },
-  { key: "material", label: "資機材登録" },
+  { key: "material", label: "資機材・その他" },
 ];
 
 // 開始時間 0〜6時 / 終了時間 24〜30時（1時間単位）

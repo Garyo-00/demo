@@ -751,6 +751,7 @@ td .subtle{color:var(--sub);font-size:12px;}
 .rsv-head{display:contents;}
 .rsv-corner,.rsv-hour{background:#f7f9fb;border-bottom:1px solid var(--line);font-size:11px;
   color:var(--sub);padding:6px 4px;text-align:center;}
+.rsv-hour-next{display:block;font-size:9px;color:var(--accent);line-height:1.1;margin-top:1px;}
 .rsv-hours{display:grid;border-bottom:1px solid var(--line);}
 .rsv-reslabel{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--line);
   border-right:1px solid var(--line);background:#fafbfc;display:flex;align-items:center;
