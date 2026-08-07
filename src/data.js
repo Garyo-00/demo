@@ -674,6 +674,10 @@ export const WA_RESERVATIONS = [
   { id: "RSV-010", kind: "gate", resource: "西ゲート", company: "東洋設備", date: "2026-07-09", start: "10:30", end: "11:00", content: "設備搬入", vehicleType: "ユニック車", resvType: "normal" },
   // タワークレーン1号で2社バッティング（10:00〜12:00）
   { id: "RSV-011", kind: "lift", resource: "タワークレーン1号", company: "青木工業", date: "2026-07-09", start: "10:00", end: "13:00", content: "資材揚重", vehicleType: "", resvType: "normal" },
+  // 資機材・その他（時間制）のタイムライン確認用（高所作業車 001〜003号／時間制）
+  { id: "RSV-012", kind: "aerial", resource: "高所作業車 4.5m-002号", company: "青木工業", date: "2026-07-09", start: "08:00", end: "12:00", content: "外壁塗装", workPlace: "外観整備", vehicleType: "", resvType: "normal" },
+  { id: "RSV-013", kind: "aerial", resource: "高所作業車 4.5m-003号", company: "東洋設備", date: "2026-07-09", start: "13:00", end: "15:00", content: "設備点検", workPlace: "南エリア", vehicleType: "", resvType: "normal" },
+  { id: "RSV-014", kind: "aerial", resource: "高所作業車 4.5m-001号", company: "山本電気", date: "2026-07-09", start: "15:30", end: "16:00", content: "照明交換", workPlace: "北エリア", vehicleType: "", resvType: "spot" },
 ];
 
 // --- ゲート・資機材登録 ---
@@ -705,7 +709,8 @@ export const WA_EQUIPMENT = [
       bringIn: WA_COMPANIES[i % WA_COMPANIES.length],
       primary: "大和建設",
       show: true,
-      reserveType: "2部制", // 予約方法（既定＝2部制。資機材ごとに時間制/2部制を選択）
+      // 予約方法：既定は2部制。デモ用に先頭10台は時間制（時間制のタイムライン予約を確認できるように）
+      reserveType: i < 10 ? "時間制" : "2部制",
     };
   }),
   ...Array.from({ length: 100 }, (_, i) => {
