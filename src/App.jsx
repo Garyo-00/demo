@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import DemoList from "./pages/DemoList.jsx";
 import AppLayout from "./components/AppLayout.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -9,6 +9,13 @@ import WorkPlanDashboard from "./pages/WorkPlanDashboard.jsx";
 import WorkPlanSettings from "./pages/WorkPlanSettings.jsx";
 import WorkPlanFloorPlanSetting from "./pages/WorkPlanFloorPlanSetting.jsx";
 import WorkPlanApprovalFlowSetting from "./pages/WorkPlanApprovalFlowSetting.jsx";
+import WorkPlanNeoLayout from "./components/WorkPlanNeoLayout.jsx";
+import WorkPlanNeoTemplates from "./pages/WorkPlanNeoTemplates.jsx";
+import WorkPlanNeoTemplateForm from "./pages/WorkPlanNeoTemplateForm.jsx";
+import WorkPlanNeoBlank from "./pages/WorkPlanNeoBlank.jsx";
+import WorkPlanNeoPlans from "./pages/WorkPlanNeoPlans.jsx";
+import WorkPlanNeoPlanNew from "./pages/WorkPlanNeoPlanNew.jsx";
+import WorkPlanNeoPlanDetail from "./pages/WorkPlanNeoPlanDetail.jsx";
 import WorkAdjustLayout from "./components/WorkAdjustLayout.jsx";
 import WorkAdjustSchedule from "./pages/WorkAdjustSchedule.jsx";
 import WorkAdjustReservation from "./pages/WorkAdjustReservation.jsx";
@@ -50,6 +57,19 @@ export default function App() {
         <Route path="settings/floor-plan" element={<WorkPlanFloorPlanSetting />} />
         <Route path="settings/approval-flow" element={<WorkPlanApprovalFlowSetting />} />
         <Route path="placeholder/:name" element={<Placeholder />} />
+      </Route>
+      {/* 作業計画書NEO（現時点はテンプレート設定のみ実装。他メニューは空ページ） */}
+      <Route path="/workplan-neo" element={<WorkPlanNeoLayout />}>
+        <Route index element={<Navigate to="/workplan-neo/plans" replace />} />
+        <Route path="templates" element={<WorkPlanNeoTemplates />} />
+        <Route path="templates/new" element={<WorkPlanNeoTemplateForm />} />
+        <Route path="templates/:id" element={<WorkPlanNeoTemplateForm />} />
+        <Route path="plans" element={<WorkPlanNeoPlans />} />
+        <Route path="plans/new" element={<WorkPlanNeoPlanNew />} />
+        <Route path="plans/:id" element={<WorkPlanNeoPlanDetail />} />
+        <Route path="floor-plan" element={<WorkPlanNeoBlank />} />
+        <Route path="approval-flow" element={<WorkPlanNeoBlank />} />
+        <Route path="manual" element={<WorkPlanNeoBlank />} />
       </Route>
       <Route path="/workadjust" element={<WorkAdjustLayout />}>
         <Route index element={<WorkAdjustSchedule />} />

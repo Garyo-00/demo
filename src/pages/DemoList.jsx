@@ -14,6 +14,12 @@ const DEMOS = [
     ready: true,
   },
   {
+    to: "/workplan-neo",
+    badge: "作業計画書NEO",
+    title: "作業計画書一覧・テンプレート設定",
+    ready: true,
+  },
+  {
     to: "/workadjust",
     badge: "作業間調整pro",
     title: "作業予定一覧",

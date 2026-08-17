@@ -1,0 +1,1314 @@
+/* ===== 作業計画書NEO 専用スタイル（既存デモと干渉しないよう .wpn- 接頭辞で分離） ===== */
+.wpn {
+  --wpn-bg: #eef1f8;
+  --wpn-card: #ffffff;
+  --wpn-ink: #1f2437;
+  --wpn-sub: #6b7280;
+  --wpn-soft: #9aa1ad;
+  --wpn-line: #e6e9f0;
+  --wpn-line-soft: #eef0f5;
+  --wpn-primary: #4f5bd5;
+  --wpn-primary-hover: #4048b8;
+  --wpn-primary-weak: #eceefc;
+  --wpn-head: #f7f8fb;
+  --wpn-danger: #e5484d;
+  --wpn-radius: 10px;
+  --wpn-shadow: 0 1px 2px rgba(23, 27, 48, 0.06), 0 4px 14px rgba(23, 27, 48, 0.04);
+
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--wpn-bg);
+  color: var(--wpn-ink);
+  font-family: "Inter", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+}
+
+/* ===== サイドバー ===== */
+.wpn-side {
+  width: 216px;
+  flex: 0 0 216px;
+  background: #fff;
+  border-right: 1px solid var(--wpn-line);
+  display: flex;
+  flex-direction: column;
+  transition: width 0.18s ease, flex-basis 0.18s ease;
+}
+.wpn.collapsed .wpn-side {
+  width: 64px;
+  flex-basis: 64px;
+}
+.wpn-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  height: 56px;
+  border-bottom: 1px solid var(--wpn-line);
+}
+.wpn-logo {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  background: #1f2437;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+}
+.wpn-brand-name {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.wpn-collapse {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: var(--wpn-soft);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+}
+.wpn-collapse:hover {
+  background: var(--wpn-head);
+  color: var(--wpn-ink);
+}
+.wpn.collapsed .wpn-brand-name,
+.wpn.collapsed .wpn-nav-label,
+.wpn.collapsed .wpn-back {
+  display: none;
+}
+.wpn.collapsed .wpn-brand {
+  padding: 12px 14px;
+}
+.wpn.collapsed .wpn-collapse {
+  display: none;
+}
+
+.wpn-nav {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+.wpn-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--wpn-sub);
+}
+.wpn-nav-item:hover {
+  background: var(--wpn-head);
+  color: var(--wpn-ink);
+}
+.wpn-nav-item.active {
+  background: var(--wpn-primary-weak);
+  color: var(--wpn-primary);
+  font-weight: 600;
+}
+.wpn-nav-item svg {
+  flex: 0 0 auto;
+  opacity: 0.85;
+}
+.wpn-back {
+  padding: 12px 16px;
+  border-top: 1px solid var(--wpn-line);
+  font-size: 11.5px;
+  color: var(--wpn-sub);
+  text-decoration: none;
+}
+.wpn-back:hover {
+  color: var(--wpn-primary);
+}
+
+/* ===== メイン ===== */
+.wpn-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.wpn-topbar {
+  height: 56px;
+  flex: 0 0 56px;
+  background: #fff;
+  border-bottom: 1px solid var(--wpn-line);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+}
+.wpn-project {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wpn-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wpn-role {
+  margin-left: auto;
+  display: inline-flex;
+  background: var(--wpn-head);
+  border: 1px solid var(--wpn-line);
+  border-radius: 999px;
+  padding: 2px;
+}
+.wpn-role button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--wpn-sub);
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+.wpn-role button.active {
+  background: var(--wpn-primary);
+  color: #fff;
+}
+.wpn-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e3e6f5;
+  color: #4f5bd5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+.wpn-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 32px 40px;
+}
+.wpn-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* ===== 見出し・カード ===== */
+.wpn-page-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 14px;
+}
+.wpn-page-head {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.wpn-page-head .wpn-page-title {
+  margin: 0;
+}
+.wpn-page-note {
+  font-size: 12px;
+  color: var(--wpn-sub);
+  line-height: 1.7;
+  margin: 0 0 16px;
+}
+.wpn-card {
+  background: var(--wpn-card);
+  border: 1px solid var(--wpn-line);
+  border-radius: var(--wpn-radius);
+  box-shadow: var(--wpn-shadow);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.wpn-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 14px;
+}
+.wpn-card-title .wpn-hint {
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--wpn-sub);
+  margin-left: 8px;
+}
+.wpn-card-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.wpn-card-head .wpn-card-title {
+  margin: 0;
+}
+.wpn-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--wpn-sub);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wpn-block-body {
+  border: 1px dashed #d7dbe4;
+  border-radius: 8px;
+  padding: 26px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--wpn-soft);
+  background: #fbfcfe;
+}
+.wpn-block-body.off {
+  opacity: 0.6;
+}
+
+/* ===== フォーム部品 ===== */
+.wpn-label {
+  display: block;
+  font-size: 12px;
+  color: var(--wpn-sub);
+  margin-bottom: 8px;
+}
+.wpn-input,
+.wpn-select {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #d7dbe4;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--wpn-ink);
+  outline: none;
+}
+.wpn-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%239aa1ad' d='M0 0h10L5 6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 26px;
+  cursor: pointer;
+}
+.wpn-input:focus,
+.wpn-select:focus {
+  border-color: var(--wpn-primary);
+  box-shadow: 0 0 0 3px rgba(79, 91, 213, 0.12);
+}
+.wpn-input::placeholder {
+  color: #b9bec9;
+}
+.wpn-input.sm {
+  height: 32px;
+  font-size: 12.5px;
+}
+.wpn .wpn-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+}
+.wpn .wpn-check:checked {
+  background: var(--wpn-primary);
+  border-color: var(--wpn-primary);
+}
+.wpn .wpn-check:disabled:checked {
+  background: #b7bce6;
+  border-color: #b7bce6;
+}
+
+/* ===== テーブル ===== */
+.wpn-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.wpn-table th {
+  text-align: left;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--wpn-sub);
+  background: var(--wpn-head);
+  padding: 9px 10px;
+  border-top: 1px solid var(--wpn-line-soft);
+  border-bottom: 1px solid var(--wpn-line-soft);
+  white-space: nowrap;
+}
+.wpn-table td {
+  font-size: 12.5px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--wpn-line-soft);
+  vertical-align: middle;
+}
+.wpn-table tbody tr:last-child td {
+  border-bottom: 1px solid var(--wpn-line-soft);
+}
+.wpn-table .center {
+  text-align: center;
+}
+.wpn-table .num {
+  color: var(--wpn-sub);
+  width: 44px;
+}
+.wpn-col-handle {
+  width: 34px;
+}
+.wpn-col-req {
+  width: 84px;
+}
+.wpn-col-del {
+  width: 48px;
+}
+.wpn-drag {
+  cursor: grab;
+  color: #c2c7d2;
+  border: none;
+  background: none;
+  padding: 2px;
+  line-height: 1;
+  font-size: 13px;
+}
+.wpn-drag:active {
+  cursor: grabbing;
+}
+.wpn-row-dragging {
+  opacity: 0.4;
+}
+.wpn-row-over td {
+  border-top: 2px solid var(--wpn-primary);
+}
+.wpn-icon-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--wpn-soft);
+  padding: 4px;
+  border-radius: 6px;
+  display: inline-flex;
+}
+.wpn-icon-btn:hover {
+  color: var(--wpn-danger);
+  background: #fdeced;
+}
+.wpn-empty {
+  padding: 18px 10px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--wpn-soft);
+}
+.wpn-opts {
+  margin-top: 6px;
+}
+
+/* ===== リンク・ボタン ===== */
+.wpn-linkbtn {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: var(--wpn-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 2px;
+}
+.wpn-linkbtn:hover {
+  text-decoration: underline;
+}
+.wpn-addrow {
+  width: 100%;
+  border: none;
+  background: none;
+  color: var(--wpn-primary);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 10px 0;
+  border-radius: 8px;
+}
+.wpn-addrow:hover {
+  background: var(--wpn-primary-weak);
+}
+.wpn-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.wpn-btn.primary {
+  background: var(--wpn-primary);
+  color: #fff;
+}
+.wpn-btn.primary:hover {
+  background: var(--wpn-primary-hover);
+}
+.wpn-btn.ghost {
+  background: #fff;
+  border-color: var(--wpn-primary);
+  color: var(--wpn-primary);
+}
+.wpn-btn.ghost:hover {
+  background: var(--wpn-primary-weak);
+}
+.wpn-btn.sm {
+  height: 30px;
+  padding: 0 14px;
+  font-size: 12px;
+}
+.wpn-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 4px 0 8px;
+}
+.wpn-file-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 36px;
+}
+.wpn-files {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wpn-files li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  background: var(--wpn-head);
+  border: 1px solid var(--wpn-line-soft);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+.wpn-files li span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== チェックリストのタブ ===== */
+.wpn-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--wpn-line);
+  margin-bottom: 14px;
+}
+.wpn-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--wpn-sub);
+  padding: 10px 14px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.wpn-tab:hover {
+  color: var(--wpn-ink);
+}
+.wpn-tab.active {
+  color: var(--wpn-primary);
+  border-bottom-color: var(--wpn-primary);
+}
+.wpn-tab-del {
+  display: inline-flex;
+  color: var(--wpn-soft);
+  border-radius: 4px;
+  padding: 1px;
+}
+.wpn-tab-del:hover {
+  color: var(--wpn-danger);
+}
+.wpn-tab-add {
+  margin-left: auto;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--wpn-primary);
+  font-size: 16px;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+.wpn-tab-add:hover {
+  background: var(--wpn-primary-weak);
+}
+.wpn-mb8 {
+  margin-bottom: 8px;
+}
+
+/* ===== 行メニュー（⋮）とページネーション ===== */
+.wpn-menu-wrap {
+  position: relative;
+  display: inline-block;
+}
+.wpn-kebab {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--wpn-sub);
+  font-size: 16px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.wpn-kebab:hover {
+  background: var(--wpn-head);
+  color: var(--wpn-ink);
+}
+.wpn-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+.wpn-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 21;
+  min-width: 132px;
+  background: #fff;
+  border: 1px solid var(--wpn-line);
+  border-radius: 10px;
+  box-shadow: 0 10px 26px rgba(23, 27, 48, 0.14);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+.wpn-menu button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--wpn-ink);
+  padding: 8px 10px;
+  border-radius: 6px;
+}
+.wpn-menu button:hover {
+  background: var(--wpn-head);
+}
+.wpn-menu button.danger {
+  color: var(--wpn-danger);
+}
+.wpn-menu button.danger:hover {
+  background: #fdeced;
+}
+.wpn-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 4px 2px;
+  font-size: 12px;
+  color: var(--wpn-sub);
+}
+.wpn-select.wpn-perpage {
+  width: auto;
+  height: 28px;
+  font-size: 12px;
+  border: none;
+  background-color: transparent;
+  padding: 0 22px 0 6px;
+}
+.wpn-pager-range {
+  margin-left: 12px;
+}
+.wpn-pager-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--wpn-sub);
+  font-size: 17px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.wpn-pager-btn:hover:not(:disabled) {
+  background: var(--wpn-head);
+  color: var(--wpn-ink);
+}
+.wpn-pager-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.wpn-name-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--wpn-ink);
+  padding: 2px 0;
+  text-align: left;
+}
+.wpn-name-btn:hover {
+  color: var(--wpn-primary);
+  text-decoration: underline;
+}
+.wpn-name-btn.master {
+  color: var(--wpn-soft);
+}
+
+/* ===== 一覧・空ページ ===== */
+.wpn-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: var(--wpn-primary-weak);
+  color: var(--wpn-primary);
+}
+.wpn-tag.gray {
+  background: #f1f2f6;
+  color: var(--wpn-sub);
+}
+.wpn-tag.master {
+  background: #3fc0f0;
+  color: #fff;
+  padding: 4px 14px;
+}
+.wpn-rowlink {
+  color: var(--wpn-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+.wpn-rowlink:hover {
+  text-decoration: underline;
+}
+.wpn-blank {
+  background: #fff;
+  border: 1px dashed #d7dbe4;
+  border-radius: var(--wpn-radius);
+  padding: 64px 20px;
+  text-align: center;
+  color: var(--wpn-soft);
+  font-size: 13px;
+  line-height: 1.9;
+}
+.wpn-blank strong {
+  display: block;
+  color: var(--wpn-sub);
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+/* ===== 業務フローの説明（デモ補足） ===== */
+.wpn-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.wpn-flow-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--wpn-line);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 11.5px;
+  color: var(--wpn-sub);
+}
+.wpn-flow-step.current {
+  border-color: var(--wpn-primary);
+  background: var(--wpn-primary-weak);
+  color: var(--wpn-primary);
+  font-weight: 600;
+}
+.wpn-flow-step b {
+  font-size: 10.5px;
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+/* ===== 作業計画書：一覧の検索条件 ===== */
+.wpn-search {
+  border-bottom: 1px solid var(--wpn-line);
+  padding-bottom: 14px;
+  margin-bottom: 4px;
+}
+.wpn-search-head {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--wpn-sub);
+  padding: 6px 2px 10px;
+}
+.wpn-search-head .wpn-caret {
+  margin-left: auto;
+}
+.wpn-caret {
+  display: inline-block;
+  font-size: 11px;
+  transition: transform 0.15s;
+}
+.wpn-caret.open {
+  transform: rotate(180deg);
+}
+.wpn-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.wpn-search-row.wrap {
+  flex-wrap: wrap;
+}
+.wpn-field {
+  width: 176px;
+  flex: 0 1 176px;
+}
+.wpn-date {
+  width: 190px;
+  flex: 0 0 190px;
+}
+.wpn-seg {
+  display: inline-flex;
+  border: 1px solid var(--wpn-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.wpn-seg button {
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wpn-sub);
+  padding: 7px 14px;
+}
+.wpn-seg button.active {
+  background: var(--wpn-primary);
+  color: #fff;
+}
+.wpn-statusfield {
+  position: relative;
+  width: 214px;
+  flex: 0 1 214px;
+  border: 1px solid #d7dbe4;
+  border-radius: 8px;
+  padding: 6px 8px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+}
+.wpn-field-label {
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  background: #fff;
+  padding: 0 4px;
+  font-size: 10.5px;
+  color: var(--wpn-sub);
+}
+.wpn-statuschips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.wpn-search-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 0 2px;
+}
+
+/* ===== 申請ステータス ===== */
+.wpn-status {
+  display: inline-block;
+  border: none;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 12px;
+  line-height: 1.3;
+  cursor: default;
+}
+button.wpn-status {
+  cursor: pointer;
+}
+.wpn-status.applying {
+  background: #f5a623;
+}
+.wpn-status.approved {
+  background: #2eb85c;
+}
+.wpn-status.rejected {
+  background: #e5484d;
+}
+.wpn-status.withdrawn {
+  background: #9aa1ad;
+}
+.wpn-status.off {
+  background: #eceef2;
+  color: #9aa1ad;
+}
+
+/* ===== 一覧テーブル（機械カテゴリ展開） ===== */
+.wpn-plan-table td {
+  vertical-align: middle;
+}
+.wpn-count-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--wpn-ink);
+  padding: 2px 4px;
+  margin-bottom: 4px;
+}
+.wpn-catchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.wpn-catchip {
+  font-size: 11px;
+  background: #eef0f4;
+  color: var(--wpn-sub);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.wpn-exp-row > td {
+  background: #fafbfd;
+  padding: 0 0 0 42px;
+}
+.wpn-inner-table th {
+  background: #f2f4f8;
+}
+.wpn-detail-btn:hover {
+  color: var(--wpn-primary);
+  background: var(--wpn-primary-weak);
+}
+
+/* ===== 作業計画書 詳細 ===== */
+.wpn-detail-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+.wpn-detail-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.wpn-detail-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+.wpn-back-btn {
+  margin-left: 0;
+}
+.wpn-kv {
+  width: 100%;
+  border-collapse: collapse;
+}
+.wpn-kv th {
+  width: 190px;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--wpn-sub);
+  background: var(--wpn-head);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--wpn-line-soft);
+}
+.wpn-kv td {
+  font-size: 12.5px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--wpn-line-soft);
+}
+.wpn-edit-link {
+  margin-left: auto;
+}
+.wpn-subcard {
+  border: 1px solid var(--wpn-line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.wpn-sub-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.wpn-answer-table td {
+  vertical-align: middle;
+}
+.wpn-note-cell {
+  color: var(--wpn-soft);
+}
+.wpn-req-mark {
+  color: var(--wpn-danger);
+  margin-left: 2px;
+}
+.wpn-textarea {
+  height: auto;
+  min-height: 64px;
+  padding: 8px 10px;
+  line-height: 1.6;
+  resize: vertical;
+}
+.wpn-textarea.lg {
+  min-height: 96px;
+}
+.wpn-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wpn-none {
+  font-size: 12.5px;
+  color: var(--wpn-soft);
+  padding: 6px 2px;
+}
+.wpn-memo {
+  font-size: 12.5px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+.wpn-filechips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wpn-filechip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  background: var(--wpn-head);
+  border: 1px solid var(--wpn-line);
+  border-radius: 999px;
+  padding: 6px 14px;
+  color: var(--wpn-sub);
+}
+.wpn-step {
+  margin-bottom: 16px;
+}
+.wpn-step-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.wpn-step-no {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--wpn-primary);
+  color: #fff;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wpn-step-group {
+  font-size: 12px;
+  color: var(--wpn-sub);
+  margin: 0 0 6px 28px;
+}
+
+/* 安全指示事項 */
+.wpn-si {
+  border: 1px solid var(--wpn-line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.wpn-si-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.wpn-si-no {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--wpn-primary);
+}
+.wpn-si-work {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.wpn-si-select {
+  width: 260px;
+}
+.wpn-si-meta {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--wpn-soft);
+}
+.wpn-si.edit .wpn-si-meta {
+  margin-left: 0;
+  margin-top: 6px;
+}
+.wpn-si-text {
+  font-size: 12.5px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+
+/* ===== ドロワー ===== */
+.wpn-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 27, 48, 0.28);
+  z-index: 60;
+}
+.wpn-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(680px, 92vw);
+  background: var(--wpn-bg);
+  z-index: 61;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -12px 0 32px rgba(23, 27, 48, 0.16);
+}
+.wpn-drawer-top {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px 0;
+  background: #fff;
+}
+.wpn-drawer-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 14px;
+  background: #fff;
+  border-bottom: 1px solid var(--wpn-line);
+}
+.wpn-drawer-title {
+  font-size: 13.5px;
+  font-weight: 700;
+}
+.wpn-drawer-head .wpn-btn {
+  margin-left: auto;
+}
+.wpn-drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+.wpn-detail.compact .wpn-card {
+  padding: 14px 16px;
+}
+.wpn-detail.compact .wpn-kv th {
+  width: 130px;
+}
+
+/* ===== ダイアログ ===== */
+.wpn-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 27, 48, 0.32);
+  z-index: 70;
+}
+.wpn-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 71;
+  width: min(560px, 92vw);
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(23, 27, 48, 0.24);
+  padding: 22px 24px 16px;
+}
+.wpn-dialog h3 {
+  font-size: 15px;
+  margin: 0 0 12px;
+}
+.wpn-dialog p {
+  font-size: 13px;
+  color: var(--wpn-sub);
+  margin: 0 0 14px;
+  line-height: 1.7;
+}
+.wpn-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ボタンの追加バリエーション */
+.wpn-btn.plain {
+  background: none;
+  color: var(--wpn-primary);
+}
+.wpn-btn.plain:hover {
+  background: var(--wpn-primary-weak);
+}
+.wpn-btn.plain:disabled {
+  color: var(--wpn-soft);
+  cursor: default;
+  background: none;
+}
+.wpn-btn.danger {
+  background: var(--wpn-danger);
+  color: #fff;
+}
+.wpn-btn.danger:hover {
+  background: #cc3b40;
+}
+.wpn-btn.outline-danger {
+  background: #fff;
+  border-color: #f3b4b6;
+  color: var(--wpn-danger);
+}
+.wpn-btn.outline-danger:hover {
+  background: #fdeced;
+}
+/* 作成画面：作業内容タブの「＋追加」／作業配置図の作図・アップロード切替 */
+.wpn-tab-addinline {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--wpn-primary);
+  padding: 10px 14px;
+}
+.wpn-tab-addinline:hover {
+  text-decoration: underline;
+}
+.wpn-radios {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  font-size: 12.5px;
+  margin-bottom: 8px;
+}
+.wpn-radios label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.wpn-radios input[type="radio"] {
+  accent-color: var(--wpn-primary);
+  width: 16px;
+  height: 16px;
+}
+.wpn-fileline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wpn-fileline.right {
+  justify-content: flex-end;
+}
+.wpn-camera {
+  font-size: 16px;
+}
+.wpn-empty.tall {
+  padding: 56px 10px;
+}
+.wpn-floatfield {
+  position: relative;
+}
+.wpn-float-label {
+  position: absolute;
+  top: -7px;
+  left: 10px;
+  background: #fff;
+  padding: 0 4px;
+  font-size: 10.5px;
+  color: var(--wpn-sub);
+  z-index: 1;
+}
+.wpn-copy-link {
+  margin: 12px 0 0;
+  display: inline-block;
+}
+.wpn-actions.top {
+  padding-bottom: 12px;
+}
+.wpn-drawer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 16px 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--wpn-line);
+}
+.wpn-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+@media (max-width: 900px) {
+  .wpn-side {
+    display: none;
+  }
+  .wpn-content {
+    padding: 16px;
+  }
+}
