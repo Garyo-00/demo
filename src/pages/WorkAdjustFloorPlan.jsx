@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { WA_SAMPLE_PLAN_IMAGE, WA_SAMPLE_PLAN_IMAGE_2F, WA_PROJECT, shiftDate, formatDateStr } from "../data.js";
+import { WA_SAMPLE_PLAN_IMAGE, WA_SAMPLE_PLAN_IMAGE_2F, WA_PROJECT, formatDateStr } from "../data.js";
 import { useWaSettings } from "../components/wa/WaSettingsContext.jsx";
 
 // ===== スタンプ（右側パレット。クリックで台紙に配置→ドラッグで移動） =====
@@ -42,8 +42,9 @@ const STAMP_GROUPS = [
 // 配置図（デモ用の初期プラン。日付ごと・台紙を選んで作成）
 const INITIAL_PLANS = [
   { id: "F-001", date: "2026-07-09", templateId: "FP-001", name: "1F平面図", image: WA_SAMPLE_PLAN_IMAGE, saved: true },
-  // 前日（7/8）の2F平面図の配置図。7/9に「2F平面図」を選ぶと「前日からコピー」がアクティブになる
-  { id: "F-000", date: "2026-07-08", templateId: "FP-002", name: "2F平面図", image: WA_SAMPLE_PLAN_IMAGE_2F, saved: true },
+  // 3日前（7/6）の2F平面図の配置図。7/9に「2F平面図」を選ぶと「前回からコピー」がアクティブになる。
+  // 前日（7/8）ではなく数日空けてあるのは、「前日」ではなく「前回作成した日」を辿る挙動を確認するため。
+  { id: "F-000", date: "2026-07-06", templateId: "FP-002", name: "2F平面図", image: WA_SAMPLE_PLAN_IMAGE_2F, saved: true },
 ];
 const INITIAL_MARKERS = {
   "F-001": [
@@ -104,10 +105,13 @@ export default function WorkAdjustFloorPlan() {
     ? plans.find((p) => p.date === date && p.templateId === selectedTemplateId) || null
     : null;
   const currentMarkers = currentPlan ? markers[currentPlan.id] || [] : [];
-  // 前日の同一平面図の配置図があるか（無ければ「前日からコピー」を非アクティブ）
-  const hasPrevPlan =
-    !!selectedTemplateId &&
-    plans.some((p) => p.date === shiftDate(date, -1) && p.templateId === selectedTemplateId);
+  // 「前回」＝表示中の日付より前で、同一平面図の配置図が作られた直近の日のもの。
+  // 前日に限らず遡って探す（無ければ「前回からコピー」を非アクティブ）。
+  const prevPlan = !selectedTemplateId
+    ? null
+    : plans
+        .filter((p) => p.templateId === selectedTemplateId && p.date < date)
+        .sort((a, b) => b.date.localeCompare(a.date))[0] || null;
 
   // ===== 新規作成 / 編集（いずれもダイアログ内でのみスタンプ配置可能） =====
   function openEditor(base) {
@@ -200,16 +204,15 @@ export default function WorkAdjustFloorPlan() {
     if (draggingId) setDraggingId(null);
   }
 
-  // 前日の配置図（配置）を当日にコピーして作成（選択中の平面図のみ）
-  function copyFromPrevDay() {
+  // 前回作成した配置図（配置）を当日にコピーして作成（選択中の平面図のみ）
+  function copyFromPrevPlan() {
     if (!selectedTemplate) return;
-    const prev = shiftDate(date, -1);
-    const prevPlan = plans.find((p) => p.date === prev && p.templateId === selectedTemplateId);
     if (!prevPlan) {
-      window.alert(`前日（${formatDateStr(prev)}）の「${selectedTemplate.floorName}」の配置図がありません。`);
+      window.alert(`「${selectedTemplate.floorName}」の配置図は過去に作成されていません。`);
       return;
     }
-    if (!window.confirm(`前日（${formatDateStr(prev)}）の「${selectedTemplate.floorName}」の配置図をコピーしますか？`)) return;
+    const prev = prevPlan.date;
+    if (!window.confirm(`前回（${formatDateStr(prev)}）の「${selectedTemplate.floorName}」の配置図をコピーしますか？`)) return;
     const id = nextId("F-");
     setPlans((ps) => [...ps, { id, date, templateId: prevPlan.templateId, name: prevPlan.name, image: prevPlan.image, saved: true }]);
     setMarkers((m) => ({ ...m, [id]: (m[prevPlan.id] || []).map((mk, i) => ({ ...mk, id: "m" + id + "-" + i })) }));
@@ -328,11 +331,15 @@ export default function WorkAdjustFloorPlan() {
               <span className="badge-red">本日の配置図：未作成</span>
               <button
                 className="ghost-btn spacer"
-                onClick={copyFromPrevDay}
-                disabled={!hasPrevPlan}
-                title={hasPrevPlan ? "前日の配置図を複製" : "前日に同じ図面の配置図がありません"}
+                onClick={copyFromPrevPlan}
+                disabled={!prevPlan}
+                title={
+                  prevPlan
+                    ? `前回（${formatDateStr(prevPlan.date)}）の配置図を複製`
+                    : "同じ図面の配置図が過去に作成されていません"
+                }
               >
-                ⧉ 前日からコピー
+                ⧉ 前回からコピー
               </button>
               <button className="primary-btn" onClick={openCreate}>
                 ＋ 新規作成
