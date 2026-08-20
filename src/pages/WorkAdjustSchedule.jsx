@@ -28,6 +28,13 @@ import {
   DateField,
 } from "../components/wa/Field.jsx";
 
+// コピー作成の候補として表示する件数（元請は協力会社ごと／職長は自分ぶんの通算）
+const COPY_RECENT_LIMIT = 5;
+// 「直近」の並び：日付の新しい順、同日はID（登録順）の新しい順
+function byRecent(a, b) {
+  return b.date.localeCompare(a.date) || b.id.localeCompare(a.id);
+}
+
 // 実績入力ダイアログ用：ドラフトを会社ごとにまとめる（元の並び順・indexは保持）。
 // 同一会社に複数作業があっても1つの会社グループにまとめて表示するため。
 function groupDraftByCompany(draft) {
@@ -262,27 +269,26 @@ export default function WorkAdjustSchedule() {
   // --- コピー作成（過去の作業予定を本日ぶんとして複製）---
   // 表示中日付より前の予定（複製元の候補）。ISO日付なので文字列比較でOK。
   const pastRows = rows.filter((r) => r.date < date);
-  // 直近 n 日ぶん（日付の新しい順に n 日）を対象に絞り込む
-  function recentDays(list, n) {
-    const days = [...new Set(list.map((r) => r.date))].sort().reverse().slice(0, n);
-    const keep = new Set(days);
-    return list.filter((r) => keep.has(r.date));
+  // 直近 n 件（日付の新しい順／同日は登録の新しい順）を取り出す
+  function recentItems(list, n) {
+    return [...list].sort(byRecent).slice(0, n);
   }
-  // 元請版：全協力会社ぶん・直近3日 ／ 職長版：自社ぶん・直近5日
+  // 元請版：協力会社ごとの直近5件 ／ 職長版：自分が作成した予定の直近5件
   const copySource =
     copyMode === "prime"
-      ? recentDays(pastRows, 3)
+      ? [...new Set(pastRows.map((r) => r.company))].flatMap((company) =>
+          recentItems(pastRows.filter((r) => r.company === company), COPY_RECENT_LIMIT)
+        )
       : copyMode === "foreman"
-      ? recentDays(pastRows.filter((r) => r.company === WA_MY_COMPANY), 5)
+      ? // デモは作成者を識別できないため自社ぶんで代用（本番は作成者ユーザーで判定）
+        recentItems(pastRows.filter((r) => r.company === WA_MY_COMPANY), COPY_RECENT_LIMIT)
       : [];
   // 会社→レコード配列（元請版の大カテゴリ見出し用）／ 会社は50音で安定表示
   const copyGroups = [...new Set(copySource.map((r) => r.company))]
     .sort((a, b) => a.localeCompare(b, "ja"))
     .map((company) => ({
       company,
-      items: copySource
-        .filter((r) => r.company === company)
-        .sort((a, b) => b.date.localeCompare(a.date)),
+      items: copySource.filter((r) => r.company === company).sort(byRecent),
     }));
 
   function openCopy(mode) {
@@ -854,8 +860,8 @@ export default function WorkAdjustSchedule() {
           wide
           title={
             copyMode === "prime"
-              ? "コピー作成（元請）－ 全協力会社・直近3日"
-              : "コピー作成（職長）－ 自社・直近5日"
+              ? "コピー作成（元請）－ 協力会社ごとの直近5件"
+              : "コピー作成（職長）－ 自分が作成した直近5件"
           }
           onClose={() => setCopyMode(null)}
           footer={
@@ -876,13 +882,14 @@ export default function WorkAdjustSchedule() {
           <p className="subtle" style={{ marginTop: 0 }}>
             {copyMode === "prime" ? (
               <>
-                過去（直近3日）の作業予定を協力会社別に表示しています。複製する作業を選択すると、
-                <b>{formatDateStr(date)}</b> の作業予定として一括登録されます（未確定で登録）。
+                過去の作業予定を協力会社別に、<b>各社ごとの直近{COPY_RECENT_LIMIT}件</b>まで表示しています。
+                複製する作業を選択すると、<b>{formatDateStr(date)}</b> の作業予定として一括登録されます（未確定で登録）。
               </>
             ) : (
               <>
-                自社（<b>{WA_MY_COMPANY}</b>）が作成した過去（直近5日）の作業予定を表示しています。
-                複製する作業を選択すると、<b>{formatDateStr(date)}</b> の作業予定として登録されます（未確定で登録）。
+                自分が作成した過去の作業予定を<b>直近{COPY_RECENT_LIMIT}件</b>まで表示しています（デモは自社
+                <b>{WA_MY_COMPANY}</b>ぶんで代用）。 複製する作業を選択すると、
+                <b>{formatDateStr(date)}</b> の作業予定として登録されます（未確定で登録）。
               </>
             )}
           </p>

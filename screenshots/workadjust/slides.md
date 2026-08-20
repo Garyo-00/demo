@@ -134,7 +134,7 @@ style: |
 ![](02-2-作業予定一覧_コピー作成元請.png)
 
 </div>
-<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>過去の作業予定を複製し、当日ぶんとして登録。</li><li>元請版：全協力会社別に直近3日を表示、複数選択して一括登録（未確定で登録）。</li></ul></div></div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>過去の作業予定を複製し、当日ぶんとして登録。</li><li>元請版：協力会社別に各社ごとの直近5件を表示、複数選択して一括登録（未確定で登録）。</li></ul></div></div>
 </div>
 
 ---
@@ -147,7 +147,7 @@ style: |
 ![](02-3-作業予定一覧_コピー作成職長.png)
 
 </div>
-<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>職長版：自社が作成した直近5日を表示、選択して当日に複製（未確定で登録）。</li></ul></div></div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>職長版：自分が作成した予定の直近5件を表示、選択して当日に複製（未確定で登録）。</li></ul></div></div>
 </div>
 
 ---
@@ -574,7 +574,7 @@ style: |
 ![](foreman/02-3-作業予定一覧_コピー作成職長.png)
 
 </div>
-<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>職長版：自社が作成した直近5日を表示、選択して当日に複製（未確定で登録）。</li></ul></div></div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>職長版：自分が作成した予定の直近5件を表示、選択して当日に複製（未確定で登録）。</li></ul></div></div>
 </div>
 
 ---
@@ -692,7 +692,7 @@ style: |
 ![](mobile/28-2-copy-prime.png)
 
 </div>
-<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>新規作成はモーダル（1カラム）。作業ブロックを複数追加可。</li><li>コピー作成（元請）＝全協力会社・直近3日から複製。</li></ul></div></div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>新規作成はモーダル（1カラム）。作業ブロックを複数追加可。</li><li>コピー作成（元請）＝協力会社ごとの直近5件から複製。</li></ul></div></div>
 </div>
 
 ---
@@ -705,7 +705,7 @@ style: |
 ![](mobile/29-1-copy-foreman.png)
 
 </div>
-<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>職長版コピー作成＝自社・直近5日から複製。</li></ul></div></div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>職長版コピー作成＝自分が作成した直近5件から複製。</li></ul></div></div>
 </div>
 
 ---
@@ -894,7 +894,7 @@ style: |
 ![](foreman/mobile/29-1-copy-foreman.png)
 
 </div>
-<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>職長版コピー作成＝自社・直近5日から複製。</li></ul></div></div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>職長版コピー作成＝自分が作成した直近5件から複製。</li></ul></div></div>
 </div>
 
 ---
@@ -1009,7 +1009,7 @@ QR発行 → スマホで読み取り → 現場で実績入力する流れ
 <div class="qa-item"><div class="qa-q">2. <span class="qa-tag">01-1 確定後</span>「設定」の中に作業配置図・資機材ゲート登録・協力会社一覧・設定をまとめたい</div><div class="qa-a">回答：協力会社設定はDNNと、作業配置図はNEOと共通ページとして使うので、設定タブの中に複数の設定を入れ込むように変更しました</div></div>
 <div class="qa-item"><div class="qa-q">3. <span class="qa-tag">01-2 確定前</span>ステータス必要？</div><div class="qa-a">回答：後追い確定のように、確定後に予定が追加されたときに個別で見分けがつくようにステータスを持たせています。</div></div>
 <div class="qa-item"><div class="qa-q">4. <span class="qa-tag">01-2 確定前</span>確定ボタンは元請権限のみに表示</div><div class="qa-a">回答：その仕様で考えています</div></div>
-<div class="qa-item"><div class="qa-q">5. <span class="qa-tag">01-2 確定前</span>「日付指定コピー」機能が欲しい</div><div class="qa-a">回答：コピー作成機能として実装しました（元請版＝全協力会社の直近3日／職長版＝自社の直近5日から選択し、当日の予定として複製）。→ 02-2・02-3</div></div>
+<div class="qa-item"><div class="qa-q">5. <span class="qa-tag">01-2 確定前</span>「日付指定コピー」機能が欲しい</div><div class="qa-a">回答：コピー作成機能として実装しました（元請版＝協力会社ごとの直近5件／職長版＝自分が作成した予定の直近5件から選択し、当日の予定として複製）。→ 02-2・02-3</div></div>
 <div class="qa-item"><div class="qa-q">6. <span class="qa-tag">01-3 出力</span>「業種」「職種」も列として欲しい</div><div class="qa-a">回答：出力画面の列に追加しました</div></div>
 <div class="qa-item"><div class="qa-q">7. <span class="qa-tag">01-3 出力</span>点線◯なし</div><div class="qa-a">回答：ハンコの点線を消しました</div></div>
 </div>
