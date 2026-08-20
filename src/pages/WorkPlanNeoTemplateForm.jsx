@@ -3,12 +3,14 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useWpn } from "../components/wpn/WpnContext.jsx";
 import ItemTable from "../components/wpn/ItemTable.jsx";
 import BlockCard from "../components/wpn/BlockCard.jsx";
+import CraneAutoBlock from "../components/wpn/CraneAutoBlock.jsx";
 import ChecklistEditor from "../components/wpn/ChecklistEditor.jsx";
 import {
   ANSWER_TYPES,
   FIXED_ITEMS,
   TEMPLATE_BLOCKS,
   defaultBlocks,
+  defaultCraneAuto,
   makeChecklist,
   newId,
 } from "../workPlanNeoData.js";
@@ -29,6 +31,7 @@ export default function WorkPlanNeoTemplateForm() {
   const [blocks, setBlocks] = useState(
     editing?.blocks || defaultBlocks(["floorPlan"])
   );
+  const [craneAuto, setCraneAuto] = useState(editing?.craneAuto || defaultCraneAuto());
   const [common, setCommon] = useState(editing?.common || []);
   const [work, setWork] = useState(editing?.work || []);
   const [checklists, setChecklists] = useState(editing?.checklists || [makeChecklist()]);
@@ -56,6 +59,7 @@ export default function WorkPlanNeoTemplateForm() {
       updatedAt: todayStr(),
       updatedBy: "元請 田中",
       blocks,
+      craneAuto,
       common,
       work,
       checklists,
@@ -151,7 +155,11 @@ export default function WorkPlanNeoTemplateForm() {
           block={b}
           enabled={!!blocks[b.key]}
           onToggle={(v) => setBlocks((s) => ({ ...s, [b.key]: v }))}
-        />
+        >
+          {b.key === "craneAuto" ? (
+            <CraneAutoBlock value={craneAuto} onChange={setCraneAuto} />
+          ) : null}
+        </BlockCard>
       ))}
 
       {/* 書類添付 */}

@@ -68,6 +68,41 @@ export function defaultBlocks(on = []) {
   return Object.fromEntries(TEMPLATE_BLOCKS.map((b) => [b.key, on.includes(b.key)]));
 }
 
+// ===== クレーンの自動入力ブロックの中身 =====
+// 職長が作業計画書で入力する項目。ブロック固有のため、テンプレートでは編集できない。
+export const CRANE_INPUT_ITEMS = [
+  { label: "クレーンの種類", type: "単一選択" },
+  { label: "クレーンのメーカー", type: "単一選択" },
+  { label: "作業半径（m）", type: "数値" },
+  { label: "吊荷重量（t）", type: "数値" },
+  { label: "フック重量（t）", type: "数値" },
+  { label: "吊具重量（t）", type: "数値" },
+];
+
+// 入力項目から自動で埋まる項目。テンプレートごとに使用／未使用を選べる。
+export const CRANE_AUTO_ITEMS = [
+  { key: "ratedMax", label: "定格荷重最大（m）(t)", source: "クレーンのメーカー・種類から取得" },
+  { key: "ratedMin", label: "定格荷重最小（m）(t)", source: "クレーンのメーカー・種類から取得" },
+  { key: "outrigger", label: "アウトリガー全幅張出（m）", source: "クレーンのメーカー・種類から取得" },
+  { key: "boomMax", label: "ブーム長さ最大（m）", source: "クレーンのメーカー・種類から取得" },
+  { key: "radiusMax", label: "最大作業半径（m）", source: "クレーンのメーカー・種類から取得" },
+  { key: "radiusMin", label: "最小作業半径（m）", source: "クレーンのメーカー・種類から取得" },
+  { key: "totalRated", label: "定格総荷重 (t)", source: "クレーンのメーカー・種類・作業半径から取得" },
+  { key: "loadRate", label: "荷重率（%）", source: "総荷重 ÷ 定格総荷重 × 100" },
+  { key: "judge", label: "判定", source: "荷重率 ≦ 安全率 →「◯」／ 荷重率 ＞ 安全率 →「✕」" },
+];
+
+export const CRANE_DEFAULT_SAFETY_RATE = 90;
+
+export function defaultCraneAuto(patch = {}) {
+  return {
+    // 自動反映項目の使用／未使用
+    auto: Object.fromEntries(CRANE_AUTO_ITEMS.map((i) => [i.key, true])),
+    safetyRate: CRANE_DEFAULT_SAFETY_RATE,
+    ...patch,
+  };
+}
+
 // 業務フロー（デモの位置づけを示す補助表示）
 export const WPN_FLOW = [
   { step: "1", label: "テンプレート設定（元請）", key: "template" },

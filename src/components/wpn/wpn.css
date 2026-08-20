@@ -988,6 +988,15 @@ button.wpn-status {
   font-weight: 700;
   margin-bottom: 10px;
 }
+.wpn-sub-title .wpn-hint {
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--wpn-sub);
+  margin-left: 8px;
+}
+.wpn-input.wpn-narrow {
+  width: 140px;
+}
 .wpn-answer-table td {
   vertical-align: middle;
 }
