@@ -28,6 +28,8 @@ import {
 } from "../components/wa/WaSettingsContext.jsx";
 import printIcon from "../assets/icons/print.svg";
 import TablePagination from "../components/wa/TablePagination.jsx";
+import RsvDayColumns, { MAX_COMPARE } from "../components/wa/RsvDayColumns.jsx";
+import { useIsNarrow } from "../components/wa/useIsNarrow.js";
 
 // タブ表示順（揚重機 → ゲート → その他）
 const KINDS_ALL = ["lift", "gate", "aerial"];
@@ -246,6 +248,29 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
     setRsvPage(0);
   }, [kind, cats, aerialView]);
 
+  // スマホは横スクロールのタイムラインではなく、時刻を縦軸に取った日表示にする。
+  // 資源は最大3つまで選んで列として並べ、予約状況を見比べられる。
+  const narrow = useIsNarrow();
+  const dayColumns = narrow && !twoShift;
+  const [compare, setCompare] = useState([]);
+  // 表示対象（タブ・カテゴリ・予約方法）が変わったら先頭の資源を選び直す
+  useEffect(() => {
+    setCompare(resourceItems.slice(0, 1));
+    // resourceItems は毎描画で作り直されるため、選択のリセット条件のみを依存に置く
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind, cats, aerialView]);
+  function toggleCompare(name) {
+    setCompare((sel) =>
+      sel.includes(name)
+        ? sel.filter((x) => x !== name)
+        : sel.length >= MAX_COMPARE
+        ? sel
+        : [...sel, name]
+    );
+  }
+  // 登録から外れた資源が選択に残らないようにする（予約表示OFF・同期解除など）
+  const compareShown = compare.filter((name) => resourceItems.includes(name));
+
   // 予約種別の切替（スポットにしたら所要時間を先頭候補に合わせる）
   function setResvType(t) {
     setEditing((x) => {
@@ -275,6 +300,28 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
     // スポット予約は「確定」の概念を持たないため、確定状態でも編集・削除できる
     if (b.confirmed && b.resvType !== "spot") return;
     setEditing({ ...b });
+  }
+
+  // カレンダーの空き部分をタップ → その時刻を初期値にして予約作成ダイアログを開く。
+  // 必須項目（協力会社名・作業内容ほか）があるため、即時登録ではなくフォームを開く。
+  function createAt(resourceName, startHHMM) {
+    const base = emptyRsv(kind, date, isConfirmed ? "spot" : "normal", resourceName);
+    base.start = startHHMM;
+    base.end = addMinutes(startHHMM, base.resvType === "spot" ? spotDurs[0] : 60, dayEnd);
+    setEditing(base);
+  }
+  // 予約を動かせるか。元請は全予定、職長は自分が作成した予定のみ。
+  // 確定済みの通常予約は編集不可（スポット予約は確定の概念を持たないため常に可）。
+  function canMoveBlock(b) {
+    if (guest) return false;
+    if (b.confirmed && b.resvType !== "spot") return false;
+    if (role === "prime") return true;
+    // デモは作成者を識別できないため自社ぶんで代用（本番は作成者ユーザーで判定）
+    return b.company === WA_MY_COMPANY;
+  }
+  // ドラッグ＆ドロップの確定：時刻（と移動先の資源）を書き換える
+  function moveBlock(b, next) {
+    setRows((rs) => rs.map((r) => (r.id === b.id ? { ...r, ...next } : r)));
   }
 
   function save() {
@@ -463,6 +510,23 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
             </tbody>
           </table>
         </div>
+      ) : dayColumns ? (
+        <RsvDayColumns
+          items={resourceItems}
+          selected={compareShown}
+          onToggle={toggleCompare}
+          blocksOf={(name) => visible.filter((r) => r.resource === name)}
+          dayStart={dayStart}
+          dayEnd={dayEnd}
+          isGate={isGate}
+          onOpen={openBlock}
+          onClear={() => setCompare([])}
+          onCreate={createAt}
+          onMove={moveBlock}
+          canMove={canMoveBlock}
+          stepMin={intervalMinutes(intervalLabel)}
+          label={resource.label}
+        />
       ) : (
       <div className="rsv-scroll">
       <div className="rsv-board" ref={boardRef}>
@@ -546,13 +610,16 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
       </div>
       )}
 
-      <TablePagination
-        total={resourceItems.length}
-        page={rsvSafePage}
-        pageSize={rsvPageSize}
-        onPage={setRsvPage}
-        onPageSize={(n) => { setRsvPageSize(n); setRsvPage(0); }}
-      />
+      {/* スマホの日表示は資源を選んで表示するため、行のページ送りは不要 */}
+      {!dayColumns && (
+        <TablePagination
+          total={resourceItems.length}
+          page={rsvSafePage}
+          pageSize={rsvPageSize}
+          onPage={setRsvPage}
+          onPageSize={(n) => { setRsvPageSize(n); setRsvPage(0); }}
+        />
+      )}
 
       {/* 確定（日付単位・全タブ共通）。その日の予約（通常・スポット）をまとめて確定（元請ビューのみ）。2部制は対象外 */}
       {!twoShift && canManage && (

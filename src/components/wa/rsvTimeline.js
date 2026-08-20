@@ -91,6 +91,42 @@ export function barHeight(isGate) {
   return rowHeight(isGate) - 8;
 }
 
+// 縦タイムライン（スマホの日表示）用：1資源ぶんの予約をレーンに割り当てる。
+// Googleカレンダーと同じく、重なり合う予約どうしで横幅を分け合う。
+// 重なりが途切れたところで区切り、その群の中だけで幅を分ける（無関係な予約まで細くしない）。
+export function layoutColumns(blocks) {
+  const sorted = [...blocks].sort(
+    (a, b) => toHour(a.start) - toHour(b.start) || toHour(a.end) - toHour(b.end)
+  );
+  const placed = [];
+  let cluster = []; // 連続して重なっている一群
+  let laneEnds = []; // 群内の各レーンの終了時刻
+  const closeCluster = () => {
+    const lanes = Math.max(laneEnds.length, 1);
+    cluster.forEach((p) => (p.lanes = lanes));
+    cluster = [];
+    laneEnds = [];
+  };
+  sorted.forEach((b) => {
+    const s = toHour(b.start);
+    const e = toHour(b.end);
+    // どのレーンとも重ならない＝群が途切れたので、ここで幅の分け合いを確定する
+    if (laneEnds.length && laneEnds.every((end) => end <= s)) closeCluster();
+    let lane = laneEnds.findIndex((end) => end <= s);
+    if (lane === -1) {
+      lane = laneEnds.length;
+      laneEnds.push(e);
+    } else {
+      laneEnds[lane] = e;
+    }
+    const p = { ...b, lane, lanes: 1, startH: s, endH: e };
+    cluster.push(p);
+    placed.push(p);
+  });
+  closeCluster();
+  return placed;
+}
+
 // 文字幅の概算（半角/全角を区別）
 function charWidth(ch) {
   return /[\x00-\xff]/.test(ch) ? 6.2 : 11;

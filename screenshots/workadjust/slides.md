@@ -719,7 +719,7 @@ style: |
 ![](mobile/30-2-reservation-after.png)
 
 </div>
-<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>タイムラインは横スクロール。確定後は通常・スポットをグレーアウト。</li><li>確定操作は元請のみ。</li></ul></div></div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>スマホは時刻を縦軸に取った日表示（Googleカレンダー風）。プルダウン（チェックボックス・複数選択）で資源を最大3つ選ぶと、縦3分割で並べて比較できる。</li><li>重なる予約は幅を分け合い、狭いときは会社名のみ表示（タップで詳細）。通常予約の重複は薄い赤帯。</li><li>空き部分のタップでその時刻（30分刻み）の予約作成。予約はドラッグで移動（縦＝時刻／横＝別の資源）。</li><li>移動できるのは元請＝全予定、職長＝自分が作成した予定のみ。確定済みの通常予約は移動不可。</li><li>確定後は通常・スポットをグレーアウト。確定操作は元請のみ。</li></ul></div></div>
 </div>
 
 ---
@@ -907,7 +907,7 @@ style: |
 ![](foreman/mobile/30-1-reservation-before.png)
 
 </div>
-<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>タイムラインは横スクロール（職長ビュー・確定操作なし）。</li></ul></div></div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>スマホは時刻を縦軸に取った日表示。プルダウン（複数選択）で資源を最大3つ選び、縦3分割で比較できる（職長ビュー・確定操作なし）。</li><li>空きタップで作成、ドラッグで移動。職長が動かせるのは自分が作成した予定のみ。</li></ul></div></div>
 </div>
 
 ---

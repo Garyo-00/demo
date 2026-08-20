@@ -816,6 +816,78 @@ td .subtle{color:var(--sub);font-size:12px;}
 .rsv-tlabel.confirmed .tl-time{color:#b0b7c3;}
 .rsv-tlabel.confirmed .rsv-veh{background:#98a2b3;}
 
+/* ===== スマホの予約表示（時間制）：時刻を縦軸に取り、選んだ資源を列で見比べる ===== */
+/* 資源セレクタ（プルダウン＋チェックボックス・最大3つまで選択）。
+   資機材のように候補が何台あってもセレクタの高さは変わらない。 */
+.rsvd-pick{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.rsvd-pick .ms-dd{flex:1;min-width:0;}
+.rsvd-pick .ms-dd-btn{width:100%;min-width:0;max-width:none;}
+.ms-dd-note{padding:6px 10px 8px;font-size:11.5px;color:var(--sub);
+  border-bottom:1px solid var(--line);margin-bottom:4px;}
+.ms-dd-item input:disabled{cursor:not-allowed;}
+.ms-dd-item:has(input:disabled){opacity:.45;cursor:not-allowed;}
+
+/* 列見出し（資源名）と本体 */
+.rsvd-grid{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;}
+.rsvd-colhead{display:flex;background:#f7f9fb;border-bottom:1px solid var(--line);}
+.rsvd-gutter-h{width:46px;flex:none;border-right:1px solid var(--line);}
+/* 「高所作業車 4.5m-001号」のように似た名前が並ぶため、末尾を切らず2行まで折り返す */
+.rsvd-colname{flex:1;min-width:0;padding:6px;font-size:11px;font-weight:700;line-height:1.25;
+  text-align:center;color:var(--ink);border-left:1px solid var(--line);
+  overflow:hidden;word-break:break-all;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.rsvd-colname:first-of-type{border-left:0;}
+.rsvd-body{display:flex;position:relative;}
+
+/* 左の時刻目盛り */
+.rsvd-gutter{width:46px;flex:none;position:relative;border-right:1px solid var(--line);
+  background:#fbfcfd;}
+.rsvd-hour{position:absolute;right:6px;transform:translateY(-6px);
+  font-size:10.5px;color:var(--sub);white-space:nowrap;}
+
+/* 資源1つぶんの列 */
+.rsvd-col{flex:1;min-width:0;position:relative;border-left:1px solid var(--line);}
+.rsvd-col:first-of-type{border-left:0;}
+.rsvd-line{position:absolute;left:0;right:0;height:0;border-top:1px solid #eef1f5;}
+.rsvd-overlap{position:absolute;left:0;right:0;background:rgba(229,72,77,.12);pointer-events:none;}
+
+/* 予約ブロック（重なりは横幅を分け合う） */
+.rsvd-ev{position:absolute;display:flex;flex-direction:column;gap:1px;overflow:hidden;
+  padding:3px 5px;border:0;border-left:3px solid var(--accent);border-radius:4px;
+  background:var(--accent-weak);color:var(--ink);text-align:left;cursor:pointer;
+  font-size:10.5px;line-height:1.25;}
+.rsvd-ev:hover{filter:brightness(.97);}
+.rsvd-ev>*{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rsvd-ev-co{font-weight:700;}
+.rsvd-ev-ct{margin-left:4px;}
+.rsvd-ev-tm{color:var(--sub);}
+.rsvd-ev-veh{align-self:flex-start;max-width:100%;font-weight:600;font-size:9.5px;
+  background:var(--accent);color:#fff;border-radius:3px;padding:0 4px;}
+/* 空き部分はタップで新規作成できる */
+.rsvd-col{cursor:copy;}
+/* 動かせる予約だけドラッグ可能に。touch-action:none はドラッグ中の画面スクロールを止めるため */
+.rsvd-ev.movable{cursor:grab;touch-action:none;}
+.rsvd-ev.movable:active{cursor:grabbing;}
+.rsvd-ev.dragging{opacity:.35;}
+/* ドラッグ中の移動先プレビュー */
+.rsvd-ghost{position:absolute;z-index:5;pointer-events:none;display:flex;flex-direction:column;
+  gap:1px;overflow:hidden;padding:3px 5px;border:2px dashed var(--accent);border-radius:4px;
+  background:rgba(31,111,235,.10);font-size:10px;line-height:1.2;color:var(--accent);font-weight:700;}
+.rsvd-ghost>*{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rsvd-ghost-res{font-weight:600;opacity:.8;}
+
+/* 重なって細くなった予約は会社名のみ表示（詳細はタップで開く）。
+   横幅は足りないが縦は余っているので、1行に詰めず折り返して読ませる。 */
+.rsvd-ev.tight{padding:2px 3px;border-left-width:2px;font-size:9.5px;line-height:1.15;}
+.rsvd-ev.tight .rsvd-ev-main,
+.rsvd-ev.tight .rsvd-ev-co{white-space:normal;word-break:break-all;text-overflow:clip;}
+.rsvd-ev.spot{background:var(--warn-bg);border-left-color:var(--warn);color:var(--warn);}
+.rsvd-ev.spot .rsvd-ev-tm{color:var(--warn);opacity:.85;}
+.rsvd-ev.spot .rsvd-ev-veh{background:var(--warn);}
+.rsvd-ev.confirmed{background:#e4e7ec;border-left-color:#98a2b3;color:#98a2b3;}
+.rsvd-ev.confirmed .rsvd-ev-tm{color:#b0b7c3;}
+.rsvd-ev.confirmed .rsvd-ev-veh{background:#98a2b3;}
+
 /* 予約の凡例 */
 .rsv-legend{display:flex;gap:18px;margin:10px 0 0;font-size:12.5px;color:var(--sub);}
 .rsv-legend .lg-item{display:inline-flex;align-items:center;gap:6px;}
