@@ -4,6 +4,7 @@ import {
   WA_COMPANIES,
   WA_SAFETY_MACHINES,
   WA_RENTAL_MACHINES,
+  formatDateStr,
 } from "../data.js";
 import Modal from "../components/wa/Modal.jsx";
 import { SuggestField } from "../components/wa/Field.jsx";
@@ -483,7 +484,8 @@ function emptyGate() {
 }
 
 export default function WorkAdjustRegistry() {
-  const { gates, setGates, lifts, setLifts, equipment, setEquipment } = useWaSettings();
+  const { gates, setGates, lifts, setLifts, equipment, setEquipment, reservations } =
+    useWaSettings();
   // 同期元プール（持込機械／レンタル）。揚重機・資機材で共通利用。同期で取り込むとプールから外れ、
   // 同期解除で戻る（＝同一機械が同時に複数登録されない）。
   const [safetyPool, setSafetyPool] = useState(WA_SAFETY_MACHINES);
@@ -505,9 +507,19 @@ export default function WorkAdjustRegistry() {
     }
     setGateEdit(null);
   }
+  // 予約実績のあるゲートは、削除前に件数と直近の予約日を示して警告する。
+  // 本番はゲートも論理削除とし、削除後も予約記録は保持する（[07] §8）。
   function removeGate(g) {
-    if (window.confirm(`ゲート「${g.name}」を削除しますか？`))
-      setGates((gs) => gs.filter((x) => x.id !== g.id));
+    const booked = reservations.filter((r) => r.kind === "gate" && r.resource === g.name);
+    let message = `ゲート「${g.name}」を削除しますか？`;
+    if (booked.length > 0) {
+      const latest = booked.map((r) => r.date).sort().reverse()[0];
+      message =
+        `⚠️ ゲート「${g.name}」には予約実績が ${booked.length} 件あります（直近：${formatDateStr(latest)}）。\n\n` +
+        "削除すると予約画面に表示されなくなります（予約記録自体は残ります）。\n" +
+        "本当に削除しますか？";
+    }
+    if (window.confirm(message)) setGates((gs) => gs.filter((x) => x.id !== g.id));
   }
   function toggleGateShow(g) {
     setGates((gs) => gs.map((x) => (x.id === g.id ? { ...x, show: !x.show } : x)));

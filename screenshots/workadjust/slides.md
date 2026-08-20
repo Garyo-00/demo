@@ -381,7 +381,7 @@ style: |
 ![](15-資機材ゲート登録_ゲート.png)
 
 </div>
-<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>ゲートの登録一覧（ゲートID・ゲート名・設置場所・備考・予約表示・操作）。</li><li>「予約表示」チェックで予約画面への表示ON/OFF。</li></ul></div></div>
+<div class="spec"><div class="spec-h">📝 詳細仕様</div><div class="spec-body"><ul><li>ゲートの登録一覧（ゲートID・ゲート名・設置場所・備考・予約表示・操作）。</li><li>「予約表示」チェックで予約画面への表示ON/OFF。</li><li>ゲートは削除可（資機材は同期解除のみ）。予約実績があるゲートは削除前に件数を示して警告。</li><li>本番の削除は論理削除で、削除後も予約記録は残す。</li></ul></div></div>
 </div>
 
 ---
