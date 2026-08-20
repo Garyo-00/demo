@@ -5,7 +5,7 @@ export default function TablePagination({
   pageSize,
   onPage,
   onPageSize,
-  options = [50, 100, 200],
+  options = [25, 50, 100],
 }) {
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   const from = total === 0 ? 0 : page * pageSize + 1;

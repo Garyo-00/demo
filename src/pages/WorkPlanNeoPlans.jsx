@@ -264,7 +264,7 @@ export default function WorkPlanNeoPlans() {
             value={perPage}
             onChange={(e) => setPerPage(Number(e.target.value))}
           >
-            {[10, 25, 50, 100].map((n) => (
+            {[25, 50, 100].map((n) => (
               <option key={n} value={n}>{n}</option>
             ))}
           </select>

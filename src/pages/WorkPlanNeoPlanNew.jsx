@@ -39,7 +39,7 @@ export default function WorkPlanNeoPlanNew() {
   // 既定でデモ用テンプレートを選択し、全ブロックが反映された状態を確認できるようにする
   const [templateId, setTemplateId] = useState("tplDemo");
   const [flowId, setFlowId] = useState("");
-  const [perPage, setPerPage] = useState(25);
+  const [perPage, setPerPage] = useState(50);
   // テンプレート項目への回答
   const [common, setCommon] = useState({});
   const [works, setWorks] = useState([{ id: newId("w"), values: {} }]);
@@ -189,7 +189,7 @@ export default function WorkPlanNeoPlanNew() {
         <div className="wpn-pager">
           <span>ページあたりの行数:</span>
           <select className="wpn-select wpn-perpage" value={perPage} onChange={(e) => setPerPage(Number(e.target.value))}>
-            {[10, 25, 50, 100].map((n) => (
+            {[25, 50, 100].map((n) => (
               <option key={n} value={n}>{n}</option>
             ))}
           </select>

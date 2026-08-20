@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useWpn } from "../components/wpn/WpnContext.jsx";
 import { newId } from "../workPlanNeoData.js";
 
-const PER_PAGE_OPTIONS = [10, 25, 50, 100];
+const PER_PAGE_OPTIONS = [25, 50, 100];
 
 // 行ごとの操作メニュー（⋮）。マスタは編集・削除不可で、複製して自現場用に使う。
 function RowMenu({ template, onEdit, onDuplicate, onDelete }) {
