@@ -185,7 +185,7 @@ function WorkAdjustLayoutInner() {
             setNavOpen(false);
           }}
         >
-          作業間調整pro<small>新産業の森作業所</small>
+          作業間調整pro
         </Link>
         <nav>
           {navItems.map((item) =>
@@ -348,7 +348,6 @@ function WorkAdjustLayoutInner() {
           <button className="nav-toggle" onClick={() => setNavOpen(true)} aria-label="メニューを開く">
             ☰
           </button>
-          <span className="topbar-project">新産業の森作業所</span>
           <div className="topbar-right">
             <RoleSwitch />
             {role === "prime" && <OverlapBell />}
