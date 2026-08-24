@@ -6,6 +6,7 @@ import {
   WA_LIFT_EQUIPMENT,
   WA_EQUIPMENT,
   WA_RESERVATIONS,
+  WA_WORK_SCHEDULES,
 } from "../../data.js";
 
 // 作業間調整pro の各種設定・共通の作業日を画面間で共有するContext
@@ -54,6 +55,8 @@ export function WaSettingsProvider({ children }) {
   const [equipment, setEquipment] = useState(WA_EQUIPMENT);
   // 予約（ヘッダーの重複通知でも参照するため共有）
   const [reservations, setReservations] = useState(WA_RESERVATIONS);
+  // 作業予定（予約との紐づけを予約側からも参照するため共有）
+  const [schedules, setSchedules] = useState(WA_WORK_SCHEDULES);
   // 画面遷移ガード（未保存の編集がある画面が dirty を立て、遷移前に確認する）
   const navDirtyRef = useRef(false);
   function setNavDirty(v) {
@@ -75,6 +78,7 @@ export function WaSettingsProvider({ children }) {
         interval, setInterval, templates, setTemplates,
         gates, setGates, lifts, setLifts, equipment, setEquipment,
         reservations, setReservations,
+        schedules, setSchedules,
         setNavDirty, confirmLeave,
       }}
     >

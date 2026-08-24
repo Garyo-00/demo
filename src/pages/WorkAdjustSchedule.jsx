@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
-  WA_WORK_SCHEDULES,
   WA_COMPANIES,
   WA_INDUSTRIES,
   WA_JOBTYPES_BY_INDUSTRY,
   WA_FOREMEN,
   defaultForeman,
   WA_HISTORY,
+  WA_VEHICLE_TYPES,
   WA_STATUS_LABEL,
   WA_STATUS_PILL,
   WA_PRIME_USERS,
@@ -18,9 +18,24 @@ import {
 import Modal from "../components/wa/Modal.jsx";
 import PrintPreview from "../components/wa/PrintPreview.jsx";
 import SchedulePrint from "../components/wa/SchedulePrint.jsx";
-import { useWaSettings } from "../components/wa/WaSettingsContext.jsx";
+import {
+  useWaSettings,
+  settingsKeyOf,
+  intervalMinutes,
+} from "../components/wa/WaSettingsContext.jsx";
 import printIcon from "../assets/icons/print.svg";
 import TablePagination from "../components/wa/TablePagination.jsx";
+import ResourcePicker from "../components/wa/ResourcePicker.jsx";
+import {
+  RSV_KIND_LABEL,
+  resourceOptions,
+  linkState,
+  rsvTimeLabel,
+  defaultTimes,
+  claimsOf,
+  scheduleLabel,
+} from "../components/wa/scheduleLinks.js";
+import { makeTimeOptions } from "../components/wa/rsvTimeline.js";
 import {
   SuggestField,
   SelectField,
@@ -62,6 +77,8 @@ function emptyBlock() {
   return {
     building: "", floor: "", area: "", zone: "", content: "",
     normalWorkers: 1, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
+    // 使用する資機材・ゲート [{kind, name, rsvId}]
+    resources: [],
   };
 }
 // 新規作成フォーム（共通項目＋作業ブロックを複数）
@@ -90,9 +107,146 @@ function toForm(r) {
         building: r.building, floor: r.floor, area: r.area, zone: r.zone, content: r.content,
         normalWorkers: r.normalWorkers, normalHours: r.normalHours,
         overtimeWorkers: r.overtimeWorkers, overtimeHours: r.overtimeHours,
+        resources: r.resources || [],
       },
     ],
   };
+}
+
+// 一覧に出す「使用する資機材・ゲート」のチップ。予約と紐づいていれば青、無ければ橙。
+function ResourceChips({ row, reservations, claims }) {
+  const list = row.resources || [];
+  if (list.length === 0) return null;
+  return (
+    <div className="res-chips">
+      {list.map((res) => {
+        const { reservation, state, dateMismatch } = linkState(
+          reservations,
+          { date: row.date, company: row.company, claims, selfId: row.id },
+          res
+        );
+        const linked = state === "linked" && !dateMismatch;
+        return (
+          <span
+            className={"res-chip " + (linked ? "ok" : "warn")}
+            key={res.kind + "|" + res.name}
+            title={
+              `${RSV_KIND_LABEL[res.kind]}：${res.name}｜` +
+              (state === "linked"
+                ? `予約 ${rsvTimeLabel(reservation)} に紐づけ` +
+                  (dateMismatch ? `（予約日 ${reservation.date}）` : "")
+                : state === "claimed"
+                ? "他の作業予定に紐づけ済み"
+                : "予約なし")
+            }
+          >
+            {res.name}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+// コピー作成 手順2：複製する予定が使う資機材・ゲートについて、
+// 複製先の日付に予約があるか（＝紐づくか）を一覧で確認し、無いものはここで作成できる。
+function CopyResourceStep({ plan, date, onToggleAll, onChangeRow, timeOptionsFor }) {
+  const missing = plan.filter((x) => !x.linked);
+  const allOn = missing.length > 0 && missing.every((x) => x.create);
+  const createCount = missing.filter((x) => x.create).length;
+
+  return (
+    <div>
+      <p className="subtle" style={{ marginTop: 0 }}>
+        複製する予定が使う資機材・ゲートは <b>{plan.length} 件</b>です。
+        <b>{formatDateStr(date)}</b> にすでに予約があるものは自動で紐づきます。
+        予約が無いものは、この画面でまとめて作成できます（{createCount} / {missing.length} 件を作成）。
+      </p>
+
+      {missing.length > 0 && (
+        <label className="copy-bulk">
+          <input type="checkbox" checked={allOn} onChange={(e) => onToggleAll(e.target.checked)} />
+          予約が無いものをすべて作成する
+        </label>
+      )}
+
+      <div className="copy-plan">
+        {plan.map((row) => {
+          const opts = timeOptionsFor(row.res.kind);
+          return (
+            <div className={"copy-plan-row" + (row.linked ? " linked" : "")} key={row.key}>
+              <div className="copy-plan-main">
+                <span className="copy-plan-res">{row.res.name}</span>
+                <span className="res-kind">{RSV_KIND_LABEL[row.res.kind]}</span>
+                <span className="copy-plan-for">
+                  {row.company}／{row.label || "（作業内容なし）"}
+                </span>
+              </div>
+              {row.linked ? (
+                <div className="copy-plan-act">
+                  <span className="res-badge ok">
+                    予約あり {rsvTimeLabel(row.linked)} に紐づけ
+                  </span>
+                </div>
+              ) : (
+                <div className="copy-plan-act">
+                  <span className="res-badge warn">
+                    {row.claimedBy
+                      ? `既存の予約は「${scheduleLabel(row.claimedBy)}」に紐づけ済み`
+                      : row.othersOnly
+                      ? "自社の予約なし（他社あり）"
+                      : "予約なし"}
+                  </span>
+                  <label className="copy-plan-make">
+                    <input
+                      type="checkbox"
+                      checked={row.create}
+                      onChange={(e) => onChangeRow(row.key, { create: e.target.checked })}
+                    />
+                    予約を作成
+                  </label>
+                  <select
+                    value={row.start}
+                    disabled={!row.create}
+                    onChange={(e) => onChangeRow(row.key, { start: e.target.value })}
+                  >
+                    {opts.map((t) => (
+                      <option key={t}>{t}</option>
+                    ))}
+                  </select>
+                  <span>〜</span>
+                  <select
+                    value={row.end}
+                    disabled={!row.create}
+                    onChange={(e) => onChangeRow(row.key, { end: e.target.value })}
+                  >
+                    {opts.map((t) => (
+                      <option key={t}>{t}</option>
+                    ))}
+                  </select>
+                  {row.res.kind === "gate" && (
+                    <select
+                      value={row.vehicleType}
+                      disabled={!row.create}
+                      onChange={(e) => onChangeRow(row.key, { vehicleType: e.target.value })}
+                    >
+                      {WA_VEHICLE_TYPES.map((v) => (
+                        <option key={v}>{v}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <p className="subtle">
+        ※ 作成する予約の時間は、複製元の予約時間を初期値にしています。チェックを外した資機材は
+        「使用する資機材」としては引き継ぎますが、予約は作成されません（あとから予定の編集画面で作成できます）。
+      </p>
+    </div>
+  );
 }
 
 // 各パターンの作業人数の選択肢（0〜30名）
@@ -108,8 +262,12 @@ function actualTotal(r) {
 }
 
 export default function WorkAdjustSchedule() {
-  const { date, role } = useWaSettings(); // 共通の作業日（ヘッダーで操作）／閲覧ロール
-  const [rows, setRows] = useState(WA_WORK_SCHEDULES);
+  // 共通の作業日／閲覧ロールに加え、資機材・ゲート登録と予約（紐づけ用）を参照する
+  const {
+    date, role, gates, lifts, equipment,
+    reservations, setReservations, interval, time,
+    schedules: rows, setSchedules: setRows,
+  } = useWaSettings();
   const [editing, setEditing] = useState(null); // 作成/編集中の行
   const [confirmDraft, setConfirmDraft] = useState(null); // 確定ダイアログ（全未確定の下書き）
   const [actualDraft, setActualDraft] = useState(null); // 実績入力ダイアログ（全確定の下書き）
@@ -117,11 +275,15 @@ export default function WorkAdjustSchedule() {
   const [showPrint, setShowPrint] = useState(false);
   const [copyMode, setCopyMode] = useState(null); // "prime" | "foreman" | null
   const [copySel, setCopySel] = useState(() => new Set()); // 複製元として選択したID
+  const [copyStep, setCopyStep] = useState("pick"); // "pick"（複製元選択）→ "resources"（資機材の確認）
+  const [copyPlan, setCopyPlan] = useState([]); // 手順2で編集する資機材ごとの予約プラン
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(50);
   const [search, setSearch] = useState(""); // 協力会社名での検索
   const [sortKey, setSortKey] = useState("industry"); // 初期は業種ソート
   const [sortDir, setSortDir] = useState("asc");
+  // 作業予定から作る予約のID採番（既存の RSV-xxx と衝突しない位置から開始）
+  const rsvSeq = useRef(900);
 
   // 列ごとの比較（全カラムでソート可能）
   function cmpBy(a, b, key) {
@@ -216,6 +378,9 @@ export default function WorkAdjustSchedule() {
                 building: b.building, floor: b.floor, area: b.area, zone: b.zone, content: b.content,
                 normalWorkers: b.normalWorkers, normalHours: b.normalHours,
                 overtimeWorkers: b.overtimeWorkers, overtimeHours: b.overtimeHours,
+                resources: fixLinks(b.resources, {
+                  date: f.date, company: f.company, selfId: f.id,
+                }),
               }
             : r
         )
@@ -232,6 +397,9 @@ export default function WorkAdjustSchedule() {
           building: b.building, floor: b.floor, area: b.area, zone: b.zone, content: b.content,
           normalWorkers: b.normalWorkers, normalHours: b.normalHours,
           overtimeWorkers: b.overtimeWorkers, overtimeHours: b.overtimeHours,
+          resources: fixLinks(b.resources, {
+            date: f.date, company: f.company, selfId: "W-" + String(n).padStart(3, "0"),
+          }),
           safetyNote: "",
           actualNormalWorkers: null, actualNormalHours: null,
           actualOvertimeWorkers: null, actualOvertimeHours: null,
@@ -241,6 +409,48 @@ export default function WorkAdjustSchedule() {
       setRows((rs) => [...rs, ...newRows]);
     }
     setEditing(null);
+  }
+
+  // ===== 資機材・ゲートの紐づけ =====
+  // 予約表示ONの資源だけを選択肢にする（資機材・ゲート登録の設定に従う）
+  const resOptions = resourceOptions({ lifts, gates, equipment });
+  // 予約ID → 掴んでいる作業予定。1つの予約に紐づく作業予定は1件までとする
+  const claims = claimsOf(rows);
+  // 照合で見つかった予約IDを確定させる。以後は日付を変えても紐づけを保持する。
+  function fixLinks(resources, ctx) {
+    return (resources || []).map((res) => {
+      if (res.rsvId) return res;
+      const { reservation, state } = linkState(reservations, { ...ctx, claims }, res);
+      return state === "linked" && reservation ? { ...res, rsvId: reservation.id } : res;
+    });
+  }
+  // 予約作成の時刻候補。資源種別ごとの予約可能時間・時間間隔設定に従う
+  function timeOptionsFor(kind) {
+    const key = kind === "lift" ? "lift" : kind === "gate" ? "gate" : "material";
+    const range = time?.[key] || { start: 6, end: 24 };
+    return makeTimeOptions(intervalMinutes(interval[settingsKeyOf(kind)]), range.start, range.end);
+  }
+  // 作業予定から予約を作成する。作成した予約のIDを返し、呼び出し側で紐づける。
+  function createReservationFor(res, { start, end, vehicleType }, ctx) {
+    const id = "RSV-" + String(rsvSeq.current++).padStart(3, "0");
+    setReservations((rs) => [
+      ...rs,
+      {
+        id,
+        kind: res.kind,
+        resource: res.name,
+        company: ctx.company,
+        date: ctx.date,
+        start,
+        end,
+        content: ctx.content || "作業予定より作成",
+        workPlace: res.kind === "gate" ? "" : ctx.workPlace || "",
+        remark: "",
+        vehicleType: res.kind === "gate" ? vehicleType : "",
+        resvType: "normal",
+      },
+    ]);
+    return id;
   }
 
   // 協力会社を選ぶと職長の選択肢を自動で埋め、既定で表示順の先頭を適用（複数いる場合は選択可）
@@ -294,6 +504,8 @@ export default function WorkAdjustSchedule() {
   function openCopy(mode) {
     setCopyMode(mode);
     setCopySel(new Set());
+    setCopyStep("pick");
+    setCopyPlan([]);
   }
   function toggleCopy(id) {
     setCopySel((s) => {
@@ -311,8 +523,82 @@ export default function WorkAdjustSchedule() {
       return next;
     });
   }
-  function commitCopy() {
+  // ===== コピー作成：資機材・ゲートの確認ステップ =====
+  // 複製元が資機材を使っている場合、複製先の日付での予約状況を1画面で確認・作成する。
+  // 行ごとに「予約あり＝紐づけ」「予約なし＝作成するか選ぶ」を提示する。
+  function buildCopyPlan(picked) {
+    const plan = [];
+    // 1予約＝1予定。既存の紐づけに加え、この一括作成の中で取り合いにならないよう
+    // 割り当て済みの予約を順に控えていく。
+    const taken = new Map(claims);
+    picked.forEach((r) => {
+      (r.resources || []).forEach((res) => {
+        // 複製先の日付に、まだ他の予定に紐づいていない自社の予約があるか
+        const target = linkState(
+          reservations,
+          { date, company: r.company, claims: taken },
+          { ...res, rsvId: null }
+        );
+        if (target.state === "linked" && target.reservation) {
+          taken.set(target.reservation.id, r); // この複製ぶんが確保
+        }
+        // 複製元の予約時間を初期値として引き継ぐ（無ければ既定の時間帯）
+        const src = res.rsvId ? reservations.find((x) => x.id === res.rsvId) : null;
+        const opts = timeOptionsFor(res.kind);
+        const def = defaultTimes(opts);
+        plan.push({
+          key: r.id + "|" + res.kind + "|" + res.name,
+          rowId: r.id,
+          company: r.company,
+          label: [r.jobType, r.content].filter(Boolean).join("／"),
+          res,
+          linked: target.state === "linked" ? target.reservation : null,
+          othersOnly: target.state === "others",
+          // 同じ資源の自社予約はあるが、他の作業予定がすでに掴んでいる
+          claimedBy: target.state === "claimed" ? target.owner : null,
+          create: target.state !== "linked", // 予約が無いものは既定で作成する
+          start: src?.start || def.start,
+          end: src?.end || def.end,
+          vehicleType: res.kind === "gate" ? src?.vehicleType || WA_VEHICLE_TYPES[0] : "",
+        });
+      });
+    });
+    return plan;
+  }
+  // 手順1（複製元の選択）→ 資機材があれば手順2へ、無ければそのまま登録
+  function proceedCopy() {
     const picked = copySource.filter((r) => copySel.has(r.id));
+    const plan = buildCopyPlan(picked);
+    if (plan.length === 0) {
+      commitCopy([]);
+      return;
+    }
+    setCopyPlan(plan);
+    setCopyStep("resources");
+  }
+  function setPlanRow(key, patch) {
+    setCopyPlan((p) => p.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+  }
+  // 予約が無い行をまとめて作成する／しない
+  function toggleAllCreate(on) {
+    setCopyPlan((p) => p.map((x) => (x.linked ? x : { ...x, create: on })));
+  }
+
+  function commitCopy(plan) {
+    const picked = copySource.filter((r) => copySel.has(r.id));
+    // 先に予約を作り、資源キー → 予約ID の対応を作る
+    const linkOf = {};
+    plan.forEach((row) => {
+      if (row.linked) {
+        linkOf[row.key] = row.linked.id;
+      } else if (row.create) {
+        linkOf[row.key] = createReservationFor(
+          row.res,
+          { start: row.start, end: row.end, vehicleType: row.vehicleType },
+          { company: row.company, date, content: row.label }
+        );
+      }
+    });
     let n = seq;
     const newRows = picked.map((r) => {
       n += 1;
@@ -322,14 +608,24 @@ export default function WorkAdjustSchedule() {
         date, // 表示中の日付ぶんとして登録
         status: "pending", // 未確定でコピー（元請の確定はこれから）
         safetyNote: "", // 元請安全指示事項は確定時に入力
+        // 資機材の選択は引き継ぎ、紐づけ先は複製先の日付の予約に貼り替える
+        resources: (r.resources || []).map((res) => ({
+          ...res,
+          rsvId: linkOf[r.id + "|" + res.kind + "|" + res.name] || null,
+        })),
         actualNormalWorkers: null, actualNormalHours: null,
         actualOvertimeWorkers: null, actualOvertimeHours: null,
       };
     });
     setSeq(n);
     setRows((rs) => [...rs, ...newRows]);
+    closeCopy();
+  }
+  function closeCopy() {
     setCopyMode(null);
     setCopySel(new Set());
+    setCopyStep("pick");
+    setCopyPlan([]);
   }
 
   // 確定（全未確定を対象に、元請安全指示事項を入力するダイアログを開く）
@@ -520,7 +816,8 @@ export default function WorkAdjustSchedule() {
         <div className="empty">この日の作業予定はありません。</div>
       ) : (
         <>
-          {/* デスクトップ：テーブル表示 */}
+          {/* デスクトップ：テーブル表示。カード幅に収まらない場合だけ横スクロールさせる */}
+          <div className="wa-table-scroll">
           <table className="wa-schedule-table">
             <thead>
               <tr>
@@ -551,7 +848,10 @@ export default function WorkAdjustSchedule() {
                     {r.building} / {r.floor} / {r.area} /{" "}
                     <span className="muted">{r.zone}</span>
                   </td>
-                  <td>{r.content}</td>
+                  <td>
+                    {r.content}
+                    <ResourceChips row={r} reservations={reservations} claims={claims} />
+                  </td>
                   <td>{totalWorkers(r)} 名</td>
                   <td>
                     {actualTotal(r) != null ? (
@@ -597,6 +897,7 @@ export default function WorkAdjustSchedule() {
               ))}
             </tbody>
           </table>
+          </div>
 
           {/* モバイル：カード表示（横スクロールなしで全項目を表示） */}
           <div className="wa-card-list">
@@ -622,7 +923,10 @@ export default function WorkAdjustSchedule() {
                   </div>
                   <div className="wa-card-field">
                     <span className="wa-card-label">作業内容</span>
-                    <span>{r.content || "—"}</span>
+                    <span>
+                      {r.content || "—"}
+                      <ResourceChips row={r} reservations={reservations} claims={claims} />
+                    </span>
                   </div>
                   <div className="wa-card-field">
                     <span className="wa-card-label">作業人数（予定／実績）</span>
@@ -840,6 +1144,29 @@ export default function WorkAdjustSchedule() {
                     {patternRow(bk, setBlockObj(i), "早出・残業作業", "overtimeWorkers", "overtimeHours")}
                   </div>
                 </div>
+                {/* 使用する資機材・ゲート。選ぶとその日の予約と紐づき、無ければここから作成できる */}
+                <ResourcePicker
+                  options={resOptions}
+                  value={bk.resources || []}
+                  onChange={(v) => setBlock(i, { resources: v })}
+                  reservations={reservations}
+                  date={editing.date}
+                  company={editing.company}
+                  timeOptions={timeOptionsFor("lift")}
+                  vehicleTypes={WA_VEHICLE_TYPES}
+                  claims={claims}
+                  selfId={editing.id}
+                  onCreateReservation={(res, draft) =>
+                    createReservationFor(res, draft, {
+                      company: editing.company,
+                      date: editing.date,
+                      content: bk.content,
+                      workPlace: [bk.building, bk.floor, bk.area, bk.zone]
+                        .filter(Boolean)
+                        .join(" "),
+                    })
+                  }
+                />
               </div>
             </div>
           ))}
@@ -859,26 +1186,50 @@ export default function WorkAdjustSchedule() {
         <Modal
           wide
           title={
-            copyMode === "prime"
-              ? "コピー作成（元請）－ 協力会社ごとの直近5件"
-              : "コピー作成（職長）－ 自分が作成した直近5件"
+            copyStep === "resources"
+              ? "コピー作成 － 手順2／2：資機材・ゲートの予約"
+              : copyMode === "prime"
+              ? "コピー作成（元請）－ 手順1／2：協力会社ごとの直近5件"
+              : "コピー作成（職長）－ 手順1／2：自分が作成した直近5件"
           }
-          onClose={() => setCopyMode(null)}
+          onClose={closeCopy}
           footer={
-            <>
-              <button className="ghost-btn" onClick={() => setCopyMode(null)}>
-                キャンセル
-              </button>
-              <button
-                className="primary-btn"
-                onClick={commitCopy}
-                disabled={copySel.size === 0}
-              >
-                選択した内容を {formatDateStr(date)} の予定として登録（{copySel.size} 件）
-              </button>
-            </>
+            copyStep === "resources" ? (
+              <>
+                <button className="ghost-btn" onClick={() => setCopyStep("pick")}>
+                  ← 複製元の選択に戻る
+                </button>
+                <button className="primary-btn" onClick={() => commitCopy(copyPlan)}>
+                  {formatDateStr(date)} の予定として登録（{copySel.size} 件／予約
+                  {copyPlan.filter((x) => !x.linked && x.create).length} 件を作成）
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="ghost-btn" onClick={closeCopy}>
+                  キャンセル
+                </button>
+                <button
+                  className="primary-btn"
+                  onClick={proceedCopy}
+                  disabled={copySel.size === 0}
+                >
+                  次へ：資機材・ゲートの確認（{copySel.size} 件）
+                </button>
+              </>
+            )
           }
         >
+        {copyStep === "resources" ? (
+          <CopyResourceStep
+            plan={copyPlan}
+            date={date}
+            onToggleAll={toggleAllCreate}
+            onChangeRow={setPlanRow}
+            timeOptionsFor={timeOptionsFor}
+          />
+        ) : (
+        <>
           <p className="subtle" style={{ marginTop: 0 }}>
             {copyMode === "prime" ? (
               <>
@@ -934,6 +1285,8 @@ export default function WorkAdjustSchedule() {
               })}
             </div>
           )}
+        </>
+        )}
         </Modal>
       )}
 

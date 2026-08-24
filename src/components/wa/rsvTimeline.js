@@ -23,6 +23,24 @@ export function pctHour(h, start = DAY_START, end = DAY_END) {
   return ((h - start) / (end - start)) * 100;
 }
 
+// 予約時刻の選択肢（「予約時間間隔設定」のステップ＝15/30/60分に従う。範囲は予約時間設定に準拠）
+export function makeTimeOptions(stepMin, start = DAY_START, end = DAY_END) {
+  const opts = [];
+  for (let t = start * 60; t <= end * 60; t += stepMin) {
+    const h = Math.floor(t / 60);
+    const m = t % 60;
+    opts.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+  }
+  return opts;
+}
+
+// "HH:MM" に分を加算（1日の終了時刻でクランプ）
+export function addMinutes(hhmm, min, end = DAY_END) {
+  const [h, m] = hhmm.split(":").map(Number);
+  const total = Math.min(h * 60 + m + min, end * 60);
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
 // 予約タブ（資源種別）のラベル
 export const KIND_LABEL = { lift: "揚重機", gate: "ゲート", aerial: "資機材・その他" };
 

@@ -13,6 +13,8 @@ import {
   DAY_START,
   DAY_END,
   makeHours,
+  makeTimeOptions,
+  addMinutes,
   toHour,
   layoutLabeled,
   overlapBands,
@@ -26,6 +28,7 @@ import {
   spotDurations,
   intervalMinutes,
 } from "../components/wa/WaSettingsContext.jsx";
+import { scheduleOfReservation } from "../components/wa/scheduleLinks.js";
 import printIcon from "../assets/icons/print.svg";
 import TablePagination from "../components/wa/TablePagination.jsx";
 import RsvDayColumns, { MAX_COMPARE } from "../components/wa/RsvDayColumns.jsx";
@@ -36,27 +39,30 @@ const KINDS_ALL = ["lift", "gate", "aerial"];
 const CONTENT_MAX = 25; // 作業内容の文字数上限
 const REMARK_MAX = 25; // 備考の文字数上限
 
-// 予約時刻の選択肢（「予約時間間隔設定」のステップ＝15/30/60分に従う。範囲は予約時間設定に準拠）
-function makeTimeOptions(stepMin, start = DAY_START, end = DAY_END) {
-  const opts = [];
-  for (let t = start * 60; t <= end * 60; t += stepMin) {
-    const h = Math.floor(t / 60);
-    const m = t % 60;
-    opts.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
-  }
-  return opts;
-}
-
-// "HH:MM" に分を加算（1日の終了時刻でクランプ）
-function addMinutes(hhmm, min, end = DAY_END) {
-  const [h, m] = hhmm.split(":").map(Number);
-  let total = Math.min(h * 60 + m + min, end * 60);
-  const hh = Math.floor(total / 60);
-  const mm = total % 60;
-  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
-}
 // 所要時間（分）
 const durationMin = (start, end) => Math.round((toHour(end) - toHour(start)) * 60);
+
+// 予約に紐づいている作業予定。1つの予約に紐づく作業予定は1件まで（[01] §4-2）。
+function LinkedSchedule({ schedules, rsvId }) {
+  const rec = scheduleOfReservation(schedules, rsvId);
+  if (!rec) {
+    return (
+      <p className="rsv-linked none">この予約に紐づいている作業予定はありません。</p>
+    );
+  }
+  const place = [rec.building, rec.floor, rec.area, rec.zone].filter(Boolean).join(" / ");
+  return (
+    <div className="rsv-linked">
+      <span className="rsv-linked-label">紐づく作業予定</span>
+      <div className="rsv-linked-body">
+        <b>{rec.content || "（作業内容なし）"}</b>
+        <span className="rsv-linked-meta">
+          {[rec.company, rec.jobType, place].filter(Boolean).join("／")}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 // 予約タブ（資源種別）のラベル
 const KIND_LABEL = { lift: "揚重機", gate: "ゲート", aerial: "資機材・その他" };
@@ -104,6 +110,7 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
   const {
     interval, time, date, gates, lifts, equipment, role,
     reservations: rows, setReservations: setRows,
+    schedules,
   } = useWaSettings();
   const KINDS = restrictAerial ? ["aerial"] : KINDS_ALL;
   // 元請のみの操作（出力・確定）。アカウントなし（guest）では非表示
@@ -710,6 +717,8 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
             </>
           }
         >
+          {/* この予約がどの作業予定に使われるか（作業予定側からの紐づけの逆引き） */}
+          {editing.id && <LinkedSchedule schedules={schedules} rsvId={editing.id} />}
           <div className="form-grid">
             <SelectField
               label="予約種別"

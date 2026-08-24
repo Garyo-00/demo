@@ -506,6 +506,11 @@ export const WA_WORK_SCHEDULES = [
     building: "A棟", floor: "2F", area: "北エリア", zone: "1工区",
     content: "配筋作業",
     normalWorkers: 6, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
+    // 使用する資機材・ゲート。rsvId=null でも同じ日・同じ協力会社の予約があれば紐づく
+    resources: [
+      { kind: "lift", name: "タワークレーン1号", rsvId: "RSV-004" },
+      { kind: "gate", name: "東ゲート", rsvId: "RSV-001" },
+    ],
     safetyNote: "上下作業禁止。開口部養生を確認のこと。",
   },
   {
@@ -522,6 +527,7 @@ export const WA_WORK_SCHEDULES = [
     building: "B棟", floor: "3F", area: "東エリア", zone: "2工区",
     content: "電気配線",
     normalWorkers: 3, normalHours: 8, overtimeWorkers: 2, overtimeHours: 2,
+    resources: [{ kind: "aerial", name: "高所作業車 4.5m-001号", rsvId: "RSV-006" }],
     safetyNote: "",
   },
   {
@@ -538,6 +544,7 @@ export const WA_WORK_SCHEDULES = [
     building: "C棟", floor: "1F", area: "中央", zone: "3工区",
     content: "足場組立",
     normalWorkers: 5, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
+    resources: [{ kind: "gate", name: "西ゲート", rsvId: null }],
     safetyNote: "",
   },
   {
@@ -556,6 +563,10 @@ export const WA_WORK_SCHEDULES = [
     company: "大和建設", industry: "鉄筋", jobType: "鉄筋工", foreman: "佐藤 健",
     building: "A棟", floor: "2F", area: "北エリア", zone: "1工区", content: "配筋作業",
     normalWorkers: 6, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
+    resources: [
+      { kind: "lift", name: "タワークレーン1号", rsvId: null },
+      { kind: "gate", name: "東ゲート", rsvId: null },
+    ],
     safetyNote: "上下作業禁止。開口部養生を確認のこと。",
     actualNormalWorkers: 6, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
   },
@@ -593,6 +604,7 @@ export const WA_WORK_SCHEDULES = [
     company: "渡辺工務店", industry: "とび", jobType: "足場組立工", foreman: "渡辺 浩",
     building: "C棟", floor: "1F", area: "中央", zone: "3工区", content: "足場組立",
     normalWorkers: 5, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
+    resources: [{ kind: "lift", name: "ラフター25t", rsvId: null }],
     safetyNote: "", actualNormalWorkers: 5, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
   },
   {

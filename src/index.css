@@ -901,6 +901,82 @@ td .subtle{color:var(--sub);font-size:12px;}
 .rsvd-ev.confirmed .rsvd-ev-tm{color:#b0b7c3;}
 .rsvd-ev.confirmed .rsvd-ev-veh{background:#98a2b3;}
 
+/* ===== 作業予定一覧のテーブル =====
+   見出しが nowrap だと「作業場所（棟/階/エリア/工区）」等で最小幅が膨らみ、
+   カードからはみ出して右側の列が切れていた。見出しは折り返しつつ、
+   列ごとに最小幅を与えて内容が1文字ずつ縦に潰れるのを防ぐ。
+   それでも収まらない画面幅では、カードの中で横スクロールさせる。 */
+.wa-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.wa-schedule-table{min-width:1060px;table-layout:fixed;}
+.wa-schedule-table th.sortable{white-space:normal;}
+.wa-schedule-table th,.wa-schedule-table td{overflow-wrap:anywhere;}
+.wa-schedule-table th:nth-child(1){width:96px;white-space:nowrap;}   /* ステータス */
+.wa-schedule-table th:nth-child(2){width:100px;}  /* 協力会社名 */
+.wa-schedule-table th:nth-child(3){width:88px;}   /* 業種 */
+.wa-schedule-table th:nth-child(4){width:96px;}   /* 職種 */
+.wa-schedule-table th:nth-child(5){width:140px;}  /* 作業場所 */
+.wa-schedule-table th:nth-child(6){width:auto;}   /* 作業内容（残りを配分） */
+.wa-schedule-table th:nth-child(7),
+.wa-schedule-table th:nth-child(8){width:72px;}   /* 作業人数（予定／実績） */
+.wa-schedule-table th:nth-child(9){width:132px;}  /* 元請安全指示事項 */
+/* 操作の編集・削除ボタンは折り返さない */
+/* 操作は編集・削除の2ボタンが並ぶため、折り返さず入る幅を確保する */
+.wa-schedule-table th:last-child,.wa-schedule-table td:last-child{white-space:nowrap;width:132px;}
+
+/* ===== 作業予定 × 資機材・ゲート予約の紐づけ ===== */
+.res-kind{margin-left:6px;font-size:10.5px;font-weight:600;color:var(--sub);
+  background:var(--idle-bg);border-radius:4px;padding:1px 6px;}
+.res-links{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.res-link{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fbfcfd;}
+.res-link-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;}
+.res-link-name{font-weight:700;color:var(--ink);}
+.res-badge{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;
+  background:var(--idle-bg);color:var(--sub);}
+/* フォーム内のセレクタは他の入力欄と同じ幅に揃える */
+.field.full>.ms-dd .ms-dd-btn{width:100%;max-width:none;}
+.res-badge.ok{background:var(--accent-weak);color:var(--accent);}
+.res-badge.warn{background:var(--warn-bg);color:var(--warn);}
+.res-create{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.res-create select{border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:12.5px;
+  background:#fff;color:var(--ink);}
+.mini-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+/* 予約の編集モーダル：紐づく作業予定（作業予定側からの逆引き） */
+.rsv-linked{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--accent);
+  background:var(--accent-weak);border-radius:9px;padding:9px 12px;margin-bottom:14px;}
+.rsv-linked.none{display:block;border-color:var(--line);background:#f7f9fb;color:var(--sub);
+  font-size:12.5px;}
+.rsv-linked-label{flex:none;font-size:11px;font-weight:700;color:var(--accent);
+  background:#fff;border-radius:999px;padding:2px 9px;margin-top:1px;}
+.rsv-linked-body{min-width:0;font-size:13px;color:var(--ink);}
+.rsv-linked-meta{display:block;margin-top:2px;font-size:11.5px;color:var(--sub);}
+
+/* コピー作成 手順2：資機材ごとの予約プラン */
+.copy-bulk{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink);
+  border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin-bottom:10px;background:#f7f9fb;}
+.copy-bulk input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;}
+.copy-plan{display:flex;flex-direction:column;gap:6px;}
+.copy-plan-row{border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:#fff;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between;}
+.copy-plan-row.linked{background:#fbfcfd;}
+.copy-plan-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;font-size:13px;}
+.copy-plan-res{font-weight:700;color:var(--ink);}
+.copy-plan-for{color:var(--sub);font-size:12px;}
+.copy-plan-act{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.copy-plan-act select{border:1px solid var(--line);border-radius:7px;padding:5px 8px;font-size:12.5px;
+  background:#fff;color:var(--ink);}
+.copy-plan-act select:disabled{opacity:.45;}
+.copy-plan-make{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;
+  color:var(--ink);cursor:pointer;}
+.copy-plan-make input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+
+/* 一覧の作業内容セルに出す紐づけチップ */
+.res-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+.res-chip{display:inline-block;max-width:100%;font-size:10.5px;font-weight:600;
+  border-radius:999px;padding:1px 8px;border:1px solid var(--line);background:#fff;color:var(--sub);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.res-chip.ok{border-color:var(--accent);background:var(--accent-weak);color:var(--accent);}
+.res-chip.warn{border-color:var(--warn);background:var(--warn-bg);color:var(--warn);}
+
 /* 予約の凡例 */
 .rsv-legend{display:flex;gap:18px;margin:10px 0 0;font-size:12.5px;color:var(--sub);}
 .rsv-legend .lg-item{display:inline-flex;align-items:center;gap:6px;}
