@@ -270,7 +270,7 @@ export default function WorkAdjustActualInput() {
           <WithAccountView date={selectedDate} onSubmit={submit} />
         )}
 
-        <Link to="/workadjust/actual-qr" className="ai-back">
+        <Link to="/workadjust/qr" className="ai-back">
           ← QR発行画面へ戻る（デモ用）
         </Link>
       </div>

@@ -116,8 +116,7 @@ const ROUTES = [
   ["/workadjust/reservation", "予約"],
   ["/workadjust/floor-plan-setting", "作業配置図設定"],
   ["/workadjust/floor-plan", "配置図作成"],
-  ["/workadjust/actual-qr", "作業実績入力用QR発行"],
-  ["/workadjust/reserve-qr", "資機材・ゲート予約用QR発行"],
+  ["/workadjust/qr", "QRコード発行"],
   ["/workadjust/registry", "資機材・ゲート登録"],
   ["/workadjust/companies", "協力会社設定"],
   ["/workadjust/settings", "予約設定"],
@@ -136,7 +135,9 @@ function WorkAdjustLayoutInner() {
   const active = currentMenu(location.pathname);
   const { role, confirmLeave } = useWaSettings();
   // 職長ビューでは「設定」グループ（＝childrenを持つ項目）と「配置図作成」を非表示にする
-  const HIDDEN_FOR_FOREMAN = ["配置図作成", "作業実績入力用QR発行"];
+  // QR発行はアコーディオンを廃して単独項目にしたため、明示的に非表示にする
+  // （従来は children を持つグループごと職長には出していなかった）
+  const HIDDEN_FOR_FOREMAN = ["配置図作成", "QRコード発行"];
   const navItems = WORKADJUST_NAV.filter(
     (n) => !(role === "foreman" && (n.children || HIDDEN_FOR_FOREMAN.includes(n.label)))
   );
@@ -162,8 +163,7 @@ function WorkAdjustLayoutInner() {
     else if (m === "予約") navigate("/workadjust/reservation");
     else if (m === "予約実績出力") navigate("/workadjust/reserve-export");
     else if (m === "配置図作成") navigate("/workadjust/floor-plan");
-    else if (m === "作業実績入力用QR発行") navigate("/workadjust/actual-qr");
-    else if (m === "資機材・ゲート予約用QR発行") navigate("/workadjust/reserve-qr");
+    else if (m === "QRコード発行") navigate("/workadjust/qr");
     else if (m === "作業配置図設定") navigate("/workadjust/floor-plan-setting");
     else if (m === "資機材・ゲート登録") navigate("/workadjust/registry");
     else if (m === "協力会社設定") navigate("/workadjust/companies");

@@ -332,7 +332,20 @@ tr:last-child td{border-bottom:none;}
 .datepager.disabled .dp-current{cursor:not-allowed;}
 
 /* ===== 作業実績入力用QRコード ===== */
-.qr-toolbar{display:flex;align-items:center;margin:16px 0;}
+.qr-toolbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:16px 0;}
+.qr-toolbar .spacer{margin-left:auto;}
+/* 青ボタン上のアイコンは白抜きにする */
+.primary-btn .ic-btn{filter:brightness(0) invert(1);}
+/* 発行する種類の選択（作業予定一覧／作業実績入力／資機材・ゲート予約） */
+.qr-picks{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+.qr-pick{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--ink);cursor:pointer;}
+.qr-pick input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer;}
+/* 選んだ種類を横に並べる（1つだけなら中央に大きく1枚） */
+.qr-grid{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;
+  gap:40px 56px;width:100%;}
+.qr-item{display:flex;flex-direction:column;align-items:center;text-align:center;}
+.qr-item-title{font-size:19px;font-weight:700;color:var(--ink);}
+.qr-item-login{margin:6px 0 16px;font-size:13px;color:var(--sub);}
 .qr-sheet{background:#fff;border:1px solid var(--line);border-radius:12px;
   padding:40px 20px 48px;display:flex;flex-direction:column;align-items:center;text-align:center;}
 .qr-title{margin:0;font-size:26px;color:var(--ink);}

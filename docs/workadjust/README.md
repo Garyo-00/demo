@@ -37,13 +37,13 @@
 | 02 | 予約（揚重機/ゲート/資機材・その他） | `/workadjust/reservation` | [02-予約.md](./02-予約.md) |
 | 12 | 予約実績出力（CSV） | `/workadjust/reserve-export` | [12-予約実績出力.md](./12-予約実績出力.md) |
 | 03 | 配置図作成 | `/workadjust/floor-plan` | [03-配置図作成.md](./03-配置図作成.md) |
-| 04 | 作業実績入力用QR発行 | `/workadjust/actual-qr` | [04-作業実績入力QR発行.md](./04-作業実績入力QR発行.md) |
+| 04 | QRコード発行（3種を1画面） | `/workadjust/qr` | [04-作業実績入力QR発行.md](./04-作業実績入力QR発行.md) |
 | 05 | 作業実績入力（QR読み取り後） | `/workadjust/actual-input` | [05-作業実績入力.md](./05-作業実績入力.md) |
 | 06 | 作業配置図設定（台紙） | `/workadjust/floor-plan-setting` | [06-作業配置図設定.md](./06-作業配置図設定.md) |
 | 07 | 資機材・ゲート登録 | `/workadjust/registry` | [07-資機材ゲート登録.md](./07-資機材ゲート登録.md) |
 | 08 | 協力会社設定 | `/workadjust/companies` | [08-協力会社設定.md](./08-協力会社設定.md) |
 | 09 | 予約設定（時間/権限/時間間隔） | `/workadjust/settings` | [09-予約設定.md](./09-予約設定.md) |
-| 10 | 資機材・ゲート予約用QR発行 | `/workadjust/reserve-qr` | [10-資機材ゲート予約QR発行.md](./10-資機材ゲート予約QR発行.md) |
+| 10 | 資機材・ゲート予約用QR（発行画面は04に統合） | `/workadjust/qr` | [10-資機材ゲート予約QR発行.md](./10-資機材ゲート予約QR発行.md) |
 | 11 | 資機材・ゲート予約（QR読み取り後・アカウント不要） | `/workadjust/reserve` | [11-資機材ゲート予約ポータル.md](./11-資機材ゲート予約ポータル.md) |
 | — | **未決事項・要検討まとめ（全画面集約）** | — | [未決事項サマリ.md](./未決事項サマリ.md) |
 
