@@ -10,6 +10,8 @@ export function WpnProvider({ children }) {
   const [plans, setPlans] = useState(() => initialPlans(INITIAL_TEMPLATES));
   // 元請（ゼネコン）／職長（協力会社）の閲覧ロール。テンプレート設定は元請のみ編集可。
   const [role, setRole] = useState("prime");
+  // 現場（プロジェクト）単位の機能設定。設定画面（/workplan-neo/settings）で切り替える。
+  const [settings, setSettings] = useState({ primeConfirm: true, meetingSign: true });
 
   const value = useMemo(
     () => ({
@@ -17,6 +19,8 @@ export function WpnProvider({ children }) {
       plans,
       role,
       setRole,
+      settings,
+      saveSettings: setSettings,
       getTemplate: (id) => templates.find((t) => t.id === id) || null,
       saveTemplate: (tpl) =>
         setTemplates((list) => {
@@ -38,7 +42,7 @@ export function WpnProvider({ children }) {
           return next;
         }),
     }),
-    [templates, plans, role]
+    [templates, plans, role, settings]
   );
 
   return <WpnContext.Provider value={value}>{children}</WpnContext.Provider>;

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useWpn } from "../components/wpn/WpnContext.jsx";
 import ItemTable from "../components/wpn/ItemTable.jsx";
 import BlockCard from "../components/wpn/BlockCard.jsx";
+import BasicInfoBlock from "../components/wpn/BasicInfoBlock.jsx";
 import CraneAutoBlock from "../components/wpn/CraneAutoBlock.jsx";
 import ChecklistEditor from "../components/wpn/ChecklistEditor.jsx";
 import {
@@ -29,11 +30,10 @@ export default function WorkPlanNeoTemplateForm() {
 
   const [name, setName] = useState(editing?.name || "");
   const [blocks, setBlocks] = useState(
-    editing?.blocks || defaultBlocks(["floorPlan"])
+    editing?.blocks || defaultBlocks(["basic", "other"])
   );
   const [craneAuto, setCraneAuto] = useState(editing?.craneAuto || defaultCraneAuto());
-  const [common, setCommon] = useState(editing?.common || []);
-  const [work, setWork] = useState(editing?.work || []);
+  const [other, setOther] = useState(editing?.other || []);
   const [checklists, setChecklists] = useState(editing?.checklists || [makeChecklist()]);
   const [files, setFiles] = useState(editing?.files || []);
   const fileRef = useRef(null);
@@ -45,6 +45,14 @@ export default function WorkPlanNeoTemplateForm() {
     }));
     setFiles((list) => [...list, ...picked]);
     e.target.value = "";
+  }
+
+  // 中身の仕様が決まっているブロックだけ、カード内に設定UIを出す（未定のものは使用可否のみ）
+  function blockBody(key) {
+    if (key === "basic") return <BasicInfoBlock />;
+    if (key === "crane") return <CraneAutoBlock value={craneAuto} onChange={setCraneAuto} />;
+    if (key === "other") return <ItemTable rows={other} onChange={setOther} types={ANSWER_TYPES} />;
+    return null;
   }
 
   function submit() {
@@ -60,8 +68,7 @@ export default function WorkPlanNeoTemplateForm() {
       updatedBy: "元請 田中",
       blocks,
       craneAuto,
-      common,
-      work,
+      other,
       checklists,
       files,
     });
@@ -120,45 +127,15 @@ export default function WorkPlanNeoTemplateForm() {
         </table>
       </div>
 
-      {/* 専用ブロック（共通項目より前） */}
-      {TEMPLATE_BLOCKS.filter((b) => b.slot === "before").map((b) => (
-        <BlockCard
-          key={b.key}
-          block={b}
-          enabled={!!blocks[b.key]}
-          onToggle={(v) => setBlocks((s) => ({ ...s, [b.key]: v }))}
-        />
-      ))}
-
-      {/* 共通項目 */}
-      <div className="wpn-card">
-        <h2 className="wpn-card-title">
-          共通項目
-          <span className="wpn-hint">作業計画書に1回だけ入力する項目</span>
-        </h2>
-        <ItemTable rows={common} onChange={setCommon} types={ANSWER_TYPES} />
-      </div>
-
-      {/* 作業内容 */}
-      <div className="wpn-card">
-        <h2 className="wpn-card-title">
-          作業内容
-          <span className="wpn-hint">作業ごとに繰り返し入力する項目</span>
-        </h2>
-        <ItemTable rows={work} onChange={setWork} types={ANSWER_TYPES} />
-      </div>
-
-      {/* 専用ブロック（作業内容より後） */}
-      {TEMPLATE_BLOCKS.filter((b) => b.slot === "after").map((b) => (
+      {/* ブロック（作業計画書はブロック単位で構成する） */}
+      {TEMPLATE_BLOCKS.map((b) => (
         <BlockCard
           key={b.key}
           block={b}
           enabled={!!blocks[b.key]}
           onToggle={(v) => setBlocks((s) => ({ ...s, [b.key]: v }))}
         >
-          {b.key === "craneAuto" ? (
-            <CraneAutoBlock value={craneAuto} onChange={setCraneAuto} />
-          ) : null}
+          {blockBody(b.key)}
         </BlockCard>
       ))}
 

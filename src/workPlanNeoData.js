@@ -28,39 +28,57 @@ export function needsOptions(list, value) {
 }
 
 // 全テンプレート共通の必須項目（編集不可・必ず作業計画書の先頭に入る）
-export const FIXED_ITEMS = [
-  { label: "作業計画書名", type: "自由入力" },
-  { label: "作業期間", type: "日付範囲" },
+export const FIXED_ITEMS = [{ label: "作業計画書名", type: "自由入力" }];
+
+// 基本情報ブロックの中身（ブロック固有のため編集不可）
+export const BASIC_ITEMS = [
+  { label: "作業配置図", type: "図面配置", hint: "作業配置図設定で登録した図面上に作業範囲を配置" },
+  { label: "作業期間", type: "日付範囲", hint: "" },
 ];
 
-// 専用ブロック（項目テーブルとは別に、機能単位で計画書に載せるまとまり）
-// 詳細仕様は未定のため、現時点では使用可否のみをテンプレートで設定する。
+// 作業計画書はブロック単位で構成する。テンプレートでは使用するブロックを選ぶ。
+// 中身の詳細仕様が決まっているブロック（基本情報・クレーン・その他）はブロック内に表示し、
+// 未定のものは使用可否のみ設定できる。
 export const TEMPLATE_BLOCKS = [
   {
-    key: "floorPlan",
-    label: "作業配置図",
-    hint: "作業配置図設定で登録した図面上に、当日の作業範囲を配置します",
-    // 共通項目より前（必須項目の直後）に配置
-    slot: "before",
+    key: "basic",
+    label: "基本情報ブロック",
+    hint: "作業配置図と作業期間。作業計画書の先頭に入ります",
   },
   {
-    key: "craneAuto",
-    label: "クレーンの自動入力",
+    key: "machine",
+    label: "機械ブロック",
+    hint: "使用する持込機械・レンタル機械に関する項目",
+  },
+  {
+    key: "load",
+    label: "積荷ブロック",
+    hint: "積荷・吊り荷に関する項目",
+  },
+  {
+    key: "staffing",
+    label: "人員配置ブロック",
+    hint: "作業責任者・運転者・誘導者などの配置",
+  },
+  {
+    key: "crane",
+    label: "クレーンブロック",
     hint: "クレーン諸元から作業半径・定格荷重などを自動で入力します",
-    slot: "after",
   },
   {
-    key: "meetingSign",
-    label: "打合せ参加者サイン",
-    hint: "作業前打合せの参加者がサインを記入します",
-    slot: "after",
+    key: "survey",
+    label: "調査ブロック",
+    hint: "地盤・架空線・埋設物などの事前調査結果",
   },
   {
-    key: "safetyInstruction",
-    label: "安全指示事項",
-    // ONのとき、承認画面で元請が「作業内容＋安全指示事項」を任意の数だけ入力できる（docs/workplan/02 参照）
-    hint: "ONにすると、承認時に元請が作業内容ごとの安全指示事項を入力できます（OFFなら承認のみ）",
-    slot: "after",
+    key: "rules",
+    label: "厳守事項・周知事項ブロック",
+    hint: "作業前に周知する厳守事項・周知事項",
+  },
+  {
+    key: "other",
+    label: "その他ブロック",
+    hint: "上記ブロックに当てはまらない項目を自由に設定します（仮）",
   },
 ];
 
@@ -68,7 +86,7 @@ export function defaultBlocks(on = []) {
   return Object.fromEntries(TEMPLATE_BLOCKS.map((b) => [b.key, on.includes(b.key)]));
 }
 
-// ===== クレーンの自動入力ブロックの中身 =====
+// ===== クレーンブロックの中身 =====
 // 職長が作業計画書で入力する項目。ブロック固有のため、テンプレートでは編集できない。
 export const CRANE_INPUT_ITEMS = [
   { label: "クレーンの種類", type: "単一選択" },
@@ -156,13 +174,12 @@ function master(name, patch = {}) {
     kind: "master",
     updatedAt: "2026/04/01",
     updatedBy: "システム",
-    blocks: defaultBlocks(["floorPlan", "meetingSign", "safetyInstruction"]),
-    common: [
+    blocks: defaultBlocks(["basic", "machine", "staffing", "rules", "other"]),
+    craneAuto: defaultCraneAuto(),
+    other: [
       makeRow({ label: "使用する持込機械", type: "machine", required: true, note: "ASに登録済みの機械から選択" }),
       makeRow({ label: "作業場所", type: "text", required: true }),
       makeRow({ label: "作業責任者", type: "worker", required: true }),
-    ],
-    work: [
       makeRow({ label: "作業手順", type: "textarea", required: true }),
       makeRow({ label: "想定される危険", type: "textarea", required: true }),
       makeRow({ label: "安全対策", type: "textarea", required: true }),
@@ -180,7 +197,7 @@ function master(name, patch = {}) {
 }
 
 export const INITIAL_TEMPLATES = [
-  // 画面確認用：専用ブロックを全てONにし、回答形式を一通り並べたデモテンプレート。
+  // 画面確認用：ブロックを全てONにし、回答形式を一通り並べたデモテンプレート。
   // 「テンプレートの内容が作成画面にどう反映されるか」を確認するために用意している。
   {
     id: "tplDemo",
@@ -188,8 +205,9 @@ export const INITIAL_TEMPLATES = [
     kind: "custom",
     updatedAt: "2026/08/06",
     updatedBy: "元請 田中",
-    blocks: defaultBlocks(["floorPlan", "craneAuto", "meetingSign", "safetyInstruction"]),
-    common: [
+    blocks: defaultBlocks(TEMPLATE_BLOCKS.map((b) => b.key)),
+    craneAuto: defaultCraneAuto(),
+    other: [
       makeRow({ label: "フォークリフトの種類", type: "select", required: true, options: "カウンタ式, リーチ式, サイド式" }),
       makeRow({ label: "型式・能力", type: "text", required: true }),
       makeRow({ label: "自由入力（複数行）", type: "textarea" }),
@@ -206,13 +224,6 @@ export const INITIAL_TEMPLATES = [
       makeRow({ label: "写真添付", type: "photo" }),
       makeRow({ label: "ファイル添付", type: "file" }),
     ],
-    work: [
-      makeRow({ label: "運搬材料", type: "text", required: true }),
-      makeRow({ label: "運転者（正）", type: "worker", required: true }),
-      makeRow({ label: "作業指揮者", type: "worker", required: true }),
-      makeRow({ label: "合図方法等", type: "select", required: true, options: "手信号, laser, 無線" }),
-      makeRow({ label: "作業安全指示事項", type: "text", required: true }),
-    ],
     checklists: [
       makeChecklist({
         name: "運転前チェックリスト",
@@ -223,11 +234,15 @@ export const INITIAL_TEMPLATES = [
     files: [{ id: "fdemo", name: "作業手順書.pdf" }],
   },
   master("【テンプレート用】コンクリートポンプ車"),
-  master("【テンプレート用】トラック搭載型クレーン・ユニック車"),
+  master("【テンプレート用】トラック搭載型クレーン・ユニック車", {
+    blocks: defaultBlocks(["basic", "machine", "load", "staffing", "crane", "rules", "other"]),
+  }),
   master("【テンプレート用】フォークリフト"),
-  master("【テンプレート用】定置式クレーン"),
+  master("【テンプレート用】定置式クレーン", {
+    blocks: defaultBlocks(["basic", "machine", "load", "staffing", "crane", "rules", "other"]),
+  }),
   master("【テンプレート用】移動式クレーン", {
-    blocks: defaultBlocks(["floorPlan", "craneAuto", "meetingSign", "safetyInstruction"]),
+    blocks: defaultBlocks(["basic", "machine", "load", "staffing", "crane", "survey", "rules", "other"]),
   }),
   master("【テンプレート用】車両系建設機械（掘削用機械）"),
   master("【テンプレート用】車両系建設機械（整地・積込用機械・その他）"),
@@ -239,13 +254,12 @@ export const INITIAL_TEMPLATES = [
     kind: "custom",
     updatedAt: "2026/07/30",
     updatedBy: "元請 田中",
-    blocks: defaultBlocks(["floorPlan", "meetingSign", "safetyInstruction"]),
-    common: [
+    blocks: defaultBlocks(["basic", "machine", "staffing", "survey", "rules", "other"]),
+    craneAuto: defaultCraneAuto(),
+    other: [
       makeRow({ label: "使用する持込機械", type: "machine", required: true }),
       makeRow({ label: "圧送箇所", type: "text", required: true }),
       makeRow({ label: "配管経路", type: "textarea", required: false }),
-    ],
-    work: [
       makeRow({ label: "作業手順", type: "textarea", required: true }),
       makeRow({ label: "圧送量（m3）", type: "number", required: true }),
     ],
@@ -268,8 +282,9 @@ export const INITIAL_TEMPLATES = [
     kind: "custom",
     updatedAt: "2026/07/28",
     updatedBy: "元請 田中",
-    blocks: defaultBlocks(["floorPlan", "craneAuto", "meetingSign", "safetyInstruction"]),
-    common: [
+    blocks: defaultBlocks(["basic", "machine", "load", "staffing", "crane", "survey", "rules", "other"]),
+    craneAuto: defaultCraneAuto(),
+    other: [
       makeRow({ label: "使用する持込機械", type: "machine", required: true, note: "ASに登録済みの機械から選択" }),
       makeRow({ label: "作業場所", type: "text", required: true }),
       makeRow({ label: "作業責任者", type: "worker", required: true }),
@@ -279,11 +294,7 @@ export const INITIAL_TEMPLATES = [
         required: false,
         options: "風速10m/s以上, 降雨時, 該当なし",
       }),
-    ],
-    work: [
       makeRow({ label: "作業手順", type: "textarea", required: true }),
-      makeRow({ label: "吊り荷重量（t）", type: "number", required: true }),
-      makeRow({ label: "作業半径（m）", type: "number", required: true }),
       makeRow({ label: "想定される危険", type: "textarea", required: true }),
       makeRow({ label: "安全対策", type: "textarea", required: true }),
     ],
@@ -314,12 +325,11 @@ export const INITIAL_TEMPLATES = [
     kind: "custom",
     updatedAt: "2026/07/22",
     updatedBy: "元請 佐藤",
-    blocks: defaultBlocks(["floorPlan", "safetyInstruction"]),
-    common: [
+    blocks: defaultBlocks(["basic", "machine", "staffing", "survey", "other"]),
+    craneAuto: defaultCraneAuto(),
+    other: [
       makeRow({ label: "使用する持込機械", type: "machine", required: true }),
       makeRow({ label: "掘削深さ（m）", type: "number", required: true }),
-    ],
-    work: [
       makeRow({ label: "作業手順", type: "textarea", required: true }),
       makeRow({ label: "誘導者の配置", type: "worker", required: true }),
     ],
@@ -341,9 +351,12 @@ export const INITIAL_TEMPLATES = [
     kind: "custom",
     updatedAt: "2026/07/10",
     updatedBy: "元請 佐藤",
-    blocks: defaultBlocks(["floorPlan", "safetyInstruction"]),
-    common: [makeRow({ label: "使用する持込機械", type: "machine", required: true })],
-    work: [makeRow({ label: "運搬経路・作業手順", type: "textarea", required: true })],
+    blocks: defaultBlocks(["basic", "machine", "load", "other"]),
+    craneAuto: defaultCraneAuto(),
+    other: [
+      makeRow({ label: "使用する持込機械", type: "machine", required: true }),
+      makeRow({ label: "運搬経路・作業手順", type: "textarea", required: true }),
+    ],
     checklists: [
       makeChecklist({
         name: "運転前チェックリスト",
@@ -359,12 +372,11 @@ export const INITIAL_TEMPLATES = [
     kind: "custom",
     updatedAt: "2026/07/15",
     updatedBy: "元請 佐藤",
-    blocks: defaultBlocks(["floorPlan", "meetingSign", "safetyInstruction"]),
-    common: [
+    blocks: defaultBlocks(["basic", "machine", "staffing", "rules", "other"]),
+    craneAuto: defaultCraneAuto(),
+    other: [
       makeRow({ label: "使用する持込機械", type: "machine", required: true }),
       makeRow({ label: "作業高さ（m）", type: "number", required: true }),
-    ],
-    work: [
       makeRow({ label: "作業内容", type: "textarea", required: true }),
       makeRow({ label: "使用する保護具", type: "multiSelect", required: true, options: "フルハーネス, 保護帽, 安全靴" }),
     ],

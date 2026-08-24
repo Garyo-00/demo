@@ -1,5 +1,8 @@
 /* ===== 作業計画書NEO 専用スタイル（既存デモと干渉しないよう .wpn- 接頭辞で分離） ===== */
-.wpn {
+/* .wpn = 管理画面レイアウト（サイド＋メイン）／.wpn-standalone = QR読み取り後の単独ページ。
+   変数と文字設定は共通、レイアウトは .wpn 側だけに持たせる。 */
+.wpn,
+.wpn-standalone {
   --wpn-bg: #eef1f8;
   --wpn-card: #ffffff;
   --wpn-ink: #1f2437;
@@ -15,12 +18,14 @@
   --wpn-radius: 10px;
   --wpn-shadow: 0 1px 2px rgba(23, 27, 48, 0.06), 0 4px 14px rgba(23, 27, 48, 0.04);
 
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
   background: var(--wpn-bg);
   color: var(--wpn-ink);
   font-family: "Inter", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+}
+.wpn {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* ===== サイドバー ===== */
@@ -248,7 +253,7 @@
   font-weight: 700;
   margin: 0 0 14px;
 }
-.wpn-card-title .wpn-hint {
+.wpn-hint {
   font-weight: 400;
   font-size: 11.5px;
   color: var(--wpn-sub);
@@ -325,16 +330,19 @@
   height: 32px;
   font-size: 12.5px;
 }
-.wpn .wpn-check {
+.wpn .wpn-check,
+.wpn-standalone .wpn-check {
   width: 18px;
   height: 18px;
   border-radius: 5px;
 }
-.wpn .wpn-check:checked {
+.wpn .wpn-check:checked,
+.wpn-standalone .wpn-check:checked {
   background: var(--wpn-primary);
   border-color: var(--wpn-primary);
 }
-.wpn .wpn-check:disabled:checked {
+.wpn .wpn-check:disabled:checked,
+.wpn-standalone .wpn-check:disabled:checked {
   background: #b7bce6;
   border-color: #b7bce6;
 }
@@ -988,14 +996,80 @@ button.wpn-status {
   font-weight: 700;
   margin-bottom: 10px;
 }
-.wpn-sub-title .wpn-hint {
-  font-weight: 400;
-  font-size: 11.5px;
-  color: var(--wpn-sub);
-  margin-left: 8px;
-}
 .wpn-input.wpn-narrow {
   width: 140px;
+}
+
+/* ===== 設定画面のトグルスイッチ ===== */
+.wpn-switch-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 0;
+}
+.wpn-switch {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  width: 42px;
+  height: 22px;
+}
+/* 全体のチェックボックス指定（index.css）を上書きするため、属性セレクタで詳細度を上げる */
+.wpn-switch input[type="checkbox"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  opacity: 0;
+  cursor: pointer;
+}
+.wpn-switch-track {
+  pointer-events: none;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 999px;
+  background: #d7dbe4;
+  transition: background 0.15s;
+}
+.wpn-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.25);
+  transition: transform 0.15s;
+}
+.wpn-switch input[type="checkbox"]:checked + .wpn-switch-track {
+  background: #c3c8ee;
+}
+.wpn-switch input[type="checkbox"]:checked + .wpn-switch-track::after {
+  transform: translateX(20px);
+  background: var(--wpn-primary);
+}
+.wpn-switch input[type="checkbox"]:focus-visible + .wpn-switch-track {
+  box-shadow: 0 0 0 3px rgba(79, 91, 213, 0.2);
+}
+.wpn-setting-note {
+  font-size: 12.5px;
+  color: var(--wpn-sub);
+  line-height: 1.7;
+  margin: 10px 0 0;
+}
+.wpn-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 .wpn-answer-table td {
   vertical-align: middle;
@@ -1320,4 +1394,303 @@ button.wpn-status {
   .wpn-content {
     padding: 16px;
   }
+}
+
+/* ===== 打合せサイン用QRコード発行 ===== */
+.wpn-print-btn {
+  margin-left: auto;
+}
+.wpn-qr-sheet {
+  text-align: center;
+  padding: 28px 20px 24px;
+}
+.wpn-qr-project {
+  font-size: 13px;
+  font-weight: 600;
+}
+.wpn-qr-name {
+  font-size: 17px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+.wpn-qr-login {
+  font-size: 11.5px;
+  color: var(--wpn-sub);
+  margin-top: 4px;
+}
+.wpn-qr-btn {
+  display: inline-block;
+  margin: 16px 0 10px;
+  padding: 10px;
+  border: 1px solid var(--wpn-line);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  line-height: 0;
+}
+.wpn-qr-btn:hover {
+  border-color: var(--wpn-primary);
+}
+.wpn-qr-url {
+  font-size: 11px;
+  color: var(--wpn-soft);
+  word-break: break-all;
+}
+@media print {
+  /* QRシートだけを印刷する（サイドバー・ヘッダー・操作列は出さない） */
+  .MuiDrawer-root,
+  .wpn-qr-toolbar {
+    display: none !important;
+  }
+}
+
+/* ===== QR読み取り後：打合せ参加者サイン（単独ページ・モバイル想定） ===== */
+.wpn-sign-screen {
+  min-height: 100vh;
+  padding: 20px 14px 40px;
+}
+.wpn-sign-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.wpn-sign-head {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.wpn-sign-project {
+  font-size: 13px;
+  color: var(--wpn-sub);
+}
+.wpn-sign-title {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 6px 0 0;
+}
+.wpn-sign-step-title {
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 14px;
+}
+.wpn-sign-companies {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.wpn-sign-company {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--wpn-line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--wpn-ink);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.wpn-sign-company:hover {
+  border-color: var(--wpn-primary);
+  background: var(--wpn-primary-weak);
+  color: var(--wpn-primary);
+}
+.wpn-sign-picked {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  background: var(--wpn-primary-weak);
+  border: 1px solid #ccd2f2;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.wpn-sign-picked-label {
+  font-size: 11.5px;
+  color: var(--wpn-sub);
+  flex: none;
+}
+.wpn-sign-picked strong {
+  font-size: 15px;
+}
+.wpn-sign-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.wpn-sign-card {
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px;
+  border: 1px solid var(--wpn-line);
+  border-radius: var(--wpn-radius);
+  background: #fff;
+  box-shadow: var(--wpn-shadow);
+  font-family: inherit;
+  color: var(--wpn-ink);
+  cursor: pointer;
+}
+.wpn-sign-card:hover {
+  border-color: var(--wpn-primary);
+}
+.wpn-sign-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.wpn-sign-card-meta {
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 12.5px;
+}
+.wpn-sign-card-meta dt {
+  color: var(--wpn-sub);
+}
+.wpn-sign-card-meta dd {
+  margin: 0;
+}
+.wpn-sign-back {
+  display: block;
+  margin: 4px auto 0;
+}
+.wpn-sign-demolink {
+  display: block;
+  text-align: center;
+  margin-top: 22px;
+  font-size: 11.5px;
+  color: var(--wpn-sub);
+  text-decoration: none;
+}
+.wpn-sign-demolink:hover {
+  color: var(--wpn-primary);
+}
+
+/* サイン枠 */
+.wpn-sign-label {
+  font-size: 12px;
+  color: var(--wpn-sub);
+  margin: 14px 0 8px;
+}
+.wpn-sign-canvas {
+  display: block;
+  width: 100%;
+  height: 180px;
+  border: 1px dashed #c2c8d6;
+  border-radius: 10px;
+  background: #fbfcfe;
+  touch-action: none;
+  cursor: crosshair;
+}
+.wpn-sign-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.wpn-sign-save {
+  margin-left: auto;
+}
+.wpn-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.wpn-sign-note {
+  font-size: 11.5px;
+  color: var(--wpn-soft);
+  margin-top: 8px;
+}
+
+/* 保存完了 */
+.wpn-sign-done {
+  text-align: center;
+  padding: 34px 20px 28px;
+}
+.wpn-sign-done-check {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--wpn-primary-weak);
+  color: var(--wpn-primary);
+  font-size: 30px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wpn-sign-done-title {
+  font-size: 18px;
+  margin: 0;
+}
+.wpn-sign-done-text {
+  font-size: 13px;
+  color: var(--wpn-sub);
+  line-height: 1.8;
+  margin: 10px 0 16px;
+}
+.wpn-sign-done-img {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto 18px;
+  border: 1px solid var(--wpn-line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+/* 承認フローのアコーディオン */
+.wpn-step-more {
+  margin-top: 8px;
+}
+
+/* ===== 詳細ページの打合せ参加者サイン一覧 ===== */
+.wpn-signs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+.wpn-sign-item {
+  border: 1px solid var(--wpn-line);
+  border-radius: 10px;
+  padding: 10px;
+  background: #fff;
+}
+.wpn-sign-item-img {
+  display: block;
+  width: 100%;
+  height: 72px;
+  object-fit: contain;
+}
+.wpn-sign-item-name {
+  height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.wpn-sign-item-tag {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--wpn-sub);
+  background: var(--wpn-head);
+  border: 1px solid var(--wpn-line);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.wpn-sign-item-at {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--wpn-line-soft);
+  font-size: 11px;
+  color: var(--wpn-sub);
+  text-align: center;
+}
+.wpn-sign-done-name {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 18px;
 }

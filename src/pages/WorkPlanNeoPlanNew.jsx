@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWpn } from "../components/wpn/WpnContext.jsx";
 import { AnswerTable } from "../components/wpn/AnswerField.jsx";
-import { newId } from "../workPlanNeoData.js";
+import { TEMPLATE_BLOCKS, newId } from "../workPlanNeoData.js";
 import {
   APPROVAL_FLOWS,
   MACHINES,
@@ -40,10 +40,8 @@ export default function WorkPlanNeoPlanNew() {
   const [templateId, setTemplateId] = useState("tplDemo");
   const [flowId, setFlowId] = useState("");
   const [perPage, setPerPage] = useState(50);
-  // テンプレート項目への回答
-  const [common, setCommon] = useState({});
-  const [works, setWorks] = useState([{ id: newId("w"), values: {} }]);
-  const [workTab, setWorkTab] = useState(0);
+  // テンプレート項目（その他ブロック）への回答
+  const [other, setOther] = useState({});
   const [floorPlanMode, setFloorPlanMode] = useState("upload"); // draw | upload
 
   const tpl = templates.find((t) => t.id === templateId) || null;
@@ -66,15 +64,10 @@ export default function WorkPlanNeoPlanNew() {
       allChecked ? s.filter((id) => !rows.some((m) => m.id === id)) : [...new Set([...s, ...rows.map((m) => m.id)])]
     );
   }
-  function setWorkValue(itemId, v) {
-    setWorks((list) =>
-      list.map((w, i) => (i === workTab ? { ...w, values: { ...w.values, [itemId]: v } } : w))
-    );
-  }
-
   function submit() {
-    if (!name.trim() || !start || !end || !templateId || !flowId) {
-      alert("必須項目（作業計画書名・作業開始日・作業終了日・テンプレート・承認フロー）を入力してください。");
+    // 作業期間は基本情報ブロックの中にあるため、ブロックがONのときだけ必須
+    if (!name.trim() || !templateId || !flowId || (blocks.basic && (!start || !end))) {
+      alert("必須項目（作業計画書名・テンプレート・承認フロー・作業期間）を入力してください。");
       return;
     }
     const flow = flowById(flowId);
@@ -98,8 +91,7 @@ export default function WorkPlanNeoPlanNew() {
           status: "applying",
           rows: s.approvers.map((a) => ({ approver: a, date: "", status: "applying", comment: "" })),
         })) || [],
-      common,
-      works,
+      other,
       files: tpl?.files || [],
       memo: "",
       checklistResults: [],
@@ -210,10 +202,6 @@ export default function WorkPlanNeoPlanNew() {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <div className="wpn-2col wpn-mb8">
-          <DateField placeholder="作業開始日" value={start} onChange={setStart} />
-          <DateField placeholder="作業終了日" value={end} onChange={setEnd} />
-        </div>
         <div className="wpn-floatfield">
           {templateId && <span className="wpn-float-label">作業計画書テンプレート</span>}
           <select
@@ -221,9 +209,7 @@ export default function WorkPlanNeoPlanNew() {
             value={templateId}
             onChange={(e) => {
               setTemplateId(e.target.value);
-              setCommon({});
-              setWorks([{ id: newId("w"), values: {} }]);
-              setWorkTab(0);
+              setOther({});
             }}
           >
             <option value="">作業計画書テンプレート</option>
@@ -235,115 +221,79 @@ export default function WorkPlanNeoPlanNew() {
         <button className="wpn-linkbtn wpn-copy-link">⧉ 過去の作業計画書からコピー</button>
       </div>
 
-      {/* ここから下はテンプレートの内容に応じて表示される */}
+      {/* ここから下はテンプレートでONにしたブロックが順に表示される */}
       {tpl && (
         <>
-          {/* 共通項目（作業配置図ブロックがONなら先頭行に入る） */}
-          <div className="wpn-card">
-            <h2 className="wpn-card-title">共通項目</h2>
-            <AnswerTable
-              items={tpl.common}
-              values={common}
-              onChange={(id, v) => setCommon((c) => ({ ...c, [id]: v }))}
-              leadingRow={
-                blocks.floorPlan ? (
-                  <tr>
-                    <td>
-                      作業配置図<span className="wpn-req-mark">*</span>
-                    </td>
-                    <td>
-                      <div className="wpn-radios">
-                        <label>
-                          <input
-                            type="radio"
-                            name="floorPlanMode"
-                            checked={floorPlanMode === "draw"}
-                            onChange={() => setFloorPlanMode("draw")}
-                          />
-                          作図
-                        </label>
-                        <label>
-                          <input
-                            type="radio"
-                            name="floorPlanMode"
-                            checked={floorPlanMode === "upload"}
-                            onChange={() => setFloorPlanMode("upload")}
-                          />
-                          アップロード
-                        </label>
-                      </div>
-                      {floorPlanMode === "upload" ? (
-                        <div className="wpn-fileline right">
-                          <button className="wpn-btn primary sm" type="button">ファイルを選択</button>
-                          <span className="wpn-camera">📷</span>
+          {TEMPLATE_BLOCKS.filter((b) => blocks[b.key]).map((b) => (
+            <div className="wpn-card" key={b.key}>
+              <h2 className="wpn-card-title">
+                {b.label}
+                <span className="wpn-hint">{b.hint}</span>
+              </h2>
+              {b.key === "basic" ? (
+                <table className="wpn-table wpn-answer-table">
+                  <tbody>
+                    <tr>
+                      <td style={{ width: "30%" }}>
+                        作業配置図<span className="wpn-req-mark">*</span>
+                      </td>
+                      <td>
+                        <div className="wpn-radios">
+                          <label>
+                            <input
+                              type="radio"
+                              name="floorPlanMode"
+                              checked={floorPlanMode === "draw"}
+                              onChange={() => setFloorPlanMode("draw")}
+                            />
+                            作図
+                          </label>
+                          <label>
+                            <input
+                              type="radio"
+                              name="floorPlanMode"
+                              checked={floorPlanMode === "upload"}
+                              onChange={() => setFloorPlanMode("upload")}
+                            />
+                            アップロード
+                          </label>
                         </div>
-                      ) : (
-                        <div className="wpn-fileline right">
-                          <button className="wpn-btn ghost sm" type="button">配置図を作図する</button>
+                        {floorPlanMode === "upload" ? (
+                          <div className="wpn-fileline right">
+                            <button className="wpn-btn primary sm" type="button">ファイルを選択</button>
+                            <span className="wpn-camera">📷</span>
+                          </div>
+                        ) : (
+                          <div className="wpn-fileline right">
+                            <button className="wpn-btn ghost sm" type="button">配置図を作図する</button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        作業期間<span className="wpn-req-mark">*</span>
+                      </td>
+                      <td>
+                        <div className="wpn-2col">
+                          <DateField placeholder="作業開始日" value={start} onChange={setStart} />
+                          <DateField placeholder="作業終了日" value={end} onChange={setEnd} />
                         </div>
-                      )}
-                    </td>
-                    <td className="wpn-note-cell">備考</td>
-                  </tr>
-                ) : null
-              }
-            />
-          </div>
-
-          {/* 作業内容（タブごとに1作業） */}
-          <div className="wpn-card">
-            <h2 className="wpn-card-title">作業内容</h2>
-            <div className="wpn-tabs">
-              {works.map((w, i) => (
-                <button
-                  key={w.id}
-                  className={"wpn-tab" + (i === workTab ? " active" : "")}
-                  onClick={() => setWorkTab(i)}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button
-                className="wpn-tab-addinline"
-                onClick={() => {
-                  setWorks((list) => [...list, { id: newId("w"), values: {} }]);
-                  setWorkTab(works.length);
-                }}
-              >
-                ＋ 追加
-              </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              ) : b.key === "other" ? (
+                <AnswerTable
+                  items={tpl.other}
+                  values={other}
+                  onChange={(id, v) => setOther((c) => ({ ...c, [id]: v }))}
+                />
+              ) : (
+                <div className="wpn-block-body">詳細仕様は後日設定予定です。</div>
+              )}
             </div>
-            <AnswerTable items={tpl.work} values={works[workTab]?.values} onChange={setWorkValue} />
-          </div>
-
-          {/* 専用ブロック */}
-          {blocks.craneAuto && (
-            <div className="wpn-card">
-              <h2 className="wpn-card-title">
-                クレーンの自動入力
-                <span className="wpn-hint">クレーン諸元から作業半径・定格荷重などを自動入力</span>
-              </h2>
-              <div className="wpn-block-body">詳細仕様は後日設定予定です。</div>
-            </div>
-          )}
-          {blocks.meetingSign && (
-            <div className="wpn-card">
-              <h2 className="wpn-card-title">
-                打合せ参加者サイン
-                <span className="wpn-hint">作業前打合せの参加者がサインを記入</span>
-              </h2>
-              <div className="wpn-block-body">詳細仕様は後日設定予定です。</div>
-            </div>
-          )}
-          {blocks.safetyInstruction && (
-            <div className="wpn-card">
-              <h2 className="wpn-card-title">
-                安全指示事項
-                <span className="wpn-hint">承認時に元請が作業内容ごとに入力します</span>
-              </h2>
-              <div className="wpn-block-body off">作成時は入力できません（承認者が入力します）。</div>
-            </div>
-          )}
+          ))}
 
           {/* 書類添付（テンプレートで登録された書類） */}
           <div className="wpn-card">

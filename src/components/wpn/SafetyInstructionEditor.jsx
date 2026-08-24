@@ -11,13 +11,8 @@ function nowStr() {
  * 「作業内容＋安全指示事項」のかたまりを、承認者が任意の数だけ追加する。
  * 他の承認者が登録した内容も上書きできる（更新者・更新日時を表示して気づけるようにする）。
  */
-export default function SafetyInstructionEditor({ plan, template, onChange }) {
+export default function SafetyInstructionEditor({ plan, onChange }) {
   const list = plan.safetyInstructions || [];
-  // 作業内容の選択肢：作業内容タブ（作業1・作業2…）＋テンプレートの作業内容項目名
-  const workOptions = plan.works.map((w, i) => ({
-    id: w.id,
-    label: `作業${i + 1}${template?.work?.[0]?.label ? `（${template.work[0].label}）` : ""}`,
-  }));
 
   const update = (id, patch) =>
     onChange(
@@ -40,8 +35,7 @@ export default function SafetyInstructionEditor({ plan, template, onChange }) {
               ...list,
               {
                 id: newId("si"),
-                workId: workOptions[0]?.id || "",
-                workLabel: workOptions[0]?.label || "",
+                workLabel: "",
                 text: "",
                 updatedAt: nowStr(),
                 updatedBy: "元請 田中",
@@ -64,19 +58,12 @@ export default function SafetyInstructionEditor({ plan, template, onChange }) {
         <div className="wpn-si edit" key={si.id}>
           <div className="wpn-si-head">
             <span className="wpn-si-no">No.{i + 1}</span>
-            <select
-              className="wpn-select wpn-si-select"
-              value={si.workId}
-              onChange={(e) => {
-                const opt = workOptions.find((o) => o.id === e.target.value);
-                update(si.id, { workId: e.target.value, workLabel: opt?.label || "" });
-              }}
-            >
-              <option value="">作業内容を選択</option>
-              {workOptions.map((o) => (
-                <option key={o.id} value={o.id}>{o.label}</option>
-              ))}
-            </select>
+            <input
+              className="wpn-input wpn-si-select"
+              placeholder="作業内容を入力"
+              value={si.workLabel}
+              onChange={(e) => update(si.id, { workLabel: e.target.value })}
+            />
             <button
               className="wpn-icon-btn"
               onClick={() => onChange(list.filter((x) => x.id !== si.id))}

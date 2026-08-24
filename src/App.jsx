@@ -13,6 +13,9 @@ import WorkPlanNeoLayout from "./components/WorkPlanNeoLayout.jsx";
 import WorkPlanNeoTemplates from "./pages/WorkPlanNeoTemplates.jsx";
 import WorkPlanNeoTemplateForm from "./pages/WorkPlanNeoTemplateForm.jsx";
 import WorkPlanNeoBlank from "./pages/WorkPlanNeoBlank.jsx";
+import WorkPlanNeoSettings from "./pages/WorkPlanNeoSettings.jsx";
+import WorkPlanNeoQr from "./pages/WorkPlanNeoQr.jsx";
+import WorkPlanNeoSign from "./pages/WorkPlanNeoSign.jsx";
 import WorkPlanNeoPlans from "./pages/WorkPlanNeoPlans.jsx";
 import WorkPlanNeoPlanNew from "./pages/WorkPlanNeoPlanNew.jsx";
 import WorkPlanNeoPlanDetail from "./pages/WorkPlanNeoPlanDetail.jsx";
@@ -43,6 +46,8 @@ export default function App() {
       <Route path="/workadjust/actual-input" element={<WorkAdjustActualInput />} />
       {/* 資機材・ゲート予約用QR読み取り後の予約ポータル（サイドバー無しの独立ページ） */}
       <Route path="/workadjust/reserve" element={<WorkAdjustReservePortal />} />
+      {/* 打合せサイン用QR読み取り後のサイン画面（サイドバー無しの独立ページ） */}
+      <Route path="/workplan-neo/sign" element={<WorkPlanNeoSign />} />
       <Route path="/app" element={<AppLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="inspection" element={<InspectionRecords />} />
@@ -68,6 +73,8 @@ export default function App() {
         <Route path="plans/:id" element={<WorkPlanNeoPlanDetail />} />
         <Route path="floor-plan" element={<WorkPlanNeoBlank />} />
         <Route path="approval-flow" element={<WorkPlanNeoBlank />} />
+        <Route path="settings" element={<WorkPlanNeoSettings />} />
+        <Route path="qr" element={<WorkPlanNeoQr />} />
         <Route path="manual" element={<WorkPlanNeoBlank />} />
       </Route>
       <Route path="/workadjust" element={<WorkAdjustLayout />}>

@@ -7,12 +7,11 @@ import SafetyInstructionEditor from "./SafetyInstructionEditor.jsx";
 // 一覧の「詳細」から開く右ドロワー。内容は詳細ページと共通。
 export default function PlanDrawer({ planId, onClose }) {
   const navigate = useNavigate();
-  const { getPlan, getTemplate, savePlan, role } = useWpn();
+  const { getPlan, savePlan, role } = useWpn();
   const plan = getPlan(planId);
   if (!plan) return null;
-  const tpl = getTemplate(plan.templateId);
   // 2ペイン（ドロワー）でも承認・否認・取下、および安全指示事項の入力ができる
-  const safetyEditable = role === "prime" && plan.status === "applying" && !!tpl?.blocks?.safetyInstruction;
+  const safetyEditable = role === "prime" && plan.status === "applying";
 
   return (
     <>
@@ -43,7 +42,6 @@ export default function PlanDrawer({ planId, onClose }) {
               safetyEditable ? (
                 <SafetyInstructionEditor
                   plan={plan}
-                  template={tpl}
                   onChange={(list) => savePlan({ ...plan, safetyInstructions: list })}
                 />
               ) : null

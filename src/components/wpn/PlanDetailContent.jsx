@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PLAN_STATUS, machineById } from "../../workPlanNeoPlanData.js";
+import { TEMPLATE_BLOCKS } from "../../workPlanNeoData.js";
 import { useWpn } from "./WpnContext.jsx";
 import { AnswerTable } from "./AnswerField.jsx";
 
@@ -13,11 +14,11 @@ export function StatusBadge({ status }) {
  * compact=true でドロワー向けの詰めたレイアウトになる。
  */
 export default function PlanDetailContent({ plan, compact = false, safetyEditor = null }) {
-  const { getTemplate } = useWpn();
+  const { getTemplate, settings } = useWpn();
   const tpl = getTemplate(plan.templateId);
-  const [workTab, setWorkTab] = useState(0);
   const machines = plan.machineIds.map(machineById).filter(Boolean);
   const blocks = tpl?.blocks || {};
+  const signs = plan.meetingSigns || [];
 
   return (
     <div className={"wpn-detail" + (compact ? " compact" : "")}>
@@ -95,61 +96,38 @@ export default function PlanDetailContent({ plan, compact = false, safetyEditor 
       <div className="wpn-card">
         <h2 className="wpn-card-title">作業計画書の内容</h2>
 
-        <div className="wpn-subcard">
-          <div className="wpn-sub-title">共通項目</div>
-          <AnswerTable
-            items={tpl?.common}
-            values={plan.common}
-            readOnly
-            leadingRow={
-              blocks.floorPlan ? (
-                <tr>
-                  <td>
-                    作業配置図<span className="wpn-req-mark">*</span>
-                  </td>
-                  <td>
-                    <button className="wpn-btn ghost sm" type="button">図面を表示</button>
-                  </td>
-                  <td className="wpn-note-cell">備考</td>
-                </tr>
-              ) : null
-            }
-          />
-        </div>
-
-        <div className="wpn-subcard">
-          <div className="wpn-sub-title">作業内容</div>
-          <div className="wpn-tabs">
-            {plan.works.map((w, i) => (
-              <button
-                key={w.id}
-                className={"wpn-tab" + (i === workTab ? " active" : "")}
-                onClick={() => setWorkTab(i)}
-              >
-                {i + 1}
-              </button>
-            ))}
+        {TEMPLATE_BLOCKS.filter((b) => blocks[b.key]).map((b) => (
+          <div className="wpn-subcard" key={b.key}>
+            <div className="wpn-sub-title">{b.label}</div>
+            {b.key === "basic" ? (
+              <table className="wpn-kv">
+                <tbody>
+                  <tr>
+                    <th>作業配置図</th>
+                    <td>
+                      <button className="wpn-btn ghost sm" type="button">図面を表示</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>作業期間</th>
+                    <td>
+                      {plan.start} 〜 {plan.end}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            ) : b.key === "other" ? (
+              <AnswerTable items={tpl?.other} values={plan.other} readOnly />
+            ) : (
+              <div className="wpn-block-body">詳細仕様は後日設定予定です。</div>
+            )}
           </div>
-          <AnswerTable items={tpl?.work} values={plan.works[workTab]?.values} readOnly />
-        </div>
-
-        {blocks.craneAuto && (
-          <div className="wpn-subcard">
-            <div className="wpn-sub-title">クレーンの自動入力</div>
-            <div className="wpn-block-body">クレーン諸元から自動入力された値を表示します。</div>
-          </div>
-        )}
-        {blocks.meetingSign && (
-          <div className="wpn-subcard">
-            <div className="wpn-sub-title">打合せ参加者サイン</div>
-            <div className="wpn-block-body">参加者のサインを表示します。</div>
-          </div>
-        )}
+        ))}
       </div>
 
-      {/* 安全指示事項（テンプレートでONのときのみ。承認時に元請が入力） */}
-      {blocks.safetyInstruction && safetyEditor}
-      {blocks.safetyInstruction && !safetyEditor && (
+      {/* 安全指示事項（承認時に元請が入力） */}
+      {safetyEditor}
+      {!safetyEditor && (
         <div className="wpn-card">
           <h2 className="wpn-card-title">
             安全指示事項
@@ -221,6 +199,38 @@ export default function PlanDetailContent({ plan, compact = false, safetyEditor 
         )}
       </div>
 
+      {/* 打合せ参加者サイン（設定でONのときのみ。QRから参加者が登録する） */}
+      {settings.meetingSign && (
+        <div className="wpn-card">
+          <h2 className="wpn-card-title">
+            打合せ参加者サイン
+            <span className="wpn-hint">
+              {signs.length > 0 ? `${signs.length}名` : "打合せサイン用QRから参加者が登録します"}
+            </span>
+          </h2>
+          {signs.length === 0 ? (
+            <div className="wpn-none">サインは登録されていません</div>
+          ) : (
+            <div className="wpn-signs">
+              {signs.map((sg) => (
+                <div className="wpn-sign-item" key={sg.id}>
+                  {sg.image ? (
+                    <img className="wpn-sign-item-img" src={sg.image} alt="打合せ参加者のサイン" />
+                  ) : (
+                    // 手書きできない参加者は氏名入力で代替する
+                    <div className="wpn-sign-item-name">
+                      {sg.name}
+                      <span className="wpn-sign-item-tag">氏名入力</span>
+                    </div>
+                  )}
+                  <div className="wpn-sign-item-at">{sg.at}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* メモ */}
       <div className="wpn-card">
         <h2 className="wpn-card-title">メモ</h2>
@@ -231,38 +241,59 @@ export default function PlanDetailContent({ plan, compact = false, safetyEditor 
       <div className="wpn-card">
         <h2 className="wpn-card-title">承認フロー</h2>
         {plan.approvals.map((step) => (
-          <div className="wpn-step" key={step.no}>
-            <div className="wpn-step-head">
-              <span className="wpn-step-no">{step.no}</span>
-              ステップ {step.no}
-              <StatusBadge status={step.status} />
-            </div>
-            <div className="wpn-step-group">{step.group}</div>
-            <table className="wpn-table">
-              <thead>
-                <tr>
-                  <th style={{ width: "18%" }}>決裁日</th>
-                  <th>決裁者</th>
-                  <th style={{ width: "18%" }}>決裁状況</th>
-                  <th style={{ width: "24%" }}>コメント</th>
-                </tr>
-              </thead>
-              <tbody>
-                {step.rows.map((r, i) => (
-                  <tr key={i}>
-                    <td>{r.date || "-"}</td>
-                    <td>{r.approver}</td>
-                    <td>
-                      <StatusBadge status={r.status} />
-                    </td>
-                    <td>{r.comment || "-"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ApprovalStep key={step.no} step={step} />
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * 承認フローの1ステップ。決裁者が多いと一覧が長くなるため、
+ * 既定では**決裁済み（承認・否認）の人だけ**を表示し、未決裁の人はアコーディオンで開く。
+ */
+function ApprovalStep({ step }) {
+  const [open, setOpen] = useState(false);
+  const decided = step.rows.filter((r) => r.status !== "applying");
+  const pending = step.rows.filter((r) => r.status === "applying");
+  // 誰も決裁していないときは全員（＝未決裁）を出す。畳むと空表示になってしまうため。
+  const rows = decided.length === 0 || open ? step.rows : decided;
+
+  return (
+    <div className="wpn-step">
+      <div className="wpn-step-head">
+        <span className="wpn-step-no">{step.no}</span>
+        ステップ {step.no}
+        <StatusBadge status={step.status} />
+      </div>
+      <div className="wpn-step-group">{step.group}</div>
+      <table className="wpn-table">
+        <thead>
+          <tr>
+            <th style={{ width: "18%" }}>決裁日</th>
+            <th>決裁者</th>
+            <th style={{ width: "18%" }}>決裁状況</th>
+            <th style={{ width: "24%" }}>コメント</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i}>
+              <td>{r.date || "-"}</td>
+              <td>{r.approver}</td>
+              <td>
+                <StatusBadge status={r.status} />
+              </td>
+              <td>{r.comment || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {decided.length > 0 && pending.length > 0 && (
+        <button type="button" className="wpn-linkbtn wpn-step-more" onClick={() => setOpen((v) => !v)}>
+          {open ? "▲ 未決裁の決裁者を隠す" : `▼ 未決裁の決裁者 ${pending.length} 名を表示`}
+        </button>
+      )}
     </div>
   );
 }

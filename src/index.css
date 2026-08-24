@@ -19,17 +19,19 @@ body{margin:0;font-family:"Inter","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo
 a{color:inherit;}
 
 /* ===== HeroUI 風チェックボックス（角丸スクエア・チェック時primary） ===== */
-input[type="checkbox"]{appearance:none;-webkit-appearance:none;margin:0;flex:0 0 auto;
+/* MUI化した画面の Checkbox / Switch / Radio には当てない（MUIは内部の input を隠して描画するため）。
+   未変換のデモ画面用に残している暫定ルール。 */
+input[type="checkbox"]:not(.PrivateSwitchBase-input){appearance:none;-webkit-appearance:none;margin:0;flex:0 0 auto;
   width:18px;height:18px;border:2px solid #d4d4d8;border-radius:6px;background:#fff;
   cursor:pointer;position:relative;vertical-align:middle;
   transition:background .15s ease,border-color .15s ease;}
-input[type="checkbox"]:hover{border-color:#a1a1aa;}
-input[type="checkbox"]:checked{background:var(--accent);border-color:var(--accent);}
-input[type="checkbox"]:checked::after{content:"";position:absolute;left:50%;top:46%;
+input[type="checkbox"]:not(.PrivateSwitchBase-input):hover{border-color:#a1a1aa;}
+input[type="checkbox"]:not(.PrivateSwitchBase-input):checked{background:var(--accent);border-color:var(--accent);}
+input[type="checkbox"]:not(.PrivateSwitchBase-input):checked::after{content:"";position:absolute;left:50%;top:46%;
   width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;
   transform:translate(-50%,-50%) rotate(45deg);}
-input[type="checkbox"]:focus-visible{outline:none;box-shadow:0 0 0 3px var(--accent-weak);}
-input[type="checkbox"]:disabled{opacity:.5;cursor:not-allowed;}
+input[type="checkbox"]:not(.PrivateSwitchBase-input):focus-visible{outline:none;box-shadow:0 0 0 3px var(--accent-weak);}
+input[type="checkbox"]:not(.PrivateSwitchBase-input):disabled{opacity:.5;cursor:not-allowed;}
 
 /* ===== demo list ===== */
 .wrap{max-width:880px;margin:0 auto;padding:48px 24px;}

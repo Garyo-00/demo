@@ -1,72 +1,83 @@
 import { useState } from "react";
 import { Outlet, useNavigate, useLocation, Link } from "react-router-dom";
+import {
+  Avatar,
+  Box,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  ScopedCssBaseline,
+  ToggleButton,
+  ToggleButtonGroup,
+  Toolbar,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
+import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
+import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
+import AccountTreeOutlinedIcon from "@mui/icons-material/AccountTreeOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import QrCode2OutlinedIcon from "@mui/icons-material/QrCode2Outlined";
+import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { WpnProvider, useWpn } from "./wpn/WpnContext.jsx";
 import { WPN_PROJECT } from "../workPlanNeoData.js";
-import "./wpn/wpn.css";
 
-// サイドメニュー（アイコンはキャプチャに合わせた線画）
+const WIDTH = 232;
+const MINI = 64;
+
+// サイドメニュー。QRコード画面の中身（発行できる種類）は設定のON/OFFで変わる。
 const NAV = [
-  { key: "plans", label: "作業計画書一覧", to: "/workplan-neo/plans", icon: IconDoc },
-  { key: "templates", label: "作業計画書テンプレート設定", to: "/workplan-neo/templates", icon: IconTable },
-  { key: "floor-plan", label: "作業配置図設定", to: "/workplan-neo/floor-plan", icon: IconMap },
-  { key: "approval-flow", label: "承認フロー設定", to: "/workplan-neo/approval-flow", icon: IconFlow },
-  { key: "manual", label: "マニュアル", to: "/workplan-neo/manual", icon: IconBook },
+  { key: "plans", label: "作業計画書一覧", to: "/workplan-neo/plans", Icon: DescriptionOutlinedIcon },
+  { key: "templates", label: "作業計画書テンプレート設定", to: "/workplan-neo/templates", Icon: TableChartOutlinedIcon },
+  { key: "floor-plan", label: "作業配置図設定", to: "/workplan-neo/floor-plan", Icon: MapOutlinedIcon },
+  { key: "approval-flow", label: "承認フロー設定", to: "/workplan-neo/approval-flow", Icon: AccountTreeOutlinedIcon },
+  { key: "settings", label: "設定", to: "/workplan-neo/settings", Icon: SettingsOutlinedIcon },
+  { key: "qr", label: "QRコード", to: "/workplan-neo/qr", Icon: QrCode2OutlinedIcon },
+  { key: "manual", label: "マニュアル", to: "/workplan-neo/manual", Icon: MenuBookOutlinedIcon },
 ];
-
-function IconDoc(props) {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
-      <path d="M14 3v5h5M9 13h6M9 17h4" />
-    </svg>
-  );
-}
-function IconTable(props) {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <rect x="4" y="4" width="16" height="16" rx="2" />
-      <path d="M4 9h16M9 9v11" />
-    </svg>
-  );
-}
-function IconMap(props) {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m9 4-5 2v14l5-2 6 2 5-2V4l-5 2z" />
-      <path d="M9 4v14M15 6v14" />
-    </svg>
-  );
-}
-function IconFlow(props) {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <rect x="3" y="3" width="7" height="5" rx="1" />
-      <rect x="14" y="16" width="7" height="5" rx="1" />
-      <rect x="3" y="16" width="7" height="5" rx="1" />
-      <path d="M6.5 8v5h11v3M6.5 13v3" />
-    </svg>
-  );
-}
-function IconBook(props) {
-  return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z" />
-      <path d="M8 7h7M8 11h7" />
-    </svg>
-  );
-}
 
 function RoleSwitch() {
   const { role, setRole } = useWpn();
   return (
-    <div className="wpn-role" role="group" aria-label="閲覧ロール切替">
-      <button className={role === "prime" ? "active" : ""} onClick={() => setRole("prime")} aria-pressed={role === "prime"}>
-        元請
-      </button>
-      <button className={role === "foreman" ? "active" : ""} onClick={() => setRole("foreman")} aria-pressed={role === "foreman"}>
-        職長
-      </button>
-    </div>
+    <ToggleButtonGroup
+      exclusive
+      size="small"
+      value={role}
+      onChange={(_, v) => v && setRole(v)}
+      aria-label="閲覧ロール切替"
+      sx={{
+        ml: "auto",
+        "& .MuiToggleButton-root": {
+          border: 0,
+          px: 1.5,
+          py: 0.4,
+          fontSize: 11.5,
+          borderRadius: 999,
+          color: "text.secondary",
+        },
+        "& .MuiToggleButton-root.Mui-selected": {
+          color: "#fff",
+          bgcolor: "primary.main",
+          "&:hover": { bgcolor: "primary.dark" },
+        },
+        bgcolor: "#f7f8fb",
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 999,
+        p: "2px",
+      }}
+    >
+      <ToggleButton value="prime">元請</ToggleButton>
+      <ToggleButton value="foreman">職長</ToggleButton>
+    </ToggleButtonGroup>
   );
 }
 
@@ -75,63 +86,160 @@ function WorkPlanNeoLayoutInner() {
   const { pathname } = useLocation();
   const { role } = useWpn();
   const [collapsed, setCollapsed] = useState(false);
+  const width = collapsed ? MINI : WIDTH;
 
   // 設定系メニューは元請（ゼネコン）のみ。職長には一覧とマニュアルのみ見せる。
   const FOREMAN_MENU = ["plans", "manual"];
   const navItems = NAV.filter((n) => role === "prime" || FOREMAN_MENU.includes(n.key));
 
   return (
-    <div className={"wpn" + (collapsed ? " collapsed" : "")}>
-      <aside className="wpn-side">
-        <div className="wpn-brand">
-          <Link to="/workplan-neo" className="wpn-logo" title="作業計画書NEO">
+    // className="wpn" は MUI 化が済んでいない画面のために残している（CSS変数の供給元）。
+    // 全画面の変換が終わったら外す。
+    <ScopedCssBaseline
+      className="wpn"
+      sx={{ display: "flex", height: "100vh", overflow: "hidden", bgcolor: "background.default" }}
+    >
+      <Drawer
+        variant="permanent"
+        sx={{
+          width,
+          flexShrink: 0,
+          "& .MuiDrawer-paper": {
+            width,
+            boxSizing: "border-box",
+            overflowX: "hidden",
+            transition: "width .18s ease",
+          },
+        }}
+      >
+        <Toolbar sx={{ minHeight: 56, gap: 1.25, px: 1.75 }}>
+          <Box
+            component={Link}
+            to="/workplan-neo"
+            title="作業計画書NEO"
+            sx={{
+              width: 34,
+              height: 34,
+              flex: "none",
+              borderRadius: 2,
+              bgcolor: "#1f2437",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 9,
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
             Arch
-          </Link>
-          <span className="wpn-brand-name">作業計画書</span>
-          <button className="wpn-collapse" onClick={() => setCollapsed(true)} aria-label="メニューを折りたたむ">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-          </button>
-        </div>
-        <nav className="wpn-nav">
-          {navItems.map(({ key, label, to, icon: Icon }) => (
-            <button
-              key={key}
-              className={"wpn-nav-item" + (pathname.startsWith(to) ? " active" : "")}
-              onClick={() => navigate(to)}
-              title={label}
-            >
-              <Icon />
-              <span className="wpn-nav-label">{label}</span>
-            </button>
-          ))}
-          {collapsed && (
-            <button className="wpn-nav-item" onClick={() => setCollapsed(false)} title="メニューを開く">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </button>
+          </Box>
+          {!collapsed && (
+            <>
+              <Typography noWrap sx={{ fontSize: 14, fontWeight: 700 }}>
+                作業計画書
+              </Typography>
+              <IconButton size="small" sx={{ ml: "auto" }} onClick={() => setCollapsed(true)} aria-label="メニューを折りたたむ">
+                <ChevronLeftIcon fontSize="small" />
+              </IconButton>
+            </>
           )}
-        </nav>
-        <Link to="/" className="wpn-back">
-          ← デモ画面一覧へ戻る
-        </Link>
-      </aside>
+        </Toolbar>
+        <Divider />
 
-      <div className="wpn-main">
-        <div className="wpn-topbar">
-          <span className="wpn-project">{WPN_PROJECT}</span>
+        <List sx={{ p: 1, flex: 1, minHeight: 0, overflowY: "auto" }}>
+          {navItems.map(({ key, label, to, Icon }) => {
+            const active = pathname.startsWith(to);
+            return (
+              <Tooltip key={key} title={collapsed ? label : ""} placement="right">
+                <ListItemButton
+                  selected={active}
+                  onClick={() => navigate(to)}
+                  sx={{
+                    borderRadius: 2,
+                    mb: 0.25,
+                    minHeight: 40,
+                    px: 1.25,
+                    "&.Mui-selected": {
+                      bgcolor: "primary.light",
+                      color: "primary.main",
+                      "&:hover": { bgcolor: "primary.light" },
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 0, mr: collapsed ? 0 : 1.25, color: "inherit" }}>
+                    <Icon fontSize="small" />
+                  </ListItemIcon>
+                  {!collapsed && (
+                    <ListItemText
+                      primary={label}
+                      slotProps={{
+                        primary: {
+                          sx: { fontSize: 12.5, fontWeight: active ? 600 : 500, lineHeight: 1.35 },
+                        },
+                      }}
+                    />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            );
+          })}
+          {collapsed && (
+            <ListItemButton sx={{ borderRadius: 2, minHeight: 40, px: 1.25 }} onClick={() => setCollapsed(false)}>
+              <ListItemIcon sx={{ minWidth: 0 }}>
+                <ChevronRightIcon fontSize="small" />
+              </ListItemIcon>
+            </ListItemButton>
+          )}
+        </List>
+
+        <Divider />
+        <Box
+          component={Link}
+          to="/"
+          sx={{
+            p: 1.5,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.75,
+            fontSize: 11.5,
+            color: "text.secondary",
+            textDecoration: "none",
+            "&:hover": { color: "primary.main" },
+          }}
+        >
+          <ArrowBackIcon sx={{ fontSize: 14 }} />
+          {!collapsed && "デモ画面一覧へ戻る"}
+        </Box>
+      </Drawer>
+
+      <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        <Toolbar
+          sx={{
+            minHeight: 56,
+            flex: "0 0 56px",
+            gap: 1.5,
+            px: 2.5,
+            bgcolor: "background.paper",
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Typography noWrap sx={{ fontSize: 13, fontWeight: 600 }}>
+            {WPN_PROJECT}
+          </Typography>
           <RoleSwitch />
-          <span className="wpn-avatar">A</span>
-        </div>
-        <div className="wpn-content">
-          <div className="wpn-inner">
+          <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.light", color: "primary.main", fontSize: 13, fontWeight: 700 }}>
+            A
+          </Avatar>
+        </Toolbar>
+        <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: { xs: 2, md: "24px 32px 40px" } }}>
+          <Box sx={{ maxWidth: 1120, mx: "auto" }}>
             <Outlet />
-          </div>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Box>
+    </ScopedCssBaseline>
   );
 }
 

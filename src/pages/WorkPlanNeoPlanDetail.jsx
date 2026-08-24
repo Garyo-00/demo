@@ -7,7 +7,7 @@ import SafetyInstructionEditor from "../components/wpn/SafetyInstructionEditor.j
 export default function WorkPlanNeoPlanDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getPlan, savePlan, getTemplate, role } = useWpn();
+  const { getPlan, savePlan, role } = useWpn();
   const plan = getPlan(id);
 
   if (!plan) {
@@ -19,10 +19,8 @@ export default function WorkPlanNeoPlanDetail() {
     );
   }
 
-  const tpl = getTemplate(plan.templateId);
-  // テンプレートで安全指示事項ブロックがONなら、承認者が承認前に入力できる
-  const safetyEditable =
-    role === "prime" && plan.status === "applying" && !!tpl?.blocks?.safetyInstruction;
+  // 安全指示事項は承認者が承認前に入力する（docs/workplan/02）
+  const safetyEditable = role === "prime" && plan.status === "applying";
 
   return (
     <div>
@@ -44,7 +42,6 @@ export default function WorkPlanNeoPlanDetail() {
           safetyEditable ? (
             <SafetyInstructionEditor
               plan={plan}
-              template={tpl}
               onChange={(list) => savePlan({ ...plan, safetyInstructions: list })}
             />
           ) : null
