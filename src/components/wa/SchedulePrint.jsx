@@ -28,9 +28,8 @@ export default function SchedulePrint({ date, rows, manager, seals = [] }) {
     <>
       {pages.map((pageRows, pi) => (
         <div className="paper" key={pi}>
-          {/* 上部ラベル */}
+          {/* 工事番号は出力しない（工事名称のみ） */}
           <div className="pf-topline">
-            <span>工事番号 {WA_PROJECT.number}</span>
             <span>工事名称 {WA_PROJECT.name}</span>
           </div>
           <div className="pf-headrow">

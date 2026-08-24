@@ -1,6 +1,35 @@
 import { useState, useRef, useEffect, Fragment } from "react";
 import {
-  WA_COMPANIES,
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
+  Radio,
+  RadioGroup,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tab,
+  Tabs,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import PrintIcon from "@mui/icons-material/PrintOutlined";
+import {
   WA_VEHICLE_TYPES,
   WA_MY_COMPANY,
   formatDateStr,
@@ -8,7 +37,7 @@ import {
 import Modal from "../components/wa/Modal.jsx";
 import PrintPreview from "../components/wa/PrintPreview.jsx";
 import ReservationPrint from "../components/wa/ReservationPrint.jsx";
-import { SuggestField, SelectField, ReadonlyField } from "../components/wa/Field.jsx";
+import { SuggestField, SelectField, ReadonlyField, FormGrid } from "../components/wa/Field.jsx";
 import {
   DAY_START,
   DAY_END,
@@ -29,7 +58,6 @@ import {
   intervalMinutes,
 } from "../components/wa/WaSettingsContext.jsx";
 import { scheduleOfReservation } from "../components/wa/scheduleLinks.js";
-import printIcon from "../assets/icons/print.svg";
 import TablePagination from "../components/wa/TablePagination.jsx";
 import RsvDayColumns, { MAX_COMPARE } from "../components/wa/RsvDayColumns.jsx";
 import { useIsNarrow } from "../components/wa/useIsNarrow.js";
@@ -42,25 +70,83 @@ const REMARK_MAX = 25; // 備考の文字数上限
 // 所要時間（分）
 const durationMin = (start, end) => Math.round((toHour(end) - toHour(start)) * 60);
 
+// ===== 2部制の予約枠（丸／他社ラベル）のスタイル =====
+const SLOT_BASE = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 22,
+  height: 22,
+  borderRadius: "50%",
+  border: "1.5px solid",
+  borderColor: "divider",
+  bgcolor: "background.paper",
+  p: 0,
+};
+const SLOT_SELF = { ...SLOT_BASE, bgcolor: "primary.main", borderColor: "primary.main" };
+const SLOT_DISABLED = {
+  ...SLOT_BASE,
+  background: "repeating-linear-gradient(45deg,#f4f4f5,#f4f4f5 3px,#e4e4e7 3px,#e4e4e7 6px)",
+  cursor: "not-allowed",
+};
+const SLOT_OTHER = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "auto",
+  height: "auto",
+  borderRadius: 1.5,
+  border: 0,
+  bgcolor: "#e4e7ec",
+  color: "#667085",
+  fontSize: 10,
+  fontWeight: 600,
+  px: 0.75,
+  py: 0.375,
+  whiteSpace: "nowrap",
+  maxWidth: 66,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  cursor: "not-allowed",
+};
+
 // 予約に紐づいている作業予定。1つの予約に紐づく作業予定は1件まで（[01] §4-2）。
 function LinkedSchedule({ schedules, rsvId }) {
   const rec = scheduleOfReservation(schedules, rsvId);
   if (!rec) {
     return (
-      <p className="rsv-linked none">この予約に紐づいている作業予定はありません。</p>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 1.25, mb: 1.75, bgcolor: "action.hover" }}
+      >
+        この予約に紐づいている作業予定はありません。
+      </Typography>
     );
   }
   const place = [rec.building, rec.floor, rec.area, rec.zone].filter(Boolean).join(" / ");
   return (
-    <div className="rsv-linked">
-      <span className="rsv-linked-label">紐づく作業予定</span>
-      <div className="rsv-linked-body">
-        <b>{rec.content || "（作業内容なし）"}</b>
-        <span className="rsv-linked-meta">
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 1.25,
+        border: "1px solid",
+        borderColor: "primary.main",
+        bgcolor: "primary.light",
+        borderRadius: 2,
+        p: 1.25,
+        mb: 1.75,
+      }}
+    >
+      <Chip size="small" label="紐づく作業予定" sx={{ bgcolor: "background.paper", color: "primary.main" }} />
+      <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{rec.content || "（作業内容なし）"}</Typography>
+        <Typography variant="caption" color="text.secondary">
           {[rec.company, rec.jobType, place].filter(Boolean).join("／")}
-        </span>
-      </div>
-    </div>
+        </Typography>
+      </Box>
+    </Box>
   );
 }
 
@@ -110,8 +196,10 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
   const {
     interval, time, date, gates, lifts, equipment, role,
     reservations: rows, setReservations: setRows,
-    schedules,
+    schedules, companies,
   } = useWaSettings();
+  // 協力会社名の選択肢は「協力会社設定」に登録された会社（表示順のまま）
+  const companyOptions = companies.map((c) => c.name);
   const KINDS = restrictAerial ? ["aerial"] : KINDS_ALL;
   // 元請のみの操作（出力・確定）。アカウントなし（guest）では非表示
   const canManage = !guest && role === "prime";
@@ -126,7 +214,6 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
   const [showPrint, setShowPrint] = useState(false);
   // 資機材・その他タブのカテゴリ絞り込み（プルダウンからの複数選択。空＝すべて）
   const [cats, setCats] = useState([]);
-  const [catOpen, setCatOpen] = useState(false);
   // 予約テーブル（機械の行）のページネーション（50件ずつ）
   const [rsvPage, setRsvPage] = useState(0);
   const [rsvPageSize, setRsvPageSize] = useState(50);
@@ -353,33 +440,37 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
   }
 
   return (
-    <div>
-      <div className="page-title">予約</div>
+    <Box>
+      <Typography variant="h1" sx={{ mb: 1.75 }}>
+        予約
+      </Typography>
 
-      <div className="tabs">
+      <Tabs
+        value={kind}
+        onChange={(_, v) => setKind(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+      >
         {KINDS.map((k) => (
-          <button
-            key={k}
-            className={"tab" + (kind === k ? " on" : "")}
-            onClick={() => setKind(k)}
-          >
-            {KIND_LABEL[k]}
-          </button>
+          <Tab key={k} value={k} label={KIND_LABEL[k]} />
         ))}
-      </div>
+      </Tabs>
 
-      <div className="toolbar">
-        <span className="subtle">
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap", my: 2 }}>
+        <Typography variant="caption" color="text.secondary">
           {twoShift ? `${resourceItems.length} 台` : `${visible.length} 件`}
-        </span>
+        </Typography>
         {!twoShift && canManage && (
-          <button className="ghost-btn spacer" onClick={() => setShowPrint(true)}>
-            <img className="ic-btn" src={printIcon} alt="" />出力
-          </button>
+          <Button variant="outlined" startIcon={<PrintIcon />} sx={{ ml: "auto" }} onClick={() => setShowPrint(true)}>
+            出力
+          </Button>
         )}
         {!twoShift && (
-          <button
-            className={"primary-btn" + (canManage ? "" : " spacer")}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            sx={canManage ? undefined : { ml: "auto" }}
             onClick={() => {
               const base = emptyRsv(kind, date, isConfirmed ? "spot" : "normal", resourceItems[0] || "");
               if (base.resvType === "spot") base.end = addMinutes(base.start, spotDurs[0], dayEnd);
@@ -388,135 +479,159 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
             disabled={resourceItems.length === 0}
             title={isConfirmed ? "確定後はスポット予約のみ作成できます" : ""}
           >
-            ＋ {isConfirmed ? "スポット予約作成" : "予約作成"}
-          </button>
+            {isConfirmed ? "スポット予約作成" : "予約作成"}
+          </Button>
         )}
-      </div>
+      </Box>
 
       {isAerial && (
-        <div className="filters">
-          <span className="subtle" style={{ fontSize: 12 }}>カテゴリ：</span>
-          <div className="ms-dd">
-            <button
-              type="button"
-              className="ms-dd-btn"
-              onClick={() => setCatOpen((o) => !o)}
-              aria-expanded={catOpen}
+        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center", my: 1.75 }}>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            {/* 未選択時は「すべて」と出すため、ラベルは常に縮小表示（notched）にする */}
+            <InputLabel shrink id="rsv-cat-label">
+              カテゴリ
+            </InputLabel>
+            <Select
+              multiple
+              labelId="rsv-cat-label"
+              input={<OutlinedInput notched label="カテゴリ" />}
+              value={cats}
+              onChange={(e) => setCats(e.target.value)}
+              displayEmpty
+              renderValue={() => (cats.length === 0 ? "すべて" : cats.join("、"))}
             >
-              <span className="ms-dd-text">
-                {cats.length === 0 ? "すべて" : cats.join("、")}
-              </span>
-              <span className="ms-dd-caret">▾</span>
-            </button>
-            {catOpen && (
-              <>
-                <div className="ms-dd-backdrop" onClick={() => setCatOpen(false)} />
-                <div className="ms-dd-panel">
-                  {catList.map((c) => (
-                    <label className="ms-dd-item" key={c}>
-                      <input
-                        type="checkbox"
-                        checked={cats.includes(c)}
-                        onChange={(e) =>
-                          setCats((prev) =>
-                            e.target.checked ? [...prev, c] : prev.filter((x) => x !== c)
-                          )
-                        }
-                      />
-                      {c}
-                    </label>
-                  ))}
-                  {cats.length > 0 && (
-                    <button className="ms-dd-clear" onClick={() => setCats([])}>
-                      クリア（すべて表示）
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+              {catList.map((c) => (
+                <MenuItem key={c} value={c} dense>
+                  <Checkbox size="small" checked={cats.includes(c)} sx={{ mr: 0.5 }} />
+                  <ListItemText primary={c} slotProps={{ primary: { sx: { fontSize: 13 } } }} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {cats.length > 0 && (
+            <Button size="small" onClick={() => setCats([])}>
+              クリア（すべて表示）
+            </Button>
+          )}
 
           {/* 予約方法の表示切替（右端・2部制→時間制の順） */}
-          <div className="filters-view">
-            <span className="subtle" style={{ fontSize: 12 }}>表示：</span>
-            <div className="role-switch" role="group" aria-label="予約方法の表示切替">
-              <button
-                className={"role-seg" + (aerialView === "2部制" ? " active" : "")}
-                onClick={() => setAerialView("2部制")}
-              >
-                2部制
-              </button>
-              <button
-                className={"role-seg" + (aerialView === "時間制" ? " active" : "")}
-                onClick={() => setAerialView("時間制")}
-              >
-                時間制
-              </button>
-            </div>
-          </div>
-        </div>
+          <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 1 }}>
+            <Typography variant="caption" color="text.secondary">
+              表示：
+            </Typography>
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={aerialView}
+              onChange={(_, v) => v && setAerialView(v)}
+              aria-label="予約方法の表示切替"
+            >
+              <ToggleButton value="2部制">2部制</ToggleButton>
+              <ToggleButton value="時間制">時間制</ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+        </Box>
       )}
 
       {twoShift ? (
-        <div className="rsv-scroll">
-          <table className="shift-grid">
-            <thead>
-              <tr>
-                <th className="shift-res-h" rowSpan={2}>機械名・現場内呼称</th>
+        <TableContainer sx={{ overflowX: "auto" }}>
+          <Table
+            size="small"
+            sx={{
+              minWidth: 920,
+              "& th, & td": { border: "1px solid", borderColor: "divider", textAlign: "center", p: "6px 4px" },
+            }}
+          >
+            <TableHead>
+              <TableRow>
+                <TableCell
+                  rowSpan={2}
+                  sx={{ textAlign: "left !important", position: "sticky", left: 0, zIndex: 2, minWidth: 170 }}
+                >
+                  機械名・現場内呼称
+                </TableCell>
                 {week.map((d, i) => (
-                  <th
+                  <TableCell
                     key={i}
                     colSpan={2}
-                    className={"shift-day" + (d.getDay() === 0 || d.getDay() === 6 ? " wend" : "")}
+                    sx={{ color: d.getDay() === 0 || d.getDay() === 6 ? "error.main" : undefined }}
                   >
                     {dayLabel(d)}
-                  </th>
+                  </TableCell>
                 ))}
-              </tr>
-              <tr>
+              </TableRow>
+              <TableRow>
                 {week.flatMap((d, i) => [
-                  <th key={i + "a"} className="shift-ap">AM</th>,
-                  <th key={i + "p"} className="shift-ap">PM</th>,
+                  <TableCell key={i + "a"} sx={{ fontSize: 11, width: 40 }}>
+                    AM
+                  </TableCell>,
+                  <TableCell key={i + "p"} sx={{ fontSize: 11, width: 40 }}>
+                    PM
+                  </TableCell>,
                 ])}
-              </tr>
-            </thead>
-            <tbody>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {pagedItems.map((res) => (
-                <tr key={res}>
-                  <td className="shift-res">{res}</td>
+                <TableRow key={res}>
+                  <TableCell
+                    sx={{
+                      textAlign: "left !important",
+                      whiteSpace: "nowrap",
+                      bgcolor: "action.hover",
+                      position: "sticky",
+                      left: 0,
+                      zIndex: 1,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {res}
+                  </TableCell>
                   {week.flatMap((d, i) =>
                     ["am", "pm"].map((p) => {
                       const val = slots[`${res}|${dayKey(d)}|${p}`];
                       const mine = val && val.self;
                       const disabled = slotDisabled(i, p);
                       return (
-                        <td key={`${i}-${p}`} className="shift-cell">
+                        <TableCell key={`${i}-${p}`} sx={{ p: "4px !important" }}>
                           {val && !mine ? (
-                            <span className="shift-slot other" title={`${val.company} 予約済`}>{val.company}</span>
+                            <Box component="span" sx={SLOT_OTHER} title={`${val.company} 予約済`}>
+                              {val.company}
+                            </Box>
                           ) : mine ? (
-                            <button
-                              className="shift-slot self"
+                            <Box
+                              component="button"
+                              type="button"
+                              sx={{ ...SLOT_SELF, cursor: "pointer" }}
                               onClick={() => setSlotDialog({ res, d, p })}
                               title="自分の予約（クリックで詳細・取消）"
+                              aria-label="自分の予約"
                             />
                           ) : disabled ? (
-                            <span className="shift-slot disabled" title="当日のため予約できません" />
+                            <Box component="span" sx={SLOT_DISABLED} title="当日のため予約できません" />
                           ) : (
-                            <button
-                              className="shift-slot"
+                            <Box
+                              component="button"
+                              type="button"
+                              sx={{
+                                ...SLOT_BASE,
+                                cursor: "pointer",
+                                "&:hover": { borderColor: "primary.main", bgcolor: "primary.light" },
+                              }}
                               onClick={() => onEmptySlot(res, d, p)}
                               title="空き（クリックで予約）"
+                              aria-label="空き枠"
                             />
                           )}
-                        </td>
+                        </TableCell>
                       );
                     })
                   )}
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
       ) : dayColumns ? (
         <RsvDayColumns
           items={resourceItems}
@@ -535,7 +650,8 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
           label={resource.label}
         />
       ) : (
-      <div className="rsv-scroll">
+      // 予約タイムラインは px 単位でバー・ラベルを配置するため既存CSSのまま
+      <Box sx={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
       <div className="rsv-board" ref={boardRef}>
         <div className="rsv-corner">{resource.label}＼時刻</div>
         <div className="rsv-hours" style={{ gridTemplateColumns: `repeat(${HOURS_DYN.length}, 1fr)` }}>
@@ -614,7 +730,7 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
           );
         })}
       </div>
-      </div>
+      </Box>
       )}
 
       {/* スマホの日表示は資源を選んで表示するため、行のページ送りは不要 */}
@@ -630,47 +746,62 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
 
       {/* 確定（日付単位・全タブ共通）。その日の予約（通常・スポット）をまとめて確定（元請ビューのみ）。2部制は対象外 */}
       {!twoShift && canManage && (
-      <div className="confirm-bar bare">
-        {isConfirmed ? (
-          <>
-            <span className="badge-green">確定済</span>
-            <button
-              className="ghost-btn"
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1.75, mt: 2, flexWrap: "wrap" }}>
+          {isConfirmed ? (
+            <>
+              <Chip size="small" color="success" label="確定済" />
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setConfirmedDays((d) => ({ ...d, [date]: false }));
+                  setRows((rs) =>
+                    rs.map((r) => (r.date === date ? { ...r, confirmed: false } : r))
+                  );
+                }}
+              >
+                確定解除
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="contained"
+              size="large"
               onClick={() => {
-                setConfirmedDays((d) => ({ ...d, [date]: false }));
+                setConfirmedDays((d) => ({ ...d, [date]: true }));
                 setRows((rs) =>
-                  rs.map((r) => (r.date === date ? { ...r, confirmed: false } : r))
+                  rs.map((r) => (r.date === date ? { ...r, confirmed: true } : r))
                 );
               }}
             >
-              確定解除
-            </button>
-          </>
-        ) : (
-          <button
-            className="primary-btn big"
-            onClick={() => {
-              setConfirmedDays((d) => ({ ...d, [date]: true }));
-              setRows((rs) =>
-                rs.map((r) => (r.date === date ? { ...r, confirmed: true } : r))
-              );
-            }}
-          >
-            確定
-          </button>
-        )}
-      </div>
+              確定
+            </Button>
+          )}
+        </Box>
       )}
 
       {twoShift ? (
         <>
-          <div className="rsv-legend">
-            <span className="lg-item"><span className="shift-slot" />空き</span>
-            <span className="lg-item"><span className="shift-slot self" />自分の予約</span>
-            <span className="lg-item"><span className="shift-slot other">他社</span>他社予約（不可）</span>
-            <span className="lg-item"><span className="shift-slot disabled" />予約不可（当日）</span>
-          </div>
-          <p className="rsv-note">
+          <Box sx={{ display: "flex", gap: 2.25, mt: 1.25, flexWrap: "wrap", fontSize: 12.5, color: "text.secondary" }}>
+            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+              <Box component="span" sx={{ ...SLOT_BASE, width: 18, height: 18 }} />
+              空き
+            </Box>
+            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+              <Box component="span" sx={{ ...SLOT_SELF, width: 18, height: 18 }} />
+              自分の予約
+            </Box>
+            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+              <Box component="span" sx={SLOT_OTHER}>
+                他社
+              </Box>
+              他社予約（不可）
+            </Box>
+            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+              <Box component="span" sx={{ ...SLOT_DISABLED, width: 18, height: 18 }} />
+              予約不可（当日）
+            </Box>
+          </Box>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1, lineHeight: 1.7 }}>
             ※ <strong>2部制</strong>表示（予約方法＝2部制の資機材。予約方法は<strong>資機材・ゲート登録</strong>で資機材ごとに設定）。各機械について<strong>今日から7日間（固定・日付送りの影響なし）</strong>の午前（AM）／午後（PM）枠を選択して予約します。
             {guest ? (
               <>予約時に<strong>会社名・予約者名</strong>を入力します（アカウントなし）。</>
@@ -681,19 +812,31 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
             ※ 空き枠をクリックで予約（青）。自分の予約をクリックすると<strong>予約者・会社名の詳細と取消</strong>ができます（取消は予約者・元請のみ）。<strong>他社が予約済みの枠は選択できません（重複予約不可）</strong>。
             <br />
             ※ <strong>当日はAM予約不可</strong>、<strong>当日12時以降はPM予約不可</strong>です。
-          </p>
+          </Typography>
         </>
       ) : (
         <>
-          <div className="rsv-legend">
-            <span className="lg-item"><span className="lg-chip normal" />通常予約</span>
-            <span className="lg-item"><span className="lg-chip spot" />スポット予約（15〜60分）</span>
-          </div>
-          <p className="rsv-note">
+          <Box sx={{ display: "flex", gap: 2.25, mt: 1.25, flexWrap: "wrap", fontSize: 12.5, color: "text.secondary" }}>
+            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+              <Box
+                component="span"
+                sx={{ width: 22, height: 12, borderRadius: 0.75, border: "1px solid", borderColor: "primary.main", bgcolor: "primary.light" }}
+              />
+              通常予約
+            </Box>
+            <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}>
+              <Box
+                component="span"
+                sx={{ width: 22, height: 12, borderRadius: 0.75, border: "1px solid", borderColor: "warning.main", bgcolor: "#fdf6e3" }}
+              />
+              スポット予約（15〜60分）
+            </Box>
+          </Box>
+          <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1, lineHeight: 1.7 }}>
             ※ デモでは枠をクリックして編集・削除できます（実運用ではドラッグで新規作成）。予約時間の間隔は<strong>「予約時間間隔設定」の設定</strong>に従います（現在：{intervalLabel}）。
             <br />
             ※ 確定は<strong>すべてのタブ（揚重機／ゲート／資機材・その他）共通（日付単位）</strong>です。確定すると<strong>通常予約がグレーアウト（編集不可）</strong>になります。確定後は<strong>通常予約は作成できず、スポット予約のみ追加</strong>できます。<strong>スポット予約は「確定」の概念を持たず、確定状態でも常に編集・削除できます</strong>（削除は表示OFF＝記録は保持）。
-          </p>
+          </Typography>
         </>
       )}
 
@@ -704,36 +847,48 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
           footer={
             <>
               {editing.id && (
-                <button className="mini-btn danger" onClick={remove}>
+                <Button variant="outlined" color="error" onClick={remove}>
                   削除
-                </button>
+                </Button>
               )}
-              <button className="ghost-btn spacer" onClick={() => setEditing(null)}>
+              <Button variant="outlined" sx={{ ml: "auto" }} onClick={() => setEditing(null)}>
                 キャンセル
-              </button>
-              <button className="primary-btn" onClick={save}>
+              </Button>
+              <Button variant="contained" onClick={save}>
                 保存
-              </button>
+              </Button>
             </>
           }
         >
           {/* この予約がどの作業予定に使われるか（作業予定側からの紐づけの逆引き） */}
           {editing.id && <LinkedSchedule schedules={schedules} rsvId={editing.id} />}
-          <div className="form-grid">
-            <SelectField
-              label="予約種別"
-              value={editing.resvType}
-              onChange={setResvType}
-              hint={isConfirmed ? "確定後はスポット予約のみ" : undefined}
-              options={
-                isConfirmed
-                  ? [{ value: "spot", label: "スポット予約" }]
-                  : [
-                      { value: "normal", label: "通常予約" },
-                      { value: "spot", label: "スポット予約" },
-                    ]
-              }
-            />
+          <FormGrid>
+            <FormControl sx={{ gridColumn: "1 / -1" }}>
+              <FormLabel sx={{ fontSize: 12.5, mb: 0.25 }}>予約種別</FormLabel>
+              <RadioGroup
+                row
+                value={editing.resvType}
+                onChange={(e) => setResvType(e.target.value)}
+              >
+                {/* 確定後はスポット予約しか作れないため、通常予約は選べなくする */}
+                <FormControlLabel
+                  value="normal"
+                  control={<Radio size="small" />}
+                  label="通常予約"
+                  disabled={isConfirmed}
+                />
+                <FormControlLabel
+                  value="spot"
+                  control={<Radio size="small" />}
+                  label="スポット予約"
+                />
+              </RadioGroup>
+              {isConfirmed && (
+                <Typography variant="caption" color="text.secondary">
+                  確定後はスポット予約のみ
+                </Typography>
+              )}
+            </FormControl>
             <SelectField
               label={resource.label + "選択"}
               required
@@ -746,7 +901,7 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
               required
               value={editing.company}
               onChange={(v) => setEditing((x) => ({ ...x, company: v }))}
-              options={WA_COMPANIES}
+              options={companyOptions}
             />
             {isGate && (
               <SelectField
@@ -800,16 +955,18 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
                 hint="任意"
               />
             )}
-            <div className="field full">
-              <label>備考</label>
-              <textarea
-                value={editing.remark || ""}
-                onChange={(e) => setEditing((x) => ({ ...x, remark: e.target.value }))}
-                placeholder="備考（任意・25文字まで）"
-                maxLength={REMARK_MAX}
-              />
-            </div>
-          </div>
+            <TextField
+              multiline
+              minRows={2}
+              size="small"
+              label="備考"
+              value={editing.remark || ""}
+              onChange={(e) => setEditing((x) => ({ ...x, remark: e.target.value }))}
+              placeholder="備考（任意・25文字まで）"
+              slotProps={{ htmlInput: { maxLength: REMARK_MAX } }}
+              sx={{ gridColumn: "1 / -1" }}
+            />
+          </FormGrid>
         </Modal>
       )}
 
@@ -822,22 +979,22 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
             onClose={() => setSlotDialog(null)}
             footer={
               <>
-                <button className="mini-btn danger" onClick={cancelSlot}>
+                <Button variant="outlined" color="error" onClick={cancelSlot}>
                   取消
-                </button>
-                <button className="ghost-btn spacer" onClick={() => setSlotDialog(null)}>
+                </Button>
+                <Button variant="outlined" sx={{ ml: "auto" }} onClick={() => setSlotDialog(null)}>
                   キャンセル
-                </button>
+                </Button>
               </>
             }
           >
-            <div className="form-grid">
+            <FormGrid>
               <ReadonlyField label="機械・現場内呼称" value={slotDialog.res} />
               <ReadonlyField label="日付" value={dayLabel(slotDialog.d)} />
               <ReadonlyField label="区分" value={slotDialog.p === "am" ? "午前（AM）" : "午後（PM）"} />
               <ReadonlyField label="予約者" value={sv.user} />
               <ReadonlyField label="会社名" value={sv.company} />
-            </div>
+            </FormGrid>
           </Modal>
         );
       })()}
@@ -849,35 +1006,35 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
           onClose={() => setBookForm(null)}
           footer={
             <>
-              <button className="ghost-btn spacer" onClick={() => setBookForm(null)}>
+              <Button variant="outlined" sx={{ ml: "auto" }} onClick={() => setBookForm(null)}>
                 キャンセル
-              </button>
-              <button className="primary-btn" onClick={submitBook}>
+              </Button>
+              <Button variant="contained" onClick={submitBook}>
                 予約する
-              </button>
+              </Button>
             </>
           }
         >
-          <p className="subtle" style={{ marginTop: 0 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {bookForm.res}／{dayLabel(bookForm.d)}／{bookForm.p === "am" ? "午前（AM）" : "午後（PM）"} を予約します。
-          </p>
-          <div className="form-grid">
+          </Typography>
+          <FormGrid>
             <SuggestField
               label="会社名"
               required
               value={bookForm.company}
               onChange={(v) => setBookForm((x) => ({ ...x, company: v }))}
-              options={WA_COMPANIES}
+              options={companyOptions}
             />
-            <div className="field">
-              <label>予約者名<span className="req">*</span></label>
-              <input
-                value={bookForm.name}
-                onChange={(e) => setBookForm((x) => ({ ...x, name: e.target.value }))}
-                placeholder="予約者名を入力"
-              />
-            </div>
-          </div>
+            <TextField
+              size="small"
+              required
+              label="予約者名"
+              value={bookForm.name}
+              onChange={(e) => setBookForm((x) => ({ ...x, name: e.target.value }))}
+              placeholder="予約者名を入力"
+            />
+          </FormGrid>
         </Modal>
       )}
 
@@ -898,6 +1055,6 @@ export default function WorkAdjustReservation({ restrictAerial = false, guest = 
           />
         </PrintPreview>
       )}
-    </div>
+    </Box>
   );
 }

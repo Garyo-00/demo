@@ -5,6 +5,7 @@ import {
   WA_GATE_REGISTRY,
   WA_LIFT_EQUIPMENT,
   WA_EQUIPMENT,
+  WA_COMPANY_LIST,
   WA_RESERVATIONS,
   WA_WORK_SCHEDULES,
 } from "../../data.js";
@@ -53,6 +54,8 @@ export function WaSettingsProvider({ children }) {
   const [gates, setGates] = useState(WA_GATE_REGISTRY);
   const [lifts, setLifts] = useState(WA_LIFT_EQUIPMENT);
   const [equipment, setEquipment] = useState(WA_EQUIPMENT);
+  // 協力会社設定（予約・作業予定の協力会社名の選択肢として共通利用）
+  const [companies, setCompanies] = useState(WA_COMPANY_LIST);
   // 予約（ヘッダーの重複通知でも参照するため共有）
   const [reservations, setReservations] = useState(WA_RESERVATIONS);
   // 作業予定（予約との紐づけを予約側からも参照するため共有）
@@ -77,6 +80,7 @@ export function WaSettingsProvider({ children }) {
         date, setDate, time, setTime, perm, setPerm,
         interval, setInterval, templates, setTemplates,
         gates, setGates, lifts, setLifts, equipment, setEquipment,
+        companies, setCompanies,
         reservations, setReservations,
         schedules, setSchedules,
         setNavDirty, confirmLeave,

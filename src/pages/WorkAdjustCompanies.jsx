@@ -1,5 +1,29 @@
 import { useState, useRef } from "react";
 import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  FormControlLabel,
+  InputAdornment,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import SearchIcon from "@mui/icons-material/Search";
+import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { useWaSettings } from "../components/wa/WaSettingsContext.jsx";
+import {
   WA_COMPANY_LIST,
   WA_INDUSTRIES,
   WA_JOBTYPES_BY_INDUSTRY,
@@ -39,7 +63,7 @@ function parseCsvLine(line) {
 }
 
 export default function WorkAdjustCompanies() {
-  const [companies, setCompanies] = useState(WA_COMPANY_LIST);
+  const { companies, setCompanies } = useWaSettings();
   const [view, setView] = useState("list"); // list | form
   const [form, setForm] = useState(null); // 編集中の会社
   const [query, setQuery] = useState("");
@@ -151,203 +175,273 @@ export default function WorkAdjustCompanies() {
   // ===== フォーム画面 =====
   if (view === "form") {
     return (
-      <div>
-        <div className="page-title">協力会社設定</div>
-        <div className="section-title first">{isEdit ? "編集" : "新規作成"}</div>
+      <Box>
+        <Typography variant="h1" sx={{ mb: 1.75 }}>
+          協力会社設定
+        </Typography>
+        <Typography variant="h2" color="text.secondary" sx={{ mb: 1.25, letterSpacing: ".04em" }}>
+          {isEdit ? "編集" : "新規作成"}
+        </Typography>
 
-        <div className="cmp-form">
-          <div className="cmp-form-row">
-            <label className="cmp-label">
-              協力会社名<span className="req">*</span>
-            </label>
-            <input
-              className="cmp-input"
+        <Card>
+          <CardContent>
+            <TextField
+              fullWidth
+              size="small"
+              required
+              label="協力会社名"
               placeholder="協力会社名を入力してください"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              sx={{ mb: 2 }}
             />
-          </div>
 
-          <button className="ghost-btn accent-outline cmp-ref" onClick={() => setShowRef(true)}>
-            参考：使用できる業種・職種
-          </button>
+            <Button variant="outlined" onClick={() => setShowRef(true)} sx={{ mb: 2.5 }}>
+              参考：使用できる業種・職種
+            </Button>
 
-          {form.entries.map((en, i) => (
-            <div className="cmp-block" key={i}>
-              <div className="cmp-block-head">
-                <span className="cmp-block-title">業種・職種 {i + 1}</span>
-                {form.entries.length > 1 && (
-                  <button className="mini-btn danger" onClick={() => removeEntry(i)}>
-                    削除
-                  </button>
-                )}
-              </div>
-              <div className="cmp-form-row">
-                <label className="cmp-label">
-                  業種名<span className="req">*</span>
-                </label>
-                <select
-                  className="cmp-input"
+            {form.entries.map((en, i) => (
+              <Box
+                key={i}
+                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2.5, mb: 2 }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                  <Typography sx={{ color: "primary.main", fontSize: 14, fontWeight: 600 }}>
+                    業種・職種 {i + 1}
+                  </Typography>
+                  {form.entries.length > 1 && (
+                    <Button size="small" color="error" onClick={() => removeEntry(i)}>
+                      削除
+                    </Button>
+                  )}
+                </Box>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  required
+                  label="業種名"
                   value={en.industry}
                   onChange={(e) => setEntry(i, { industry: e.target.value, jobType: "" })}
+                  sx={{ mb: 2 }}
                 >
-                  <option value="">業種名を選択してください</option>
+                  <MenuItem value="">業種名を選択してください</MenuItem>
                   {WA_INDUSTRIES.map((v) => (
-                    <option key={v} value={v}>{v}</option>
+                    <MenuItem key={v} value={v}>
+                      {v}
+                    </MenuItem>
                   ))}
-                </select>
-              </div>
-              <div className="cmp-form-row">
-                <label className="cmp-label">
-                  職種名<span className="req">*</span>
-                </label>
-                <select
-                  className="cmp-input"
+                </TextField>
+                <TextField
+                  select
+                  fullWidth
+                  size="small"
+                  required
+                  label="職種名"
                   value={en.jobType}
                   onChange={(e) => setEntry(i, { jobType: e.target.value })}
                   disabled={!en.industry}
+                  sx={{ mb: 2 }}
                 >
-                  <option value="">職種名を選択してください</option>
+                  <MenuItem value="">職種名を選択してください</MenuItem>
                   {(WA_JOBTYPES_BY_INDUSTRY[en.industry] || []).map((v) => (
-                    <option key={v} value={v}>{v}</option>
+                    <MenuItem key={v} value={v}>
+                      {v}
+                    </MenuItem>
                   ))}
-                </select>
-              </div>
-              <div className="cmp-form-row">
-                <label className="cmp-label">職長ユーザー</label>
-                <div className="cmp-check-group">
+                </TextField>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  職長ユーザー
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column" }}>
                   {WA_FOREMAN_USERS.map((u) => (
-                    <label className="cmp-check" key={u}>
-                      <input
-                        type="checkbox"
-                        checked={en.foremen.includes(u)}
-                        onChange={(e) => {
-                          const next = e.target.checked
-                            ? [...en.foremen, u]
-                            : en.foremen.filter((x) => x !== u);
-                          // 表示順（マスタ順）の昇順で保持＝先頭が既定の職長になる
-                          next.sort(
-                            (a, b) => WA_FOREMAN_USERS.indexOf(a) - WA_FOREMAN_USERS.indexOf(b)
-                          );
-                          setEntry(i, { foremen: next });
-                        }}
-                      />
-                      {u}
-                    </label>
+                    <FormControlLabel
+                      key={u}
+                      control={
+                        <Checkbox
+                          size="small"
+                          checked={en.foremen.includes(u)}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...en.foremen, u]
+                              : en.foremen.filter((x) => x !== u);
+                            // 表示順（マスタ順）の昇順で保持＝先頭が既定の職長になる
+                            next.sort(
+                              (a, b) => WA_FOREMAN_USERS.indexOf(a) - WA_FOREMAN_USERS.indexOf(b)
+                            );
+                            setEntry(i, { foremen: next });
+                          }}
+                        />
+                      }
+                      label={u}
+                      slotProps={{ typography: { sx: { fontSize: 13 } } }}
+                    />
                   ))}
-                  <span className="cmp-hint">複数選択可能（先頭が既定の職長）</span>
-                </div>
-              </div>
-            </div>
-          ))}
+                  <Typography variant="caption" color="text.secondary">
+                    複数選択可能（先頭が既定の職長）
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
 
-          <div className="cmp-addrow">
-            <button className="linklike" onClick={addEntry}>＋ 職種を追加</button>
-          </div>
-        </div>
+            <Box sx={{ textAlign: "center" }}>
+              <Button startIcon={<AddIcon />} onClick={addEntry}>
+                職種を追加
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
 
-        <div className="cmp-form-foot">
-          <button className="ghost-btn" onClick={() => { setView("list"); setForm(null); }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, mt: 2.25 }}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setView("list");
+              setForm(null);
+            }}
+          >
             キャンセル
-          </button>
-          <button className="primary-btn" onClick={saveForm}>
+          </Button>
+          <Button variant="contained" onClick={saveForm}>
             {isEdit ? "保存" : "登録"}
-          </button>
-        </div>
+          </Button>
+        </Box>
 
         {showRef && (
           <Modal wide title="使用できる業種・職種" onClose={() => setShowRef(false)}>
-            <div className="cmp-ref-list">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {WA_INDUSTRIES.map((ind) => (
-                <div className="cmp-ref-item" key={ind}>
-                  <div className="cmp-ref-ind">{ind}</div>
-                  <div className="cmp-ref-jobs">
+                <Box
+                  key={ind}
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: "1fr", sm: "130px 1fr" },
+                    gap: 1.75,
+                    pb: 1.5,
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                  }}
+                >
+                  <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{ind}</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
                     {WA_JOBTYPES_BY_INDUSTRY[ind].join("、")}
-                  </div>
-                </div>
+                  </Typography>
+                </Box>
               ))}
-            </div>
+            </Box>
           </Modal>
         )}
-      </div>
+      </Box>
     );
   }
 
   // ===== 一覧画面 =====
   return (
-    <div>
-      <div className="page-title">協力会社設定</div>
-      <p className="lead" style={{ margin: "0 0 18px" }}>
+    <Box>
+      <Typography variant="h1" sx={{ mb: 1 }}>
+        協力会社設定
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2.25 }}>
         出面・日報管理および他サービスで共通利用する協力会社設定
-      </p>
+      </Typography>
 
-      <div className="cmp-search">
-        <div className="cmp-search-field">
-          <span className="cmp-search-icon">🔍</span>
-          <input
+      <Card>
+        <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center" }}>
+          <TextField
+            fullWidth
+            size="small"
             placeholder="協力会社名"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && setApplied(query.trim())}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
-        </div>
-        <div className="cmp-search-btns">
-          <button className="primary-btn" onClick={() => setApplied(query.trim())}>検索</button>
-          <button className="ghost-btn accent-outline" onClick={() => { setQuery(""); setApplied(""); }}>
-            クリア
-          </button>
-        </div>
-      </div>
+          <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+            <Button variant="contained" onClick={() => setApplied(query.trim())}>
+              検索
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setQuery("");
+                setApplied("");
+              }}
+            >
+              クリア
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
 
-      <div className="cmp-actions">
-        <button className="ghost-btn" onClick={() => fileRef.current?.click()}>↑ インポート</button>
-        <button className="ghost-btn" onClick={exportCsv}>↓ エクスポート</button>
-        <button className="primary-btn" onClick={openCreate}>＋ 新規作成</button>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.25, flexWrap: "wrap", my: 2.25 }}>
+        <Button variant="outlined" startIcon={<FileUploadOutlinedIcon />} onClick={() => fileRef.current?.click()}>
+          インポート
+        </Button>
+        <Button variant="outlined" startIcon={<FileDownloadOutlinedIcon />} onClick={exportCsv}>
+          エクスポート
+        </Button>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+          新規作成
+        </Button>
         <input
           ref={fileRef}
           type="file"
           accept=".csv"
-          style={{ display: "none" }}
+          hidden
           onChange={(e) => {
             const f = e.target.files?.[0];
             if (f) importCsv(f);
             e.target.value = "";
           }}
         />
-      </div>
+      </Box>
 
       {filtered.length === 0 ? (
-        <div className="empty">該当する協力会社はありません。</div>
+        <Typography sx={{ py: 4, textAlign: "center", fontSize: 13 }} color="text.secondary">
+          該当する協力会社はありません。
+        </Typography>
       ) : (
-        <table className="cmp-table">
-          <thead>
-            <tr>
-              <th>協力会社</th>
-              <th>職種</th>
-              <th style={{ textAlign: "right" }}>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((c) =>
-              c.entries.map((e, i) => (
-                <tr key={c.id + "-" + i}>
-                  {i === 0 && (
-                    <td rowSpan={c.entries.length} className="cmp-name">
-                      {c.name}
-                    </td>
-                  )}
-                  <td>{e.jobType}</td>
-                  {i === 0 && (
-                    <td rowSpan={c.entries.length} style={{ textAlign: "right" }}>
-                      <button className="linklike" onClick={() => openEdit(c)}>編集 ›</button>
-                    </td>
-                  )}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        <TableContainer component={Card}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>協力会社</TableCell>
+                <TableCell>職種</TableCell>
+                <TableCell align="right">操作</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filtered.map((c) =>
+                c.entries.map((e, i) => (
+                  <TableRow key={c.id + "-" + i} hover>
+                    {i === 0 && (
+                      <TableCell rowSpan={c.entries.length} sx={{ fontWeight: 700, verticalAlign: "middle" }}>
+                        {c.name}
+                      </TableCell>
+                    )}
+                    <TableCell>{e.jobType}</TableCell>
+                    {i === 0 && (
+                      <TableCell rowSpan={c.entries.length} align="right" sx={{ verticalAlign: "middle" }}>
+                        <Button size="small" endIcon={<ChevronRightIcon />} onClick={() => openEdit(c)}>
+                          編集
+                        </Button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
-    </div>
+    </Box>
   );
 }

@@ -1,4 +1,28 @@
 import { useState, useRef, useEffect } from "react";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  MenuItem,
+  TextField,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
+import PrintIcon from "@mui/icons-material/PrintOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
+import UndoIcon from "@mui/icons-material/Undo";
+import RedoIcon from "@mui/icons-material/Redo";
+import ZoomInIcon from "@mui/icons-material/ZoomIn";
+import ZoomOutIcon from "@mui/icons-material/ZoomOut";
+import ZoomOutMapIcon from "@mui/icons-material/ZoomOutMap";
 import { WA_SAMPLE_PLAN_IMAGE, WA_SAMPLE_PLAN_IMAGE_2F, WA_PROJECT, formatDateStr } from "../data.js";
 import { useWaSettings } from "../components/wa/WaSettingsContext.jsx";
 
@@ -279,77 +303,97 @@ export default function WorkAdjustFloorPlan() {
   }, [date]);
 
   return (
-    <div>
-      <div className="page-title">配置図作成</div>
+    <Box>
+      <Typography variant="h1" sx={{ mb: 1.75 }}>
+        配置図作成
+      </Typography>
 
       {/* 平面図（台紙）の選択：作業配置図設定に登録された図面をすべて表示 */}
-      <div className="toolbar">
-        <label className="fp-select-label">図面</label>
-        <select
+      <Box sx={{ my: 2 }}>
+        <TextField
+          select
+          size="small"
+          label="図面"
           value={selectedTemplateId}
           onChange={(e) => setSelectedTemplateId(e.target.value)}
-          style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid var(--line)", fontSize: 13, minWidth: 200 }}
+          sx={{ minWidth: 240 }}
         >
-          <option value="">選択してください</option>
+          <MenuItem value="">選択してください</MenuItem>
           {templates.map((t) => (
-            <option key={t.id} value={t.id}>
+            <MenuItem key={t.id} value={t.id}>
               {t.floorName}
-            </option>
+            </MenuItem>
           ))}
-        </select>
-      </div>
+        </TextField>
+      </Box>
 
       {/* 未選択 */}
       {!selectedTemplateId && (
-        <div className="fp-bg-empty" style={{ position: "static", height: 260, borderRadius: 10, border: "1px dashed var(--line)" }}>
+        <Box
+          sx={{
+            height: 260,
+            borderRadius: 2.5,
+            border: "1px dashed",
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 13,
+            color: "text.secondary",
+          }}
+        >
           図面を選択してください。
-        </div>
+        </Box>
       )}
 
       {/* 選択済み：当日の配置図の作成状況で表示を切替 */}
       {selectedTemplate && (
-        <div className="fp-editbar">
-          <strong className="fp-editbar-name">{selectedTemplate.floorName}</strong>
-          {currentPlan ? (
-            <>
-              <span className="badge-green">本日の配置図：作成済</span>
-              <button className="ghost-btn spacer" onClick={openEdit}>
-                編集
-              </button>
-              <button className="ghost-btn danger" onClick={deletePlan}>
-                削除
-              </button>
-              <button className="ghost-btn has-icon" onClick={outputPlan}>
-                <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="currentColor">
-                  <path d="M640-640v-120H320v120h-80v-200h480v200h-80Zm-480 80h640-640Zm560 100q17 0 28.5-11.5T760-500q0-17-11.5-28.5T720-540q-17 0-28.5 11.5T680-500q0 17 11.5 28.5T720-460Zm-80 260v-160H320v160h320Zm80 80H240v-160H80v-240q0-51 35-85.5t85-34.5h560q51 0 85.5 34.5T880-520v240H720v160Zm80-240v-160q0-17-11.5-28.5T760-560H200q-17 0-28.5 11.5T160-520v160h80v-80h480v80h80Z" />
-                </svg>
-                出力
-              </button>
-            </>
-          ) : (
-            <>
-              <span className="badge-red">本日の配置図：未作成</span>
-              <button
-                className="ghost-btn spacer"
-                onClick={copyFromPrevPlan}
-                disabled={!prevPlan}
-                title={
-                  prevPlan
-                    ? `前回（${formatDateStr(prevPlan.date)}）の配置図を複製`
-                    : "同じ図面の配置図が過去に作成されていません"
-                }
-              >
-                ⧉ 前回からコピー
-              </button>
-              <button className="primary-btn" onClick={openCreate}>
-                ＋ 新規作成
-              </button>
-            </>
-          )}
-        </div>
+        <Card sx={{ mb: 1.25 }}>
+          <CardContent
+            sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap", p: "10px 14px !important" }}
+          >
+            <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{selectedTemplate.floorName}</Typography>
+            {currentPlan ? (
+              <>
+                <Chip size="small" color="success" label="本日の配置図：作成済" />
+                <Button variant="outlined" sx={{ ml: "auto" }} onClick={openEdit}>
+                  編集
+                </Button>
+                <Button variant="outlined" color="error" onClick={deletePlan}>
+                  削除
+                </Button>
+                <Button variant="outlined" startIcon={<PrintIcon />} onClick={outputPlan}>
+                  出力
+                </Button>
+              </>
+            ) : (
+              <>
+                <Chip size="small" color="error" variant="outlined" label="本日の配置図：未作成" />
+                <Button
+                  variant="outlined"
+                  startIcon={<ContentCopyOutlinedIcon />}
+                  sx={{ ml: "auto" }}
+                  onClick={copyFromPrevPlan}
+                  disabled={!prevPlan}
+                  title={
+                    prevPlan
+                      ? `前回（${formatDateStr(prevPlan.date)}）の配置図を複製`
+                      : "同じ図面の配置図が過去に作成されていません"
+                  }
+                >
+                  前回からコピー
+                </Button>
+                <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+                  新規作成
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
       )}
 
-      {/* プレビュー（作成済みのときのみ。プレビュー上では編集不可） */}
+      {/* プレビュー（作成済みのときのみ。プレビュー上では編集不可）。
+          スタンプはピクセル座標で重ねるため既存CSSのまま。 */}
       {currentPlan && (
         <>
           <div className="fp-canvas">
@@ -369,49 +413,61 @@ export default function WorkAdjustFloorPlan() {
           </div>
 
           {/* 元請連絡事項（配置図が作成されている場合のみ表示。鉛筆で編集） */}
-          <div className="fp-notes">
-            <div className="fp-notes-head">
-              <label className="fp-notes-label">元請連絡事項</label>
-              {!editingNotes && (
-                <button className="fp-notes-edit" onClick={startEditNotes} title="編集" aria-label="編集">
-                  <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="currentColor">
-                    <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
-                  </svg>
-                </button>
+          <Card sx={{ mt: 2 }}>
+            <CardContent sx={{ p: "14px 16px !important" }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+                <Typography variant="h2">元請連絡事項</Typography>
+                {!editingNotes && (
+                  <IconButton
+                    size="small"
+                    onClick={startEditNotes}
+                    title="編集"
+                    aria-label="編集"
+                    sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}
+                  >
+                    <EditOutlinedIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+              {editingNotes ? (
+                <>
+                  <TextField
+                    fullWidth
+                    multiline
+                    minRows={3}
+                    size="small"
+                    autoFocus
+                    value={noteDraft}
+                    onChange={(e) => setNoteDraft(e.target.value)}
+                    placeholder="当日の連絡事項を記入してください"
+                  />
+                  <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.25, mt: 1.25 }}>
+                    <Button variant="outlined" onClick={cancelNotes}>
+                      キャンセル
+                    </Button>
+                    <Button variant="contained" onClick={saveNotes}>
+                      保存
+                    </Button>
+                  </Box>
+                </>
+              ) : (
+                <Typography sx={{ fontSize: 13, lineHeight: 1.6, whiteSpace: "pre-wrap", minHeight: 24 }}>
+                  {notes[date] ? notes[date] : "（連絡事項は未記入です）"}
+                </Typography>
               )}
-            </div>
-            {editingNotes ? (
-              <>
-                <textarea
-                  value={noteDraft}
-                  onChange={(e) => setNoteDraft(e.target.value)}
-                  placeholder="当日の連絡事項を記入してください"
-                  autoFocus
-                />
-                <div className="fp-notes-actions">
-                  <button className="ghost-btn" onClick={cancelNotes}>
-                    キャンセル
-                  </button>
-                  <button className="primary-btn" onClick={saveNotes}>
-                    保存
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="fp-notes-view">{notes[date] ? notes[date] : "（連絡事項は未記入です）"}</div>
-            )}
-            {notesMeta[date] && (
-              <div className="fp-notes-meta">
-                最終更新：{notesMeta[date].by}（{notesMeta[date].at}）
-              </div>
-            )}
-          </div>
+              {notesMeta[date] && (
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1, textAlign: "right" }}>
+                  最終更新：{notesMeta[date].by}（{notesMeta[date].at}）
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
 
           {/* 印刷用レイアウト（A4縦・画面では非表示、出力ボタン＝window.print で出力。
               ヘッダーは作業予定の印刷プレビューを踏襲。押印欄は無し） */}
           <div className="fp-print" aria-hidden="true">
+            {/* 工事番号は出力しない（工事名称のみ） */}
             <div className="pf-topline">
-              <span>工事番号 {WA_PROJECT.number}</span>
               <span>工事名称 {WA_PROJECT.name}</span>
             </div>
             <div className="pf-headrow">
@@ -443,42 +499,76 @@ export default function WorkAdjustFloorPlan() {
 
       {/* 作成 / 編集ダイアログ：スタンプを台紙にドロップ→ドラッグで移動 */}
       {editor && (
-        <div className="fp-dlg-overlay">
-          <div className="fp-dlg">
-            <div className="fp-dlg-head">
-              <h3>作業図面の{editor.mode === "new" ? "作成" : "編集"}</h3>
-              <button className="x" onClick={() => setEditor(null)} aria-label="閉じる">
-                ×
-              </button>
-            </div>
+        <Dialog
+          open
+          fullWidth
+          maxWidth="lg"
+          onClose={() => setEditor(null)}
+          slotProps={{ paper: { sx: { height: "calc(100vh - 32px)", m: 2 } } }}
+        >
+          <DialogTitle
+            component="div"
+            sx={{ display: "flex", alignItems: "center", gap: 1, py: 1.5, px: 2.5, bgcolor: "action.hover" }}
+          >
+            <Typography sx={{ fontSize: 15, fontWeight: 700, flex: 1 }}>
+              作業図面の{editor.mode === "new" ? "作成" : "編集"}
+            </Typography>
+            <IconButton size="small" onClick={() => setEditor(null)} aria-label="閉じる">
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </DialogTitle>
 
-            <div className="fp-dlg-sub">
-              <select
-                className="fp-dlg-tmpl"
-                value={editor.templateId}
-                onChange={(e) => changeEditorTemplate(e.target.value)}
-              >
-                {templates.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.floorName}
-                  </option>
-                ))}
-              </select>
-              <div className="fp-dlg-toolicons">
-                <button className="fp-icon-btn" onClick={doUndo} disabled={!undoStack.length} title="元に戻す">
-                  ↩
-                </button>
-                <button className="fp-icon-btn" onClick={doRedo} disabled={!redoStack.length} title="やり直し">
-                  ↪
-                </button>
-              </div>
-              <button className="primary-btn spacer" onClick={saveEditor}>
-                保存
-              </button>
-            </div>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              px: 2.5,
+              py: 1.5,
+              borderTop: "1px solid",
+              borderBottom: "1px solid",
+              borderColor: "divider",
+            }}
+          >
+            <TextField
+              select
+              size="small"
+              value={editor.templateId}
+              onChange={(e) => changeEditorTemplate(e.target.value)}
+              sx={{ minWidth: 200 }}
+            >
+              {templates.map((t) => (
+                <MenuItem key={t.id} value={t.id}>
+                  {t.floorName}
+                </MenuItem>
+              ))}
+            </TextField>
+            <IconButton
+              size="small"
+              onClick={doUndo}
+              disabled={!undoStack.length}
+              title="元に戻す"
+              sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}
+            >
+              <UndoIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={doRedo}
+              disabled={!redoStack.length}
+              title="やり直し"
+              sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}
+            >
+              <RedoIcon fontSize="small" />
+            </IconButton>
+            <Button variant="contained" sx={{ ml: "auto" }} onClick={saveEditor}>
+              保存
+            </Button>
+          </Box>
 
+          <DialogContent sx={{ p: 0, display: "flex", overflow: "hidden" }}>
+            {/* 台紙キャンバス（座標配置のため既存CSSのまま） */}
             <div className="fp-dlg-body">
-              {/* 台紙キャンバス */}
               <div className="fp-dlg-canvas-wrap">
                 <div
                   className={"fp-dlg-canvas" + (draggingId ? " dragging" : "")}
@@ -523,25 +613,62 @@ export default function WorkAdjustFloorPlan() {
                 </div>
 
                 {/* ズーム操作 */}
-                <div className="fp-zoom">
-                  <button onClick={() => setZoom((z) => Math.min(2, Math.round((z + 0.1) * 10) / 10))} title="拡大">
-                    ＋
-                  </button>
-                  <button onClick={() => setZoom((z) => Math.max(0.5, Math.round((z - 0.1) * 10) / 10))} title="縮小">
-                    －
-                  </button>
-                  <button onClick={() => setZoom(1)} title="全体表示">
-                    ⤢
-                  </button>
-                </div>
+                <Box
+                  sx={{
+                    position: "absolute",
+                    left: 16,
+                    bottom: 16,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 0.5,
+                    zIndex: 6,
+                  }}
+                >
+                  {[
+                    { title: "拡大", Icon: ZoomInIcon, run: () => setZoom((z) => Math.min(2, Math.round((z + 0.1) * 10) / 10)) },
+                    { title: "縮小", Icon: ZoomOutIcon, run: () => setZoom((z) => Math.max(0.5, Math.round((z - 0.1) * 10) / 10)) },
+                    { title: "全体表示", Icon: ZoomOutMapIcon, run: () => setZoom(1) },
+                  ].map(({ title, Icon, run }) => (
+                    <IconButton
+                      key={title}
+                      size="small"
+                      title={title}
+                      onClick={run}
+                      sx={{
+                        border: "1px solid",
+                        borderColor: "divider",
+                        borderRadius: 2,
+                        bgcolor: "background.paper",
+                        "&:hover": { bgcolor: "action.hover" },
+                      }}
+                    >
+                      <Icon fontSize="small" />
+                    </IconButton>
+                  ))}
+                </Box>
               </div>
 
               {/* スタンプパレット */}
-              <div className="fp-dlg-palette">
-                <div className="fp-palette-title">スタンプ</div>
+              <Box className="fp-dlg-palette">
+                <Typography sx={{ fontSize: 13, fontWeight: 700, mb: 1.25, textAlign: "center" }}>
+                  スタンプ
+                </Typography>
                 {STAMP_GROUPS.map((g) => (
-                  <div key={g.group} className="fp-palette-group">
-                    <div className="fp-palette-group-name">{g.group}</div>
+                  <Box key={g.group} sx={{ mb: 1.75 }}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{
+                        display: "block",
+                        fontWeight: 700,
+                        mb: 1,
+                        pb: 0.5,
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
+                      }}
+                    >
+                      {g.group}
+                    </Typography>
                     <div className="fp-stamp-grid">
                       {g.items.map((s) => (
                         <button key={s.name} className="fp-stamp" onClick={() => addStamp(s)} title={`${s.name}を配置`}>
@@ -552,13 +679,13 @@ export default function WorkAdjustFloorPlan() {
                         </button>
                       ))}
                     </div>
-                  </div>
+                  </Box>
                 ))}
-              </div>
+              </Box>
             </div>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
-    </div>
+    </Box>
   );
 }

@@ -16,8 +16,8 @@ export default function ReservationPrint({ date, label, isGate, items, reservati
     <>
       {pages.map((pageItems, pi) => (
         <div className="paper landscape" key={pi}>
+          {/* 工事番号は出力しない（工事名称のみ） */}
           <div className="pf-topline">
-            <span>工事番号 {WA_PROJECT.number}</span>
             <span>工事名称 {WA_PROJECT.name}</span>
           </div>
           <div className="pf-headrow">

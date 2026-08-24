@@ -149,11 +149,12 @@ export const WORKADJUST_NAV = [
 
 // 別ドメインのページへ遷移するメニュー（外部リンク）
 // ※URLはデモ用のプレースホルダー。実運用では各システムのURLに差し替える。
+// 表示順は定義順（安全セーフティ → 作業計画書NEO → KY NEXT → 出面・日報管理）
 export const WORKADJUST_EXTERNAL_LINKS = {
   "安全セーフティ": "https://safety.example.com/",
-  "出面・日報管理": "https://daily-report.example.com/",
-  "KY NEXT": "https://ky-next.example.com/",
   "作業計画書NEO": "https://work-plan-neo.example.com/",
+  "KY NEXT": "https://ky-next.example.com/",
+  "出面・日報管理": "https://daily-report.example.com/",
 };
 
 // --- サジェスト候補（DNN等 別システムの設定を参照する想定。デモは固定値）---

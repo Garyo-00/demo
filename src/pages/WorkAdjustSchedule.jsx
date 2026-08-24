@@ -1,5 +1,27 @@
 import { useState, useRef } from "react";
 import {
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  FormControlLabel,
+  InputAdornment,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableSortLabel,
+  TextField,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import PrintIcon from "@mui/icons-material/PrintOutlined";
+import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import {
   WA_COMPANIES,
   WA_INDUSTRIES,
   WA_JOBTYPES_BY_INDUSTRY,
@@ -23,9 +45,9 @@ import {
   settingsKeyOf,
   intervalMinutes,
 } from "../components/wa/WaSettingsContext.jsx";
-import printIcon from "../assets/icons/print.svg";
 import TablePagination from "../components/wa/TablePagination.jsx";
 import ResourcePicker from "../components/wa/ResourcePicker.jsx";
+import { useIsNarrow } from "../components/wa/useIsNarrow.js";
 import {
   RSV_KIND_LABEL,
   resourceOptions,
@@ -41,10 +63,13 @@ import {
   SelectField,
   TextAreaField,
   DateField,
+  FormGrid,
 } from "../components/wa/Field.jsx";
 
 // コピー作成の候補として表示する件数（元請は協力会社ごと／職長は自分ぶんの通算）
 const COPY_RECENT_LIMIT = 5;
+// ステータスのpillクラス → Chipの色
+const STATUS_COLOR = { approved: "success", pending: "warning", idle: "default" };
 // 「直近」の並び：日付の新しい順、同日はID（登録順）の新しい順
 function byRecent(a, b) {
   return b.date.localeCompare(a.date) || b.id.localeCompare(a.id);
@@ -118,7 +143,7 @@ function ResourceChips({ row, reservations, claims }) {
   const list = row.resources || [];
   if (list.length === 0) return null;
   return (
-    <div className="res-chips">
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
       {list.map((res) => {
         const { reservation, state, dateMismatch } = linkState(
           reservations,
@@ -127,9 +152,12 @@ function ResourceChips({ row, reservations, claims }) {
         );
         const linked = state === "linked" && !dateMismatch;
         return (
-          <span
-            className={"res-chip " + (linked ? "ok" : "warn")}
+          <Chip
             key={res.kind + "|" + res.name}
+            size="small"
+            variant="outlined"
+            color={linked ? "primary" : "warning"}
+            label={res.name}
             title={
               `${RSV_KIND_LABEL[res.kind]}：${res.name}｜` +
               (state === "linked"
@@ -139,12 +167,10 @@ function ResourceChips({ row, reservations, claims }) {
                 ? "他の作業予定に紐づけ済み"
                 : "予約なし")
             }
-          >
-            {res.name}
-          </span>
+          />
         );
       })}
-    </div>
+    </Box>
   );
 }
 
@@ -156,96 +182,145 @@ function CopyResourceStep({ plan, date, onToggleAll, onChangeRow, timeOptionsFor
   const createCount = missing.filter((x) => x.create).length;
 
   return (
-    <div>
-      <p className="subtle" style={{ marginTop: 0 }}>
+    <Box>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.25, lineHeight: 1.7 }}>
         複製する予定が使う資機材・ゲートは <b>{plan.length} 件</b>です。
         <b>{formatDateStr(date)}</b> にすでに予約があるものは自動で紐づきます。
         予約が無いものは、この画面でまとめて作成できます（{createCount} / {missing.length} 件を作成）。
-      </p>
+      </Typography>
 
       {missing.length > 0 && (
-        <label className="copy-bulk">
-          <input type="checkbox" checked={allOn} onChange={(e) => onToggleAll(e.target.checked)} />
-          予約が無いものをすべて作成する
-        </label>
+        <FormControlLabel
+          control={<Checkbox size="small" checked={allOn} onChange={(e) => onToggleAll(e.target.checked)} />}
+          label="予約が無いものをすべて作成する"
+          slotProps={{ typography: { sx: { fontSize: 13, fontWeight: 600 } } }}
+          sx={{
+            ml: 0,
+            mb: 1.25,
+            border: "1px solid",
+            borderColor: "divider",
+            borderRadius: 2,
+            px: 1.5,
+            py: 0.5,
+            bgcolor: "action.hover",
+          }}
+        />
       )}
 
-      <div className="copy-plan">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
         {plan.map((row) => {
           const opts = timeOptionsFor(row.res.kind);
           return (
-            <div className={"copy-plan-row" + (row.linked ? " linked" : "")} key={row.key}>
-              <div className="copy-plan-main">
-                <span className="copy-plan-res">{row.res.name}</span>
-                <span className="res-kind">{RSV_KIND_LABEL[row.res.kind]}</span>
-                <span className="copy-plan-for">
+            <Box
+              key={row.key}
+              sx={{
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 2,
+                p: 1.25,
+                bgcolor: row.linked ? "action.hover" : "background.paper",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                flexWrap: "wrap",
+                justifyContent: "space-between",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", minWidth: 0 }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{row.res.name}</Typography>
+                <Chip size="small" label={RSV_KIND_LABEL[row.res.kind]} />
+                <Typography variant="caption" color="text.secondary">
                   {row.company}／{row.label || "（作業内容なし）"}
-                </span>
-              </div>
+                </Typography>
+              </Box>
               {row.linked ? (
-                <div className="copy-plan-act">
-                  <span className="res-badge ok">
-                    予約あり {rsvTimeLabel(row.linked)} に紐づけ
-                  </span>
-                </div>
+                <Chip
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                  label={`予約あり ${rsvTimeLabel(row.linked)} に紐づけ`}
+                />
               ) : (
-                <div className="copy-plan-act">
-                  <span className="res-badge warn">
-                    {row.claimedBy
-                      ? `既存の予約は「${scheduleLabel(row.claimedBy)}」に紐づけ済み`
-                      : row.othersOnly
-                      ? "自社の予約なし（他社あり）"
-                      : "予約なし"}
-                  </span>
-                  <label className="copy-plan-make">
-                    <input
-                      type="checkbox"
-                      checked={row.create}
-                      onChange={(e) => onChangeRow(row.key, { create: e.target.checked })}
-                    />
-                    予約を作成
-                  </label>
-                  <select
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.875, flexWrap: "wrap" }}>
+                  <Chip
+                    size="small"
+                    color="warning"
+                    variant="outlined"
+                    label={
+                      row.claimedBy
+                        ? `既存の予約は「${scheduleLabel(row.claimedBy)}」に紐づけ済み`
+                        : row.othersOnly
+                        ? "自社の予約なし（他社あり）"
+                        : "予約なし"
+                    }
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        size="small"
+                        checked={row.create}
+                        onChange={(e) => onChangeRow(row.key, { create: e.target.checked })}
+                      />
+                    }
+                    label="予約を作成"
+                    slotProps={{ typography: { sx: { fontSize: 12.5, fontWeight: 600 } } }}
+                  />
+                  <TextField
+                    select
+                    size="small"
                     value={row.start}
                     disabled={!row.create}
                     onChange={(e) => onChangeRow(row.key, { start: e.target.value })}
+                    sx={{ minWidth: 96 }}
                   >
                     {opts.map((t) => (
-                      <option key={t}>{t}</option>
+                      <MenuItem key={t} value={t}>
+                        {t}
+                      </MenuItem>
                     ))}
-                  </select>
-                  <span>〜</span>
-                  <select
+                  </TextField>
+                  <Typography variant="body2">〜</Typography>
+                  <TextField
+                    select
+                    size="small"
                     value={row.end}
                     disabled={!row.create}
                     onChange={(e) => onChangeRow(row.key, { end: e.target.value })}
+                    sx={{ minWidth: 96 }}
                   >
                     {opts.map((t) => (
-                      <option key={t}>{t}</option>
+                      <MenuItem key={t} value={t}>
+                        {t}
+                      </MenuItem>
                     ))}
-                  </select>
+                  </TextField>
                   {row.res.kind === "gate" && (
-                    <select
+                    <TextField
+                      select
+                      size="small"
                       value={row.vehicleType}
                       disabled={!row.create}
                       onChange={(e) => onChangeRow(row.key, { vehicleType: e.target.value })}
+                      sx={{ minWidth: 110 }}
                     >
                       {WA_VEHICLE_TYPES.map((v) => (
-                        <option key={v}>{v}</option>
+                        <MenuItem key={v} value={v}>
+                          {v}
+                        </MenuItem>
                       ))}
-                    </select>
+                    </TextField>
                   )}
-                </div>
+                </Box>
               )}
-            </div>
+            </Box>
           );
         })}
-      </div>
-      <p className="subtle">
+      </Box>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5, lineHeight: 1.7 }}>
         ※ 作成する予約の時間は、複製元の予約時間を初期値にしています。チェックを外した資機材は
         「使用する資機材」としては引き継ぎますが、予約は作成されません（あとから予定の編集画面で作成できます）。
-      </p>
-    </div>
+      </Typography>
+    </Box>
   );
 }
 
@@ -260,6 +335,77 @@ function actualTotal(r) {
   if (r.actualNormalWorkers == null) return null;
   return Number(r.actualNormalWorkers) || 0;
 }
+
+// 作業人数・工数の1パターン分の行。plannedWorkers を渡すと
+// 作業人数（実績）の左に「作業人数（予定）」を表示する（実績入力用）。
+function PatternRow({ obj, setObj, label, wKey, hKey, plannedWorkers }) {
+  const hasPlanned = plannedWorkers != null;
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: hasPlanned
+          ? { xs: "repeat(3, 1fr)", sm: "120px minmax(96px, 0.7fr) 1fr 1fr" }
+          : { xs: "1fr", sm: "120px 1fr 1fr" },
+        gap: 1.25,
+        alignItems: "center",
+      }}
+    >
+      <Typography
+        sx={{ fontSize: 13, fontWeight: 600, gridColumn: { xs: "1 / -1", sm: "auto" } }}
+      >
+        {label}
+      </Typography>
+      {hasPlanned && (
+        <TextField
+          size="small"
+          label="人数（予定）"
+          value={plannedWorkers}
+          slotProps={{ input: { readOnly: true }, inputLabel: { shrink: true } }}
+          sx={{ "& .MuiOutlinedInput-root": { bgcolor: "action.hover" } }}
+        />
+      )}
+      <TextField
+        select
+        size="small"
+        label={hasPlanned ? "人数（実績）" : "作業人数"}
+        value={obj[wKey] ?? 0}
+        onChange={(e) => setObj((x) => ({ ...x, [wKey]: Number(e.target.value) }))}
+      >
+        {WORKER_OPTS.map((n) => (
+          <MenuItem key={n} value={n}>
+            {n}
+          </MenuItem>
+        ))}
+      </TextField>
+      <TextField
+        size="small"
+        type="number"
+        label="工数"
+        value={obj[hKey] ?? 0}
+        onChange={(e) => setObj((x) => ({ ...x, [hKey]: Number(e.target.value) }))}
+        slotProps={{
+          htmlInput: { min: 0, step: 0.5 },
+          input: { endAdornment: <InputAdornment position="end">h</InputAdornment> },
+        }}
+      />
+    </Box>
+  );
+}
+
+// 一覧のカラム定義（すべてソート可能）。幅は固定レイアウトで配分する
+// （見出しが長いため auto だと列が右へはみ出して操作列が見えなくなる）
+const COLUMNS = [
+  ["status", "ステータス", 96],
+  ["company", "協力会社名", 100],
+  ["industry", "業種", 88],
+  ["jobType", "職種", 96],
+  ["location", "作業場所（棟/階/エリア/工区）", 140],
+  ["content", "作業内容", "auto"],
+  ["planned", "作業人数（予定）", 72],
+  ["actual", "作業人数（実績）", 72],
+  ["safety", "元請安全指示事項", 132],
+];
 
 export default function WorkAdjustSchedule() {
   // 共通の作業日／閲覧ロールに加え、資機材・ゲート登録と予約（紐づけ用）を参照する
@@ -282,6 +428,7 @@ export default function WorkAdjustSchedule() {
   const [search, setSearch] = useState(""); // 協力会社名での検索
   const [sortKey, setSortKey] = useState("industry"); // 初期は業種ソート
   const [sortDir, setSortDir] = useState("asc");
+  const narrow = useIsNarrow();
   // 作業予定から作る予約のID採番（既存の RSV-xxx と衝突しない位置から開始）
   const rsvSeq = useRef(900);
 
@@ -304,10 +451,6 @@ export default function WorkAdjustSchedule() {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
     setPage(0);
-  }
-  function sortMark(key) {
-    if (sortKey !== key) return "";
-    return sortDir === "asc" ? " ▲" : " ▼";
   }
 
   // 表示中の日付の作業予定（確定・実績・出力はこの全件が対象）
@@ -725,252 +868,241 @@ export default function WorkAdjustSchedule() {
   const setConfirmItem = setDraftItem(setConfirmDraft);
   const setActualItem = setDraftItem(setActualDraft);
 
-  // 作業人数・工数の1パターン分の行（任意のstateに対して）
-  // plannedWorkers を渡すと、作業人数（実績）の左に「作業人数（予定）」列を表示する（実績入力用）
-  function patternRow(obj, setObj, label, wKey, hKey, plannedWorkers) {
-    return (
-      <div className={"wg-row" + (plannedWorkers != null ? " has-planned" : "")} key={wKey}>
-        <span className="wg-label">{label}</span>
-        {plannedWorkers != null && (
-          <div className="wg-cell wg-planned">
-            <small>作業人数（予定）</small>
-            <span className="wg-planned-val">{plannedWorkers}</span>
-          </div>
-        )}
-        <label className="wg-cell">
-          <small>{plannedWorkers != null ? "作業人数（実績）" : "作業人数"}</small>
-          <select
-            value={obj[wKey] ?? 0}
-            onChange={(e) => setObj((x) => ({ ...x, [wKey]: Number(e.target.value) }))}
-          >
-            {WORKER_OPTS.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="wg-cell">
-          <small>工数</small>
-          <span className="wg-hours">
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              value={obj[hKey] ?? 0}
-              onChange={(e) => setObj((x) => ({ ...x, [hKey]: Number(e.target.value) }))}
-            />
-            <em>h</em>
-          </span>
-        </label>
-      </div>
-    );
-  }
+  // 行の操作ボタン（テーブル・カード共通）
+  const rowActions = (r) => (
+    <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+      <Button
+        size="small"
+        variant="outlined"
+        onClick={() => openEdit(r)}
+        disabled={r.status === "approved"}
+        title={r.status === "approved" ? "確定済みのため編集できません" : ""}
+      >
+        編集
+      </Button>
+      <Button
+        size="small"
+        variant="outlined"
+        color="error"
+        onClick={() => remove(r)}
+        disabled={r.status === "approved"}
+        title={r.status === "approved" ? "確定済みのため削除できません" : ""}
+      >
+        削除
+      </Button>
+      {role === "foreman" && (
+        <Button
+          size="small"
+          variant="outlined"
+          onClick={() => openActualOne(r)}
+          disabled={r.status !== "approved"}
+          title={r.status !== "approved" ? "確定後に実績入力できます" : "実績を入力"}
+        >
+          実績入力
+        </Button>
+      )}
+    </Box>
+  );
+  const statusChip = (r) => (
+    <Chip
+      size="small"
+      color={STATUS_COLOR[WA_STATUS_PILL[r.status]] || "default"}
+      label={WA_STATUS_LABEL[r.status]}
+    />
+  );
 
   return (
-    <div>
-      <div className="page-title">作業予定一覧</div>
-      <div className="toolbar">
-        <span className="subtle">{dayRows.length} 件</span>
-        <input
-          className="wa-search"
+    <Box>
+      <Typography variant="h1" sx={{ mb: 1.75 }}>
+        作業予定一覧
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap", my: 2 }}>
+        <Typography variant="caption" color="text.secondary">
+          {dayRows.length} 件
+        </Typography>
+        <TextField
+          size="small"
           placeholder="協力会社名で検索"
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
             setPage(0);
           }}
+          sx={{ minWidth: 200 }}
         />
         {role === "prime" && (
-          <button
-            className="ghost-btn spacer"
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            sx={{ ml: "auto" }}
             onClick={() => setShowPrint(true)}
             disabled={approvedRows.length === 0}
             title={approvedRows.length === 0 ? "確定済みの作業予定がありません" : "確定済みのみ出力します"}
           >
-            <img className="ic-btn" src={printIcon} alt="" />出力
-          </button>
+            出力
+          </Button>
         )}
         {/* コピー作成はビューに応じて元請/職長のロジックを適用（ボタンは1つ）。
-            出力が非表示になる職長ビューでは右寄せ用のspacerを引き継ぐ */}
-        <button
-          className={"ghost-btn" + (role === "prime" ? "" : " spacer")}
+            出力が非表示になる職長ビューでは右寄せを引き継ぐ */}
+        <Button
+          variant="outlined"
+          startIcon={<ContentCopyOutlinedIcon />}
+          sx={role === "prime" ? undefined : { ml: "auto" }}
           onClick={() => openCopy(role)}
         >
           コピー作成
-        </button>
-        <button className="primary-btn" onClick={openCreate}>
-          ＋ 新規作成
-        </button>
-      </div>
+        </Button>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+          新規作成
+        </Button>
+      </Box>
 
-      <p className="wa-note">
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", my: 1.5, lineHeight: 1.7 }}>
         ※ 各カラムのヘッダークリックでソートできます（初期は業種順）。協力会社名で検索できます。
         <br />
         ※ 運用フロー：職長が予定を作成 → 元請が確定（元請安全指示事項を入力）→ 元請または職長が実績を入力。
         <br />
         ※ 確定後のレコードは「編集」で確定を解除するまで編集・削除できません。
-      </p>
+      </Typography>
 
       {dayRows.length === 0 ? (
-        <div className="empty">この日の作業予定はありません。</div>
+        <Typography sx={{ py: 4, textAlign: "center", fontSize: 13 }} color="text.secondary">
+          この日の作業予定はありません。
+        </Typography>
       ) : (
         <>
-          {/* デスクトップ：テーブル表示。カード幅に収まらない場合だけ横スクロールさせる */}
-          <div className="wa-table-scroll">
-          <table className="wa-schedule-table">
-            <thead>
-              <tr>
-                <th className="sortable" onClick={() => toggleSort("status")}>ステータス{sortMark("status")}</th>
-                <th className="sortable" onClick={() => toggleSort("company")}>協力会社名{sortMark("company")}</th>
-                <th className="sortable" onClick={() => toggleSort("industry")}>業種{sortMark("industry")}</th>
-                <th className="sortable" onClick={() => toggleSort("jobType")}>職種{sortMark("jobType")}</th>
-                <th className="sortable" onClick={() => toggleSort("location")}>作業場所（棟/階/エリア/工区）{sortMark("location")}</th>
-                <th className="sortable" onClick={() => toggleSort("content")}>作業内容{sortMark("content")}</th>
-                <th className="sortable" onClick={() => toggleSort("planned")}>作業人数（予定）{sortMark("planned")}</th>
-                <th className="sortable" onClick={() => toggleSort("actual")}>作業人数（実績）{sortMark("actual")}</th>
-                <th className="sortable" onClick={() => toggleSort("safety")}>元請安全指示事項{sortMark("safety")}</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
+          {narrow ? (
+            // モバイル：カード表示（横スクロールなしで全項目を表示）
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               {pageRows.map((r) => (
-                <tr key={r.id} className={r.status === "approved" ? "row-confirmed" : ""}>
-                  <td>
-                    <span className={"pill " + WA_STATUS_PILL[r.status]}>
-                      {WA_STATUS_LABEL[r.status]}
-                    </span>
-                  </td>
-                  <td>{r.company}</td>
-                  <td>{r.industry}</td>
-                  <td>{r.jobType}</td>
-                  <td className="loc-cell">
-                    {r.building} / {r.floor} / {r.area} /{" "}
-                    <span className="muted">{r.zone}</span>
-                  </td>
-                  <td>
-                    {r.content}
-                    <ResourceChips row={r} reservations={reservations} claims={claims} />
-                  </td>
-                  <td>{totalWorkers(r)} 名</td>
-                  <td>
-                    {actualTotal(r) != null ? (
-                      actualTotal(r) + " 名"
-                    ) : (
-                      <span className="subtle">—</span>
-                    )}
-                  </td>
-                  <td>
-                    {r.safetyNote ? r.safetyNote : <span className="subtle">—</span>}
-                  </td>
-                  <td>
-                    <div className="row-actions">
-                      <button
-                        className="mini-btn"
-                        onClick={() => openEdit(r)}
-                        disabled={r.status === "approved"}
-                        title={r.status === "approved" ? "確定済みのため編集できません" : ""}
+                <Box
+                  key={r.id}
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    p: 2,
+                    bgcolor: r.status === "approved" ? "action.hover" : "background.paper",
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 1.5 }}>
+                    {statusChip(r)}
+                    <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{r.company}</Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+                    {[
+                      ["業種／職種", `${r.industry}／${r.jobType}`],
+                      ["作業場所", [r.building, r.floor, r.area, r.zone].filter(Boolean).join(" / ")],
+                      [
+                        "作業内容",
+                        <>
+                          {r.content || "—"}
+                          <ResourceChips row={r} reservations={reservations} claims={claims} />
+                        </>,
+                      ],
+                      [
+                        "作業人数（予定／実績）",
+                        `${totalWorkers(r)} 名 ／ ${actualTotal(r) != null ? actualTotal(r) + " 名" : "—"}`,
+                      ],
+                      ["元請安全指示事項", r.safetyNote || "—"],
+                    ].map(([label, value]) => (
+                      <Box
+                        key={label}
+                        sx={{ display: "grid", gridTemplateColumns: "118px 1fr", gap: 1.25, fontSize: 13 }}
                       >
-                        編集
-                      </button>
-                      <button
-                        className="mini-btn danger"
-                        onClick={() => remove(r)}
-                        disabled={r.status === "approved"}
-                        title={r.status === "approved" ? "確定済みのため削除できません" : ""}
-                      >
-                        削除
-                      </button>
-                      {role === "foreman" && (
-                        <button
-                          className="mini-btn accent"
-                          onClick={() => openActualOne(r)}
-                          disabled={r.status !== "approved"}
-                          title={r.status !== "approved" ? "確定後に実績入力できます" : "実績を入力"}
-                        >
-                          実績入力
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                          {label}
+                        </Typography>
+                        <Box sx={{ fontSize: 13, lineHeight: 1.5 }}>{value}</Box>
+                      </Box>
+                    ))}
+                  </Box>
+                  <Box sx={{ mt: 1.75, pt: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+                    {rowActions(r)}
+                  </Box>
+                </Box>
               ))}
-            </tbody>
-          </table>
-          </div>
-
-          {/* モバイル：カード表示（横スクロールなしで全項目を表示） */}
-          <div className="wa-card-list">
-            {pageRows.map((r) => (
-              <div
-                key={r.id}
-                className={"wa-card" + (r.status === "approved" ? " confirmed" : "")}
+            </Box>
+          ) : (
+            <TableContainer sx={{ overflowX: "auto" }}>
+              <Table
+                size="small"
+                sx={{
+                  minWidth: 1060,
+                  tableLayout: "fixed",
+                  "& th, & td": { overflowWrap: "anywhere" },
+                  "& th": { whiteSpace: "normal" },
+                }}
               >
-                <div className="wa-card-top">
-                  <span className={"pill " + WA_STATUS_PILL[r.status]}>
-                    {WA_STATUS_LABEL[r.status]}
-                  </span>
-                  <strong className="wa-card-co">{r.company}</strong>
-                </div>
-                <div className="wa-card-grid">
-                  <div className="wa-card-field">
-                    <span className="wa-card-label">業種／職種</span>
-                    <span>{r.industry}／{r.jobType}</span>
-                  </div>
-                  <div className="wa-card-field">
-                    <span className="wa-card-label">作業場所</span>
-                    <span>{[r.building, r.floor, r.area, r.zone].filter(Boolean).join(" / ")}</span>
-                  </div>
-                  <div className="wa-card-field">
-                    <span className="wa-card-label">作業内容</span>
-                    <span>
-                      {r.content || "—"}
-                      <ResourceChips row={r} reservations={reservations} claims={claims} />
-                    </span>
-                  </div>
-                  <div className="wa-card-field">
-                    <span className="wa-card-label">作業人数（予定／実績）</span>
-                    <span>
-                      {totalWorkers(r)} 名 ／{" "}
-                      {actualTotal(r) != null ? actualTotal(r) + " 名" : "—"}
-                    </span>
-                  </div>
-                  <div className="wa-card-field">
-                    <span className="wa-card-label">元請安全指示事項</span>
-                    <span>{r.safetyNote || "—"}</span>
-                  </div>
-                </div>
-                <div className="wa-card-actions">
-                  <button
-                    className="mini-btn"
-                    onClick={() => openEdit(r)}
-                    disabled={r.status === "approved"}
-                    title={r.status === "approved" ? "確定済みのため編集できません" : ""}
-                  >
-                    編集
-                  </button>
-                  <button
-                    className="mini-btn danger"
-                    onClick={() => remove(r)}
-                    disabled={r.status === "approved"}
-                    title={r.status === "approved" ? "確定済みのため削除できません" : ""}
-                  >
-                    削除
-                  </button>
-                  {role === "foreman" && (
-                    <button
-                      className="mini-btn accent"
-                      onClick={() => openActualOne(r)}
-                      disabled={r.status !== "approved"}
-                      title={r.status !== "approved" ? "確定後に実績入力できます" : "実績を入力"}
+                <TableHead>
+                  <TableRow>
+                    {COLUMNS.map(([key, label, width]) => (
+                      <TableCell
+                        key={key}
+                        width={width === "auto" ? undefined : width}
+                        sortDirection={sortKey === key ? sortDir : false}
+                      >
+                        <TableSortLabel
+                          active={sortKey === key}
+                          direction={sortKey === key ? sortDir : "asc"}
+                          onClick={() => toggleSort(key)}
+                        >
+                          {label}
+                        </TableSortLabel>
+                      </TableCell>
+                    ))}
+                    <TableCell width={132} sx={{ whiteSpace: "nowrap" }}>
+                      操作
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {pageRows.map((r) => (
+                    <TableRow
+                      key={r.id}
+                      hover
+                      sx={r.status === "approved" ? { "& td": { bgcolor: "action.hover", color: "text.secondary" } } : undefined}
                     >
-                      実績入力
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+                      <TableCell>{statusChip(r)}</TableCell>
+                      <TableCell>{r.company}</TableCell>
+                      <TableCell>{r.industry}</TableCell>
+                      <TableCell>{r.jobType}</TableCell>
+                      <TableCell>
+                        {r.building} / {r.floor} / {r.area} /{" "}
+                        <Typography component="span" variant="caption" color="text.secondary">
+                          {r.zone}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        {r.content}
+                        <ResourceChips row={r} reservations={reservations} claims={claims} />
+                      </TableCell>
+                      <TableCell>{totalWorkers(r)} 名</TableCell>
+                      <TableCell>
+                        {actualTotal(r) != null ? (
+                          actualTotal(r) + " 名"
+                        ) : (
+                          <Typography component="span" variant="caption" color="text.secondary">
+                            —
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {r.safetyNote ? (
+                          r.safetyNote
+                        ) : (
+                          <Typography component="span" variant="caption" color="text.secondary">
+                            —
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ whiteSpace: "nowrap" }}>{rowActions(r)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
 
           <TablePagination
             total={dayRows.length}
@@ -982,26 +1114,22 @@ export default function WorkAdjustSchedule() {
 
           {/* テーブル下：全作業共通の確定／確定解除／実績入力（元請ビューのみ） */}
           {role === "prime" && (
-          <div className="confirm-bar bare">
-            {allConfirmed ? (
-              <>
-                <button className="ghost-btn" onClick={releaseAll}>
-                  確定解除
-                </button>
-                <button className="primary-btn big" onClick={openActual}>
-                  実績入力
-                </button>
-              </>
-            ) : (
-              <button
-                className="primary-btn big"
-                onClick={openConfirm}
-                disabled={!hasPending}
-              >
-                確定
-              </button>
-            )}
-          </div>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1.75, mt: 2, flexWrap: "wrap" }}>
+              {allConfirmed ? (
+                <>
+                  <Button variant="outlined" onClick={releaseAll}>
+                    確定解除
+                  </Button>
+                  <Button variant="contained" size="large" onClick={openActual}>
+                    実績入力
+                  </Button>
+                </>
+              ) : (
+                <Button variant="contained" size="large" onClick={openConfirm} disabled={!hasPending}>
+                  確定
+                </Button>
+              )}
+            </Box>
           )}
         </>
       )}
@@ -1014,17 +1142,17 @@ export default function WorkAdjustSchedule() {
           onClose={() => setEditing(null)}
           footer={
             <>
-              <button className="ghost-btn" onClick={() => setEditing(null)}>
+              <Button variant="outlined" onClick={() => setEditing(null)}>
                 キャンセル
-              </button>
-              <button className="primary-btn" onClick={save}>
+              </Button>
+              <Button variant="contained" onClick={save}>
                 保存
-              </button>
+              </Button>
             </>
           }
         >
           {/* 共通項目 */}
-          <div className="form-grid">
+          <FormGrid>
             <DateField
               label="日付"
               required
@@ -1087,20 +1215,25 @@ export default function WorkAdjustSchedule() {
               }
               hint="協力会社の職長ユーザーから選択（自動反映。既定は表示順の先頭）"
             />
-          </div>
+          </FormGrid>
 
           {/* 作業ブロック（棟・階・エリア・工区・作業内容・作業人数・工数）。新規は複数追加可 */}
           {editing.blocks.map((bk, i) => (
-            <div className="cmp-block" key={i}>
-              <div className="cmp-block-head">
-                <span className="cmp-block-title">作業 {i + 1}</span>
+            <Box
+              key={i}
+              sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2.5, mt: 2 }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
+                <Typography sx={{ color: "primary.main", fontSize: 14, fontWeight: 600 }}>
+                  作業 {i + 1}
+                </Typography>
                 {editing.blocks.length > 1 && (
-                  <button className="mini-btn danger" onClick={() => removeBlock(i)}>
+                  <Button size="small" color="error" onClick={() => removeBlock(i)}>
                     削除
-                  </button>
+                  </Button>
                 )}
-              </div>
-              <div className="form-grid">
+              </Box>
+              <FormGrid>
                 <SuggestField
                   label="棟"
                   value={bk.building}
@@ -1115,18 +1248,19 @@ export default function WorkAdjustSchedule() {
                   options={WA_HISTORY.floor}
                   hint="自由記述＋履歴から選択"
                 />
-                <SuggestField
-                  label="エリア"
-                  value={bk.area}
-                  onChange={(v) => setBlock(i, { area: v })}
-                  options={WA_HISTORY.area}
-                  hint="自由記述＋履歴から選択"
-                />
+                {/* 入力順は 棟 → 階 → 工区 → エリア（工区のほうが上位の区分のため） */}
                 <SuggestField
                   label="工区"
                   value={bk.zone}
                   onChange={(v) => setBlock(i, { zone: v })}
                   options={WA_HISTORY.zone}
+                  hint="自由記述＋履歴から選択"
+                />
+                <SuggestField
+                  label="エリア"
+                  value={bk.area}
+                  onChange={(v) => setBlock(i, { area: v })}
+                  options={WA_HISTORY.area}
                   hint="自由記述＋履歴から選択"
                 />
                 <SuggestField
@@ -1137,13 +1271,15 @@ export default function WorkAdjustSchedule() {
                   options={WA_HISTORY.content}
                   hint="自由記述＋履歴から選択"
                 />
-                <div className="field full">
-                  <label>作業人数・工数</label>
-                  <div className="worker-grid">
-                    {patternRow(bk, setBlockObj(i), "通常作業", "normalWorkers", "normalHours")}
-                    {patternRow(bk, setBlockObj(i), "早出・残業作業", "overtimeWorkers", "overtimeHours")}
-                  </div>
-                </div>
+                <Box sx={{ gridColumn: "1 / -1" }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                    作業人数・工数
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, mt: 0.75 }}>
+                    <PatternRow obj={bk} setObj={setBlockObj(i)} label="通常作業" wKey="normalWorkers" hKey="normalHours" />
+                    <PatternRow obj={bk} setObj={setBlockObj(i)} label="早出・残業作業" wKey="overtimeWorkers" hKey="overtimeHours" />
+                  </Box>
+                </Box>
                 {/* 使用する資機材・ゲート。選ぶとその日の予約と紐づき、無ければここから作成できる */}
                 <ResourcePicker
                   options={resOptions}
@@ -1167,16 +1303,16 @@ export default function WorkAdjustSchedule() {
                     })
                   }
                 />
-              </div>
-            </div>
+              </FormGrid>
+            </Box>
           ))}
 
           {!editing.id && (
-            <div className="cmp-addrow">
-              <button className="linklike" onClick={addBlock}>
-                ＋ 作業を追加
-              </button>
-            </div>
+            <Box sx={{ textAlign: "center", mt: 1.5 }}>
+              <Button startIcon={<AddIcon />} onClick={addBlock}>
+                作業を追加
+              </Button>
+            </Box>
           )}
         </Modal>
       )}
@@ -1196,26 +1332,22 @@ export default function WorkAdjustSchedule() {
           footer={
             copyStep === "resources" ? (
               <>
-                <button className="ghost-btn" onClick={() => setCopyStep("pick")}>
-                  ← 複製元の選択に戻る
-                </button>
-                <button className="primary-btn" onClick={() => commitCopy(copyPlan)}>
+                <Button variant="outlined" startIcon={<ArrowBackIcon />} onClick={() => setCopyStep("pick")}>
+                  複製元の選択に戻る
+                </Button>
+                <Button variant="contained" onClick={() => commitCopy(copyPlan)}>
                   {formatDateStr(date)} の予定として登録（{copySel.size} 件／予約
                   {copyPlan.filter((x) => !x.linked && x.create).length} 件を作成）
-                </button>
+                </Button>
               </>
             ) : (
               <>
-                <button className="ghost-btn" onClick={closeCopy}>
+                <Button variant="outlined" onClick={closeCopy}>
                   キャンセル
-                </button>
-                <button
-                  className="primary-btn"
-                  onClick={proceedCopy}
-                  disabled={copySel.size === 0}
-                >
+                </Button>
+                <Button variant="contained" onClick={proceedCopy} disabled={copySel.size === 0}>
                   次へ：資機材・ゲートの確認（{copySel.size} 件）
-                </button>
+                </Button>
               </>
             )
           }
@@ -1230,7 +1362,7 @@ export default function WorkAdjustSchedule() {
           />
         ) : (
         <>
-          <p className="subtle" style={{ marginTop: 0 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.7 }}>
             {copyMode === "prime" ? (
               <>
                 過去の作業予定を協力会社別に、<b>各社ごとの直近{COPY_RECENT_LIMIT}件</b>まで表示しています。
@@ -1243,47 +1375,86 @@ export default function WorkAdjustSchedule() {
                 <b>{formatDateStr(date)}</b> の作業予定として登録されます（未確定で登録）。
               </>
             )}
-          </p>
+          </Typography>
 
           {copyGroups.length === 0 ? (
-            <div className="empty">複製できる過去の作業予定がありません。</div>
+            <Typography sx={{ py: 4, textAlign: "center", fontSize: 13 }} color="text.secondary">
+              複製できる過去の作業予定がありません。
+            </Typography>
           ) : (
-            <div className="copy-list">
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {copyGroups.map((g) => {
                 const allOn = g.items.every((r) => copySel.has(r.id));
                 return (
-                  <div className="copy-group" key={g.company}>
-                    <div className="copy-group-head">
-                      <span className="copy-group-name">{g.company}</span>
-                      <button className="linklike" onClick={() => toggleCopyGroup(g.items)}>
+                  <Box
+                    key={g.company}
+                    sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, overflow: "hidden" }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        bgcolor: "action.hover",
+                        px: 1.75,
+                        py: 1,
+                        borderBottom: "1px solid",
+                        borderColor: "divider",
+                      }}
+                    >
+                      <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{g.company}</Typography>
+                      <Button size="small" onClick={() => toggleCopyGroup(g.items)}>
                         {allOn ? "選択を解除" : "すべて選択"}
-                      </button>
-                    </div>
+                      </Button>
+                    </Box>
                     {g.items.map((r) => (
-                      <label
-                        className={"copy-row" + (copySel.has(r.id) ? " on" : "")}
+                      <Box
                         key={r.id}
+                        component="label"
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns: {
+                            xs: "20px 74px 1fr auto",
+                            md: "20px 92px 1fr 1.2fr 1fr 52px",
+                          },
+                          alignItems: "center",
+                          gap: 1.25,
+                          px: 1.75,
+                          py: 1,
+                          borderTop: "1px solid",
+                          borderColor: "divider",
+                          fontSize: 13,
+                          cursor: "pointer",
+                          bgcolor: copySel.has(r.id) ? "primary.light" : "transparent",
+                          "&:hover": { bgcolor: copySel.has(r.id) ? "primary.light" : "action.hover" },
+                        }}
                       >
-                        <input
-                          type="checkbox"
+                        <Checkbox
+                          size="small"
+                          sx={{ p: 0 }}
                           checked={copySel.has(r.id)}
                           onChange={() => toggleCopy(r.id)}
                         />
-                        <span className="copy-date">{formatDateStr(r.date)}</span>
-                        <span className="copy-job">
+                        <Typography variant="caption" color="text.secondary">
+                          {formatDateStr(r.date)}
+                        </Typography>
+                        {/* 狭い画面では業種・場所を省略して主要項目のみ表示 */}
+                        <Typography sx={{ fontSize: 13, display: { xs: "none", md: "block" } }}>
                           {r.industry}／{r.jobType}
-                        </span>
-                        <span className="copy-loc">
+                        </Typography>
+                        <Typography sx={{ fontSize: 13, display: { xs: "none", md: "block" } }}>
                           {[r.building, r.floor, r.area, r.zone].filter(Boolean).join(" / ")}
-                        </span>
-                        <span className="copy-content">{r.content}</span>
-                        <span className="copy-workers">{totalWorkers(r)} 名</span>
-                      </label>
+                        </Typography>
+                        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{r.content}</Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ textAlign: "right" }}>
+                          {totalWorkers(r)} 名
+                        </Typography>
+                      </Box>
                     ))}
-                  </div>
+                  </Box>
                 );
               })}
-            </div>
+            </Box>
           )}
         </>
         )}
@@ -1298,39 +1469,40 @@ export default function WorkAdjustSchedule() {
           onClose={() => setConfirmDraft(null)}
           footer={
             <>
-              <button className="ghost-btn" onClick={() => setConfirmDraft(null)}>
+              <Button variant="outlined" onClick={() => setConfirmDraft(null)}>
                 キャンセル
-              </button>
-              <button className="primary-btn" onClick={commitConfirm}>
+              </Button>
+              <Button variant="contained" onClick={commitConfirm}>
                 確定する（{confirmDraft.length} 件）
-              </button>
+              </Button>
             </>
           }
         >
-          <p className="subtle" style={{ marginTop: 0 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             未確定の作業予定をまとめて確定します。各作業の元請安全指示事項を入力してください。
-          </p>
-          <div className="batch-list">
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
             {confirmDraft.map((d, i) => (
-              <div className="batch-item" key={d.id}>
-                <div className="batch-head">
+              <Box
+                key={d.id}
+                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}
+              >
+                <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 1.25 }}>
                   {d.company}／{d.jobType}／{d.content}（{d.building} {d.floor}）
-                </div>
+                </Typography>
                 <TextAreaField
                   full
                   required
                   maxLength={255}
                   label="元請安全指示事項"
                   value={d.safetyNote}
-                  onChange={(v) =>
-                    setConfirmItem(i)((x) => ({ ...x, safetyNote: v }))
-                  }
+                  onChange={(v) => setConfirmItem(i)((x) => ({ ...x, safetyNote: v }))}
                   placeholder="確定にあたっての安全指示を記入（必須・255文字まで）"
                   history={safetyHistoryFor(d.company)}
                 />
-              </div>
+              </Box>
             ))}
-          </div>
+          </Box>
         </Modal>
       )}
 
@@ -1342,43 +1514,89 @@ export default function WorkAdjustSchedule() {
           onClose={() => setActualDraft(null)}
           footer={
             <>
-              <button className="ghost-btn" onClick={() => setActualDraft(null)}>
+              <Button variant="outlined" onClick={() => setActualDraft(null)}>
                 キャンセル
-              </button>
-              <button className="primary-btn" onClick={commitActual}>
+              </Button>
+              <Button variant="contained" onClick={commitActual}>
                 保存（{actualDraft.length} 件）
-              </button>
+              </Button>
             </>
           }
         >
-          <p className="subtle" style={{ marginTop: 0 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             確定済みの各作業について、作業人数（実績）を入力してください。
-          </p>
-          <div className="batch-list">
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
             {groupDraftByCompany(actualDraft).map((g) => (
-              <div className="batch-company" key={g.company}>
-                <div className="batch-company-head">
-                  <span className="bc-name">{g.company}</span>
+              <Box
+                key={g.company}
+                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, overflow: "hidden" }}
+              >
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    flexWrap: "wrap",
+                    px: 2,
+                    py: 1.25,
+                    bgcolor: "primary.light",
+                    color: "primary.main",
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                  }}
+                >
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, mr: "auto" }}>{g.company}</Typography>
                   {g.hasAttendance && (
-                    <span className="bc-attend" title="DNN（出面管理）連携の入場人数">
+                    <Typography
+                      title="DNN（出面管理）連携の入場人数"
+                      sx={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "text.primary",
+                        bgcolor: "background.paper",
+                        border: "1px solid",
+                        borderColor: "primary.main",
+                        borderRadius: 999,
+                        px: 1.5,
+                        py: 0.25,
+                      }}
+                    >
                       入場人数 <strong>{g.attendance}</strong> 名
-                    </span>
+                    </Typography>
                   )}
-                </div>
-                {g.items.map(({ item: d, index: i }) => (
-                  <div className="batch-item" key={d.id}>
-                    <div className="batch-head">
+                </Box>
+                {g.items.map(({ item: d, index: i }, k) => (
+                  <Box
+                    key={d.id}
+                    sx={{ px: 2, py: 1.75, borderTop: k === 0 ? 0 : "1px dashed", borderColor: "divider" }}
+                  >
+                    <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 1.25 }}>
                       {d.jobType}／{d.content}
-                    </div>
-                    <div className="worker-grid">
-                      {patternRow(d, setActualItem(i), "通常作業", "actualNormalWorkers", "actualNormalHours", d.plannedNormalWorkers)}
-                      {patternRow(d, setActualItem(i), "早出・残業作業", "actualOvertimeWorkers", "actualOvertimeHours", d.plannedOvertimeWorkers)}
-                    </div>
-                  </div>
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+                      <PatternRow
+                        obj={d}
+                        setObj={setActualItem(i)}
+                        label="通常作業"
+                        wKey="actualNormalWorkers"
+                        hKey="actualNormalHours"
+                        plannedWorkers={d.plannedNormalWorkers}
+                      />
+                      <PatternRow
+                        obj={d}
+                        setObj={setActualItem(i)}
+                        label="早出・残業作業"
+                        wKey="actualOvertimeWorkers"
+                        hKey="actualOvertimeHours"
+                        plannedWorkers={d.plannedOvertimeWorkers}
+                      />
+                    </Box>
+                  </Box>
                 ))}
-              </div>
+              </Box>
             ))}
-          </div>
+          </Box>
         </Modal>
       )}
 
@@ -1395,6 +1613,6 @@ export default function WorkAdjustSchedule() {
           />
         </PrintPreview>
       )}
-    </div>
+    </Box>
   );
 }
