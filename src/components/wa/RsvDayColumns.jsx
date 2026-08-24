@@ -1,4 +1,16 @@
 import { useEffect, useRef, useState } from "react";
+import {
+  Box,
+  Button,
+  Checkbox,
+  FormControl,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  Typography,
+} from "@mui/material";
 import { layoutColumns, makeHours, overlapBands } from "./rsvTimeline.js";
 
 // スマホの予約表示（時間制）。時刻を縦軸に取り、選んだ資源を列として横に並べて比較する。
@@ -32,7 +44,6 @@ export default function RsvDayColumns({
   stepMin,
   label,
 }) {
-  const [pickOpen, setPickOpen] = useState(false);
   const hours = makeHours(dayStart, dayEnd);
   const bodyHeight = (dayEnd - dayStart) * HOUR_PX;
   const y = (hour) => (hour - dayStart) * HOUR_PX;
@@ -144,66 +155,66 @@ export default function RsvDayColumns({
     onCreate(resourceName, toHHMM(start));
   }
 
+  // 選択の増減は1件ずつ親へ通知する（最大件数の制御は親が持つ）
+  function onPickChange(e) {
+    const next = e.target.value;
+    const changed =
+      next.find((n) => !selected.includes(n)) ?? selected.find((s) => !next.includes(s));
+    if (changed) onToggle(changed);
+  }
+
   return (
     <div className="rsvd">
-      {/* 資源が何台あってもUIの高さが変わらないよう、選択はプルダウン＋チェックボックスで行う
-          （カテゴリ絞り込みと同じ .ms-dd のパターン） */}
-      <div className="rsvd-pick">
-        <span className="subtle" style={{ fontSize: 12 }}>
-          比較する{label}：
-        </span>
-        <div className="ms-dd">
-          <button
-            type="button"
-            className="ms-dd-btn"
-            onClick={() => setPickOpen((o) => !o)}
-            aria-expanded={pickOpen}
-            disabled={items.length === 0}
-          >
-            <span className="ms-dd-text">
-              {items.length === 0
+      {/* 資源が何台あってもUIの高さが変わらないよう、選択はプルダウン＋チェックボックスで行う */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap", mb: 1.25 }}>
+        <FormControl size="small" sx={{ flex: 1, minWidth: 0 }} disabled={items.length === 0}>
+          {/* 未選択でも案内文を出すため、ラベルは常に縮小表示（notched）にする */}
+          <InputLabel shrink id="rsvd-pick-label">
+            比較する{label}
+          </InputLabel>
+          <Select
+            multiple
+            labelId="rsvd-pick-label"
+            input={<OutlinedInput notched label={`比較する${label}`} />}
+            value={selected}
+            onChange={onPickChange}
+            displayEmpty
+            renderValue={() =>
+              items.length === 0
                 ? `予約表示ONの${label}がありません`
                 : selected.length === 0
                 ? "未選択"
-                : selected.join("、")}
-            </span>
-            <span className="ms-dd-caret">▾</span>
-          </button>
-          {pickOpen && (
-            <>
-              <div className="ms-dd-backdrop" onClick={() => setPickOpen(false)} />
-              <div className="ms-dd-panel">
-                <div className="ms-dd-note">
-                  最大{MAX_COMPARE}つまで選べます（{selected.length} / {MAX_COMPARE}）
-                </div>
-                {items.map((name) => {
-                  const on = selected.includes(name);
-                  return (
-                    <label className="ms-dd-item" key={name}>
-                      <input
-                        type="checkbox"
-                        checked={on}
-                        // 3つ選択済みのときは、選択中のもの以外をチェックできなくする
-                        disabled={!on && selected.length >= MAX_COMPARE}
-                        onChange={() => onToggle(name)}
-                      />
-                      {name}
-                    </label>
-                  );
-                })}
-                {selected.length > 0 && (
-                  <button className="ms-dd-clear" onClick={onClear}>
-                    選択をクリア
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+                : selected.join("、")
+            }
+          >
+            <MenuItem disabled value="">
+              <Typography variant="caption" color="text.secondary">
+                最大{MAX_COMPARE}つまで選べます（{selected.length} / {MAX_COMPARE}）
+              </Typography>
+            </MenuItem>
+            {items.map((name) => {
+              const on = selected.includes(name);
+              return (
+                // 3つ選択済みのときは、選択中のもの以外を選べなくする
+                <MenuItem key={name} value={name} dense disabled={!on && selected.length >= MAX_COMPARE}>
+                  <Checkbox size="small" checked={on} sx={{ mr: 0.5 }} />
+                  <ListItemText primary={name} slotProps={{ primary: { sx: { fontSize: 13 } } }} />
+                </MenuItem>
+              );
+            })}
+          </Select>
+        </FormControl>
+        {selected.length > 0 && (
+          <Button size="small" onClick={onClear}>
+            選択をクリア
+          </Button>
+        )}
+      </Box>
 
       {selected.length === 0 ? (
-        <div className="empty">比較する{label}を選んでください（最大{MAX_COMPARE}つ）。</div>
+        <Typography sx={{ py: 4, textAlign: "center", fontSize: 13 }} color="text.secondary">
+          比較する{label}を選んでください（最大{MAX_COMPARE}つ）。
+        </Typography>
       ) : (
         <div className="rsvd-grid">
           <div className="rsvd-colhead">

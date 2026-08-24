@@ -1,3 +1,5 @@
+import MuiTablePagination from "@mui/material/TablePagination";
+
 // テーブル用ページネーション（ページあたりの行数セレクタ＋範囲表示＋前後移動）
 export default function TablePagination({
   total,
@@ -7,42 +9,31 @@ export default function TablePagination({
   onPageSize,
   options = [25, 50, 100],
 }) {
-  const pageCount = Math.max(1, Math.ceil(total / pageSize));
-  const from = total === 0 ? 0 : page * pageSize + 1;
-  const to = Math.min(total, (page + 1) * pageSize);
   return (
-    <div className="pager">
-      <span className="pager-label">ページあたりの行数：</span>
-      <select
-        className="pager-size"
-        value={pageSize}
-        onChange={(e) => onPageSize(Number(e.target.value))}
-      >
-        {options.map((o) => (
-          <option key={o} value={o}>
-            {o}件
-          </option>
-        ))}
-      </select>
-      <span className="pager-range">
-        {from}〜{to} / {total}
-      </span>
-      <button
-        className="pager-arrow"
-        onClick={() => onPage(page - 1)}
-        disabled={page <= 0}
-        aria-label="前のページ"
-      >
-        ‹
-      </button>
-      <button
-        className="pager-arrow"
-        onClick={() => onPage(page + 1)}
-        disabled={page >= pageCount - 1}
-        aria-label="次のページ"
-      >
-        ›
-      </button>
-    </div>
+    <MuiTablePagination
+      component="div"
+      count={total}
+      page={page}
+      rowsPerPage={pageSize}
+      rowsPerPageOptions={options.map((o) => ({ value: o, label: `${o}件` }))}
+      onPageChange={(_, p) => onPage(p)}
+      onRowsPerPageChange={(e) => onPageSize(Number(e.target.value))}
+      labelRowsPerPage="ページあたりの行数："
+      labelDisplayedRows={({ from, to, count }) => `${from}〜${to} / ${count}`}
+      slotProps={{
+        actions: {
+          previousButton: { "aria-label": "前のページ" },
+          nextButton: { "aria-label": "次のページ" },
+        },
+      }}
+      sx={{
+        borderBottom: 0,
+        "& .MuiTablePagination-toolbar": { minHeight: 44, px: 0.5 },
+        "& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows": {
+          fontSize: 12.5,
+          color: "text.secondary",
+        },
+      }}
+    />
   );
 }

@@ -1,8 +1,41 @@
 import { Fragment, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  Chip,
+  Collapse,
+  IconButton,
+  MenuItem,
+  Select,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import FirstPageIcon from "@mui/icons-material/FirstPage";
+import LastPageIcon from "@mui/icons-material/LastPage";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useWpn } from "../components/wpn/WpnContext.jsx";
 import PlanDrawer from "../components/wpn/PlanDrawer.jsx";
-import { StatusBadge } from "../components/wpn/PlanDetailContent.jsx";
+import { StatusBadge, STATUS_COLOR } from "../components/wpn/PlanDetailContent.jsx";
 import {
   APPLICANTS,
   COMPANIES,
@@ -54,227 +87,271 @@ export default function WorkPlanNeoPlans() {
 
   return (
     <>
-      <div className="wpn-card">
-        <div className="wpn-page-head">
-          <h1 className="wpn-page-title">作業計画書一覧</h1>
-          <button
-            className="wpn-btn primary sm"
-            style={{ marginLeft: "auto" }}
-            onClick={() => navigate("/workplan-neo/plans/new")}
-          >
-            ＋ 新規作成
-          </button>
-        </div>
+      <Card>
+        <CardContent>
+          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+            <Typography variant="h1">作業計画書一覧</Typography>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<AddIcon />}
+              sx={{ ml: "auto" }}
+              onClick={() => navigate("/workplan-neo/plans/new")}
+            >
+              新規作成
+            </Button>
+          </Box>
 
-        {/* 検索条件 */}
-        <div className="wpn-search">
-          <button className="wpn-search-head" onClick={() => setOpenSearch((o) => !o)}>
-            検索条件
-            <span className={"wpn-caret" + (openSearch ? " open" : "")}>⌃</span>
-          </button>
-          {openSearch && (
-            <>
-              <div className="wpn-search-row">
-                <div className="wpn-seg">
-                  <button className={span === "day" ? "active" : ""} onClick={() => setSpan("day")}>日</button>
-                  <button className={span === "week" ? "active" : ""} onClick={() => setSpan("week")}>週</button>
-                </div>
-                <button className="wpn-pager-btn" onClick={() => shiftDate(-7)} aria-label="前週">|‹</button>
-                <button className="wpn-pager-btn" onClick={() => shiftDate(-1)} aria-label="前日">‹</button>
-                <input className="wpn-input wpn-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-                <button className="wpn-pager-btn" onClick={() => shiftDate(1)} aria-label="翌日">›</button>
-                <button className="wpn-pager-btn" onClick={() => shiftDate(7)} aria-label="翌週">›|</button>
-              </div>
-              <div className="wpn-search-row wrap">
-                <select
-                  className="wpn-select wpn-field"
+          {/* 検索条件 */}
+          <Accordion
+            expanded={openSearch}
+            onChange={() => setOpenSearch((o) => !o)}
+            disableGutters
+            elevation={0}
+            sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, mb: 2, "&:before": { display: "none" } }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ minHeight: 44 }}>
+              <Typography sx={{ fontSize: 12.5, fontWeight: 600 }}>検索条件</Typography>
+            </AccordionSummary>
+            <AccordionDetails>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
+                <ToggleButtonGroup
+                  exclusive
+                  size="small"
+                  value={span}
+                  onChange={(_, v) => v && setSpan(v)}
+                  aria-label="表示単位"
+                >
+                  <ToggleButton value="day">日</ToggleButton>
+                  <ToggleButton value="week">週</ToggleButton>
+                </ToggleButtonGroup>
+                <IconButton size="small" onClick={() => shiftDate(-7)} aria-label="前週">
+                  <FirstPageIcon fontSize="small" />
+                </IconButton>
+                <IconButton size="small" onClick={() => shiftDate(-1)} aria-label="前日">
+                  <ChevronLeftIcon fontSize="small" />
+                </IconButton>
+                <TextField type="date" value={date} onChange={(e) => setDate(e.target.value)} sx={{ width: 165 }} />
+                <IconButton size="small" onClick={() => shiftDate(1)} aria-label="翌日">
+                  <ChevronRightIcon fontSize="small" />
+                </IconButton>
+                <IconButton size="small" onClick={() => shiftDate(7)} aria-label="翌週">
+                  <LastPageIcon fontSize="small" />
+                </IconButton>
+              </Box>
+
+              <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", alignItems: "center" }}>
+                <Select
+                  displayEmpty
                   value={cond.category}
                   onChange={(e) => setCond({ ...cond, category: e.target.value })}
+                  sx={{ width: 240 }}
                 >
-                  <option value="">持込/レンタル機械カテゴリ</option>
+                  <MenuItem value="">持込/レンタル機械カテゴリ</MenuItem>
                   {MACHINE_CATEGORIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <MenuItem key={c} value={c}>{c}</MenuItem>
                   ))}
-                </select>
-                <input
-                  className="wpn-input wpn-field"
+                </Select>
+                <TextField
                   placeholder="現場内呼称"
                   value={cond.alias}
                   onChange={(e) => setCond({ ...cond, alias: e.target.value })}
+                  sx={{ width: 200 }}
                 />
-                <select
-                  className="wpn-select wpn-field"
+                <Select
+                  displayEmpty
                   value={cond.applicant}
                   onChange={(e) => setCond({ ...cond, applicant: e.target.value })}
+                  sx={{ width: 180 }}
                 >
-                  <option value="">申請者</option>
+                  <MenuItem value="">申請者</MenuItem>
                   {APPLICANTS.map((a) => (
-                    <option key={a} value={a}>{a}</option>
+                    <MenuItem key={a} value={a}>{a}</MenuItem>
                   ))}
-                </select>
-                <select
-                  className="wpn-select wpn-field"
+                </Select>
+                <Select
+                  displayEmpty
                   value={cond.company}
                   onChange={(e) => setCond({ ...cond, company: e.target.value })}
+                  sx={{ width: 180 }}
                 >
-                  <option value="">協力会社名</option>
+                  <MenuItem value="">協力会社名</MenuItem>
                   {COMPANIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
+                    <MenuItem key={c} value={c}>{c}</MenuItem>
                   ))}
-                </select>
-                <div className="wpn-field wpn-statusfield">
-                  <span className="wpn-field-label">申請ステータス</span>
-                  <div className="wpn-statuschips">
-                    {STATUS_KEYS.map((k) => (
-                      <button
-                        key={k}
-                        className={"wpn-status " + PLAN_STATUS[k].cls + (cond.statuses.includes(k) ? "" : " off")}
-                        onClick={() => toggleStatus(k)}
-                      >
-                        {PLAN_STATUS[k].label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="wpn-search-actions">
-                <button className="wpn-btn primary sm" onClick={() => setApplied(cond)}>検索</button>
-                <button
-                  className="wpn-btn ghost sm"
+                </Select>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.5 }}>
+                    申請ステータス
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 0.75 }}>
+                    {STATUS_KEYS.map((k) => {
+                      const on = cond.statuses.includes(k);
+                      return (
+                        <Chip
+                          key={k}
+                          size="small"
+                          label={PLAN_STATUS[k].label}
+                          color={STATUS_COLOR[k]}
+                          variant={on ? "filled" : "outlined"}
+                          onClick={() => toggleStatus(k)}
+                          sx={{ opacity: on ? 1 : 0.55 }}
+                        />
+                      );
+                    })}
+                  </Box>
+                </Box>
+              </Box>
+
+              <Box sx={{ display: "flex", gap: 1.25, mt: 2 }}>
+                <Button variant="contained" size="small" onClick={() => setApplied(cond)}>
+                  検索
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
                   onClick={() => {
                     setCond(EMPTY_COND);
                     setApplied(EMPTY_COND);
                   }}
                 >
                   条件をリセット
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+                </Button>
+              </Box>
+            </AccordionDetails>
+          </Accordion>
 
-        {/* 一覧 */}
-        <table className="wpn-table wpn-plan-table">
-          <thead>
-            <tr>
-              <th style={{ width: 42 }}>
-                <input type="checkbox" className="wpn-check" aria-label="全選択" />
-              </th>
-              <th style={{ width: "18%" }}>作業計画書名</th>
-              <th>持込/レンタル機械カテゴリ</th>
-              <th style={{ width: 130 }}>申請者</th>
-              <th style={{ width: 140 }}>協力会社名</th>
-              <th style={{ width: 120 }}>申請ステータス</th>
-              <th style={{ width: 60 }}>詳細</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={7} className="wpn-empty">条件に一致する作業計画書はありません。</td>
-              </tr>
-            )}
-            {rows.map((p) => {
-              const cats = categoryCounts(p.machineIds);
-              const open = !!expanded[p.id];
-              return (
-                <Fragment key={p.id}>
-                  <tr>
-                    <td className="center">
-                      <input type="checkbox" className="wpn-check" aria-label="選択" />
-                    </td>
-                    <td>{p.name}</td>
-                    <td>
-                      <button
-                        className="wpn-count-toggle"
-                        onClick={() => setExpanded((e) => ({ ...e, [p.id]: !open }))}
-                      >
-                        {p.machineIds.length}台 <span className={"wpn-caret" + (open ? " open" : "")}>⌄</span>
-                      </button>
-                      {cats.length > 0 && (
-                        <div className="wpn-catchips">
-                          {cats.map((c) => (
-                            <span className="wpn-catchip" key={c.category}>
-                              {c.category}（{c.count}台）
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                    <td>{p.applicant}</td>
-                    <td>{p.company}</td>
-                    <td>
-                      <StatusBadge status={p.status} />
-                    </td>
-                    <td className="center">
-                      <button className="wpn-icon-btn wpn-detail-btn" onClick={() => setDrawerId(p.id)} aria-label="詳細">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14 5h5v5M19 5l-8 8M11 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-5" />
-                        </svg>
-                      </button>
-                    </td>
-                  </tr>
-                  {open && (
-                    <tr className="wpn-exp-row">
-                      <td colSpan={7}>
-                        <table className="wpn-table wpn-inner-table">
-                          <thead>
-                            <tr>
-                              <th>機械名</th>
-                              <th style={{ width: "26%" }}>現場内呼称</th>
-                              <th style={{ width: "22%" }}>カテゴリ</th>
-                              <th style={{ width: 100 }}>始業前点検</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {p.machineIds.length === 0 && (
-                              <tr>
-                                <td colSpan={4} className="wpn-empty">機械は登録されていません。</td>
-                              </tr>
-                            )}
-                            {p.machineIds.map((id) => {
-                              const m = machineById(id);
-                              if (!m) return null;
-                              return (
-                                <tr key={id}>
-                                  <td>{m.name}</td>
-                                  <td>{m.alias}</td>
-                                  <td>{m.category}</td>
-                                  <td>
-                                    <span className="wpn-tag gray">未</span>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </td>
-                    </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+          {/* 一覧 */}
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ width: 42 }}>
+                    <Checkbox size="small" slotProps={{ input: { "aria-label": "全選択" } }} />
+                  </TableCell>
+                  <TableCell sx={{ width: "18%" }}>作業計画書名</TableCell>
+                  <TableCell>持込/レンタル機械カテゴリ</TableCell>
+                  <TableCell sx={{ width: 130 }}>申請者</TableCell>
+                  <TableCell sx={{ width: 140 }}>協力会社名</TableCell>
+                  <TableCell sx={{ width: 120 }}>申請ステータス</TableCell>
+                  <TableCell sx={{ width: 60 }}>詳細</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center" sx={{ color: "text.secondary", py: 4 }}>
+                      条件に一致する作業計画書はありません。
+                    </TableCell>
+                  </TableRow>
+                )}
+                {rows.map((p) => {
+                  const cats = categoryCounts(p.machineIds);
+                  const open = !!expanded[p.id];
+                  return (
+                    <Fragment key={p.id}>
+                      <TableRow hover>
+                        <TableCell align="center">
+                          <Checkbox size="small" slotProps={{ input: { "aria-label": "選択" } }} />
+                        </TableCell>
+                        <TableCell>{p.name}</TableCell>
+                        <TableCell>
+                          <Button
+                            size="small"
+                            endIcon={
+                              <ExpandMoreIcon
+                                sx={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}
+                              />
+                            }
+                            onClick={() => setExpanded((e) => ({ ...e, [p.id]: !open }))}
+                          >
+                            {p.machineIds.length}台
+                          </Button>
+                          {cats.length > 0 && (
+                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+                              {cats.map((c) => (
+                                <Chip
+                                  key={c.category}
+                                  size="small"
+                                  variant="outlined"
+                                  label={`${c.category}（${c.count}台）`}
+                                />
+                              ))}
+                            </Box>
+                          )}
+                        </TableCell>
+                        <TableCell>{p.applicant}</TableCell>
+                        <TableCell>{p.company}</TableCell>
+                        <TableCell>
+                          <StatusBadge status={p.status} />
+                        </TableCell>
+                        <TableCell align="center">
+                          <IconButton size="small" onClick={() => setDrawerId(p.id)} aria-label="詳細">
+                            <OpenInNewIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell colSpan={7} sx={{ p: 0, border: 0 }}>
+                          <Collapse in={open} unmountOnExit>
+                            <Box sx={{ px: 2, py: 1.5, bgcolor: "#f7f8fb" }}>
+                              <Table size="small">
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell>機械名</TableCell>
+                                    <TableCell sx={{ width: "26%" }}>現場内呼称</TableCell>
+                                    <TableCell sx={{ width: "22%" }}>カテゴリ</TableCell>
+                                    <TableCell sx={{ width: 100 }}>始業前点検</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {p.machineIds.length === 0 && (
+                                    <TableRow>
+                                      <TableCell colSpan={4} align="center" sx={{ color: "text.secondary", py: 3 }}>
+                                        機械は登録されていません。
+                                      </TableCell>
+                                    </TableRow>
+                                  )}
+                                  {p.machineIds.map((id) => {
+                                    const m = machineById(id);
+                                    if (!m) return null;
+                                    return (
+                                      <TableRow key={id}>
+                                        <TableCell>{m.name}</TableCell>
+                                        <TableCell>{m.alias}</TableCell>
+                                        <TableCell>{m.category}</TableCell>
+                                        <TableCell>
+                                          <Chip size="small" label="未" variant="outlined" />
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </Box>
+                          </Collapse>
+                        </TableCell>
+                      </TableRow>
+                    </Fragment>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
 
-        <div className="wpn-pager">
-          <span>ページあたりの行数:</span>
-          <select
-            className="wpn-select wpn-perpage"
-            value={perPage}
-            onChange={(e) => setPerPage(Number(e.target.value))}
-          >
-            {[25, 50, 100].map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
-          <span className="wpn-pager-range">
-            {filtered.length === 0 ? 0 : 1}〜{rows.length} / {filtered.length}
-          </span>
-          <button className="wpn-pager-btn" disabled aria-label="前のページ">‹</button>
-          <button className="wpn-pager-btn" disabled aria-label="次のページ">›</button>
-        </div>
-      </div>
+          <TablePagination
+            component="div"
+            count={filtered.length}
+            page={0}
+            onPageChange={() => {}}
+            rowsPerPage={perPage}
+            rowsPerPageOptions={[25, 50, 100]}
+            onRowsPerPageChange={(e) => setPerPage(Number(e.target.value))}
+            labelRowsPerPage="ページあたりの行数:"
+            labelDisplayedRows={({ from, to, count }) => `${from}〜${to} / ${count}`}
+          />
+        </CardContent>
+      </Card>
 
       {drawerId && <PlanDrawer planId={drawerId} onClose={() => setDrawerId(null)} />}
     </>

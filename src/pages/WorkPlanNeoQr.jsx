@@ -8,6 +8,7 @@ import {
   CardContent,
   Checkbox,
   FormControlLabel,
+  GlobalStyles,
   Typography,
 } from "@mui/material";
 import PrintIcon from "@mui/icons-material/PrintOutlined";
@@ -51,6 +52,14 @@ export default function WorkPlanNeoQr() {
 
   return (
     <Box>
+      {/* 印刷時はQRシートだけを残す（サイドバー・チェック列・注記は出さない） */}
+      <GlobalStyles
+        styles={{
+          "@media print": {
+            ".MuiDrawer-root, .wpn-qr-toolbar, .wpn-qr-note, .MuiToolbar-root": { display: "none !important" },
+          },
+        }}
+      />
       <Typography variant="h1" sx={{ mb: 2 }}>
         QRコード
       </Typography>
@@ -83,7 +92,7 @@ export default function WorkPlanNeoQr() {
         </Button>
       </Box>
 
-      <Card className="wpn-qr-sheet">
+      <Card>
         <CardContent sx={{ textAlign: "center", py: 4 }}>
           <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{WPN_PROJECT}</Typography>
           <Typography color="text.secondary" sx={{ fontSize: 13, mt: 0.5 }}>
@@ -141,7 +150,7 @@ export default function WorkPlanNeoQr() {
         </CardContent>
       </Card>
 
-      <Typography color="text.secondary" sx={{ fontSize: 12, mt: 2 }}>
+      <Typography className="wpn-qr-note" color="text.secondary" sx={{ fontSize: 12, mt: 2 }}>
         QRを読み取る、またはクリックすると各画面へ移動します（デモ用）。チェックを外した種類は印刷されません。
       </Typography>
     </Box>

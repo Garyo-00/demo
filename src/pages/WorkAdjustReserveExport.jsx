@@ -1,4 +1,26 @@
 import { useState, useMemo } from "react";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  IconButton,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+} from "@mui/material";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import CloseIcon from "@mui/icons-material/Close";
 import { useWaSettings } from "../components/wa/WaSettingsContext.jsx";
 import TablePagination from "../components/wa/TablePagination.jsx";
 
@@ -132,105 +154,178 @@ export default function WorkAdjustReserveExport() {
   }
 
   return (
-    <div>
-      <div className="page-title">予約実績出力</div>
+    <Box>
+      <Typography variant="h1" sx={{ mb: 1.75 }}>
+        予約実績出力
+      </Typography>
 
-      <div className="tabs">
+      <Tabs
+        value={kind}
+        onChange={(_, v) => switchKind(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ borderBottom: "1px solid", borderColor: "divider", mb: 2 }}
+      >
         {KINDS.map((k) => (
-          <button key={k.key} className={"tab" + (kind === k.key ? " on" : "")} onClick={() => switchKind(k.key)}>
-            {k.label}
-          </button>
+          <Tab key={k.key} value={k.key} label={k.label} />
         ))}
-      </div>
+      </Tabs>
 
       {/* 検索カード */}
-      <div className="rex-search">
-        <div className="rex-search-row">
-          <select className="rex-cat" value={cat} onChange={(e) => { setCat(e.target.value); setPage(0); }}>
-            {catList.map((c) => (
-              <option key={c} value={c}>{c === "すべて" ? "カテゴリ" : c}</option>
-            ))}
-          </select>
-          <div className="rex-search-field">
-            <input
+      <Card sx={{ mb: 2 }}>
+        <CardContent>
+          <Box sx={{ display: "flex", gap: 1.75, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+            <TextField
+              select
+              size="small"
+              label="カテゴリ"
+              value={cat}
+              onChange={(e) => { setCat(e.target.value); setPage(0); }}
+              sx={{ minWidth: 220 }}
+            >
+              {catList.map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              size="small"
               placeholder="機械名、現場内呼称等で検索"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && (setApplied(query), setPage(0))}
+              sx={{ flex: 1, minWidth: 240 }}
             />
-          </div>
-        </div>
-        <div className="rex-search-btns">
-          <button className="primary-btn" onClick={() => { setApplied(query); setPage(0); }}>検索</button>
-          <button className="ghost-btn accent-outline" onClick={() => { setQuery(""); setApplied(""); setPage(0); }}>✕ クリア</button>
-        </div>
-      </div>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1.25, justifyContent: "center", mt: 1.75 }}>
+            <Button variant="contained" onClick={() => { setApplied(query); setPage(0); }}>
+              検索
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<CloseIcon />}
+              onClick={() => { setQuery(""); setApplied(""); setPage(0); }}
+            >
+              クリア
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* 一覧カード */}
-      <div className="rex-list">
-        <div className="rex-list-head">
-          <div className="rex-month">
-            予約年月：<strong>{fmtMonth(month)}</strong>
-            <button className="rex-mbtn" onClick={() => { setMonth(shiftMonth(month, -1)); setPage(0); }} title="前の月">‹</button>
-            <input
-              type="month"
-              className="rex-month-input"
-              value={month}
-              onChange={(e) => { setMonth(e.target.value || month); setPage(0); }}
-            />
-            <button className="rex-mbtn" onClick={() => { setMonth(shiftMonth(month, 1)); setPage(0); }} title="次の月">›</button>
-          </div>
-          <button className="primary-btn" onClick={exportCsv} disabled={sel.size === 0} title={sel.size === 0 ? "資源を選択してください" : "選択した資源の当月予約をCSV出力"}>
-            出力
-          </button>
-        </div>
+      <Card>
+        <CardContent>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 1.5,
+              flexWrap: "wrap",
+              mb: 1.25,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography sx={{ fontSize: 14 }}>
+                予約年月：<strong>{fmtMonth(month)}</strong>
+              </Typography>
+              <IconButton
+                size="small"
+                title="前の月"
+                onClick={() => { setMonth(shiftMonth(month, -1)); setPage(0); }}
+                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}
+              >
+                <ChevronLeftIcon fontSize="small" />
+              </IconButton>
+              <TextField
+                size="small"
+                type="month"
+                value={month}
+                onChange={(e) => { setMonth(e.target.value || month); setPage(0); }}
+              />
+              <IconButton
+                size="small"
+                title="次の月"
+                onClick={() => { setMonth(shiftMonth(month, 1)); setPage(0); }}
+                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2 }}
+              >
+                <ChevronRightIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <Button
+              variant="contained"
+              onClick={exportCsv}
+              disabled={sel.size === 0}
+              title={sel.size === 0 ? "資源を選択してください" : "選択した資源の当月予約をCSV出力"}
+            >
+              出力
+            </Button>
+          </Box>
 
-        {filtered.length === 0 ? (
-          <div className="empty">該当する資源がありません。</div>
-        ) : (
-          <>
-            <table className="rex-table">
-              <thead>
-                <tr>
-                  <th className="col-check">
-                    <input type="checkbox" checked={allSelected} onChange={toggleAll} title="すべて選択" />
-                  </th>
-                  <th>機械名</th>
-                  <th>現場内呼称</th>
-                  <th>カテゴリ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pageRows.map((x) => (
-                  <tr key={x.id} className={sel.has(x.name) ? "rex-row-on" : ""}>
-                    <td className="col-check">
-                      <input type="checkbox" checked={sel.has(x.name)} onChange={() => toggle(x.name)} />
-                    </td>
-                    <td>{x.category || (kind === "gate" ? "ゲート" : "—")}</td>
-                    <td>{x.name}</td>
-                    <td>{x.category || "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {filtered.length === 0 ? (
+            <Typography sx={{ py: 4, textAlign: "center", fontSize: 13 }} color="text.secondary">
+              該当する資源がありません。
+            </Typography>
+          ) : (
+            <>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          size="small"
+                          checked={allSelected}
+                          onChange={toggleAll}
+                          title="すべて選択"
+                          slotProps={{ input: { "aria-label": "すべて選択" } }}
+                        />
+                      </TableCell>
+                      <TableCell>機械名</TableCell>
+                      <TableCell>現場内呼称</TableCell>
+                      <TableCell>カテゴリ</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {pageRows.map((x) => (
+                      <TableRow
+                        key={x.id}
+                        hover
+                        selected={sel.has(x.name)}
+                        onClick={() => toggle(x.name)}
+                        sx={{ cursor: "pointer" }}
+                      >
+                        <TableCell padding="checkbox">
+                          <Checkbox size="small" checked={sel.has(x.name)} onChange={() => toggle(x.name)} />
+                        </TableCell>
+                        <TableCell>{x.category || (kind === "gate" ? "ゲート" : "—")}</TableCell>
+                        <TableCell>{x.name}</TableCell>
+                        <TableCell>{x.category || "—"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
 
-            <TablePagination
-              total={filtered.length}
-              page={safePage}
-              pageSize={pageSize}
-              onPage={setPage}
-              onPageSize={(n) => { setPageSize(n); setPage(0); }}
-            />
-          </>
-        )}
-      </div>
+              <TablePagination
+                total={filtered.length}
+                page={safePage}
+                pageSize={pageSize}
+                onPage={setPage}
+                onPageSize={(n) => { setPageSize(n); setPage(0); }}
+              />
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-      <p className="rsv-note">
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1, lineHeight: 1.7 }}>
         ※ 対象月・タブ（揚重機／ゲート／資機材・その他）の予約を、選択した資源ぶんCSV出力します。
         列は「機械名・現場内呼称・ArchID・予約日・予約枠・種類・作業内容・作業場所・会社名・予約者所属企業・予約者名・<strong>備考</strong>」。
         <br />
         ※ デモは時間制予約（通常／スポット）を対象に出力します。2部制予約の出力は本番仕様として要実装。
-      </p>
-    </div>
+      </Typography>
+    </Box>
   );
 }

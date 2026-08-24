@@ -1,6 +1,21 @@
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
+  Box,
+  Chip,
+  Paper,
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tabs,
+  Typography,
+} from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import {
   REQUESTS,
   REQUEST_TYPES,
   APPROVAL_STATUS_LABEL,
@@ -10,6 +25,40 @@ import {
 
 // 申請の種別サブタブ（null = すべて）
 const TYPE_TABS = [null, ...REQUEST_TYPES];
+
+// 申請状態の色。差戻しは色を持たせずグレーで扱う。
+const STATUS_TONE = { approved: "success", pending: "warning", rejected: null };
+
+// 絞り込みチップ。選択中は primary の淡色で塗る。
+function FilterChip({ label, on, onClick }) {
+  return (
+    <Chip
+      size="small"
+      label={label}
+      onClick={onClick}
+      variant="outlined"
+      sx={{
+        bgcolor: on ? "primary.light" : "background.paper",
+        borderColor: on ? "primary.main" : "divider",
+        color: on ? "primary.main" : "text.secondary",
+      }}
+    />
+  );
+}
+
+function StatusChip({ status }) {
+  const tone = STATUS_TONE[status];
+  return (
+    <Chip
+      size="small"
+      label={APPROVAL_STATUS_LABEL[status]}
+      sx={(t) => {
+        const c = tone ? t.palette[tone].main : t.palette.text.secondary;
+        return { bgcolor: alpha(c, 0.12), color: c };
+      }}
+    />
+  );
+}
 
 export default function ApprovalRequests() {
   const [params, setParams] = useSearchParams();
@@ -49,93 +98,96 @@ export default function ApprovalRequests() {
   }, [tab, type, scope]);
 
   return (
-    <div>
-      <div className="crumb">承認・申請</div>
-      <strong style={{ fontSize: 15 }}>承認・申請</strong>
+    <Box>
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.75 }}>
+        承認・申請
+      </Typography>
+      <Typography sx={{ fontSize: 15, fontWeight: 700 }}>承認・申請</Typography>
 
-      <div className="tabs">
-        <button
-          className={"tab" + (tab === "approval" ? " on" : "")}
-          onClick={() => selectTab("approval")}
-        >
-          承認
-          {myPending > 0 && <span className="tab-badge">{myPending}</span>}
-        </button>
-        <button
-          className={"tab" + (tab === "request" ? " on" : "")}
-          onClick={() => selectTab("request")}
-        >
-          申請
-        </button>
-      </div>
+      <Tabs
+        value={tab}
+        onChange={(_, v) => selectTab(v)}
+        sx={{ mt: 2, borderBottom: "1px solid", borderColor: "divider" }}
+      >
+        <Tab
+          value="approval"
+          label={
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+              承認
+              {myPending > 0 && (
+                <Chip
+                  size="small"
+                  label={myPending}
+                  sx={(t) => ({
+                    height: 18,
+                    fontSize: 11,
+                    bgcolor: alpha(t.palette.warning.main, 0.15),
+                    color: "warning.main",
+                  })}
+                />
+              )}
+            </Box>
+          }
+        />
+        <Tab value="request" label="申請" />
+      </Tabs>
 
-      {tab === "approval" ? (
-        <div className="filters">
-          <span
-            className={"chip" + (scope === "mine" ? " on" : "")}
-            onClick={() => setParam("scope", null)}
-          >
-            自分の承認待ち
-          </span>
-          <span
-            className={"chip" + (scope === "all" ? " on" : "")}
-            onClick={() => setParam("scope", "all")}
-          >
-            すべての承認待ち
-          </span>
-        </div>
-      ) : (
-        <div className="filters">
-          {TYPE_TABS.map((t, i) => (
-            <span
+      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center", my: 1.75 }}>
+        {tab === "approval" ? (
+          <>
+            <FilterChip label="自分の承認待ち" on={scope === "mine"} onClick={() => setParam("scope", null)} />
+            <FilterChip label="すべての承認待ち" on={scope === "all"} onClick={() => setParam("scope", "all")} />
+          </>
+        ) : (
+          TYPE_TABS.map((t, i) => (
+            <FilterChip
               key={"t" + i}
-              className={
-                "chip" + (type === t || (!type && t === null) ? " on" : "")
-              }
+              label={t || "すべて"}
+              on={type === t || (!type && t === null)}
               onClick={() => setParam("type", t)}
-            >
-              {t || "すべて"}
-            </span>
-          ))}
-        </div>
-      )}
+            />
+          ))
+        )}
+      </Box>
 
       {rows.length === 0 ? (
-        <div className="empty">該当する申請はありません。</div>
+        <Typography variant="body2" color="text.secondary" sx={{ p: 4, textAlign: "center" }}>
+          該当する申請はありません。
+        </Typography>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>申請番号</th>
-              <th>種別</th>
-              <th>申請内容</th>
-              <th>申請者</th>
-              <th>承認者</th>
-              <th>申請日</th>
-              {tab === "request" && <th>状態</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.id}>
-                <td>{r.id}</td>
-                <td>{r.type}</td>
-                <td>{r.title}</td>
-                <td>{r.applicant}</td>
-                <td>{r.approver}</td>
-                <td>{r.date}</td>
-                {tab === "request" && (
-                  <td>
-                    <span className={"pill " + r.status}>
-                      {APPROVAL_STATUS_LABEL[r.status]}
-                    </span>
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <TableContainer component={Paper} variant="outlined">
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>申請番号</TableCell>
+                <TableCell>種別</TableCell>
+                <TableCell>申請内容</TableCell>
+                <TableCell>申請者</TableCell>
+                <TableCell>承認者</TableCell>
+                <TableCell>申請日</TableCell>
+                {tab === "request" && <TableCell>状態</TableCell>}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {rows.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell>{r.id}</TableCell>
+                  <TableCell>{r.type}</TableCell>
+                  <TableCell>{r.title}</TableCell>
+                  <TableCell>{r.applicant}</TableCell>
+                  <TableCell>{r.approver}</TableCell>
+                  <TableCell>{r.date}</TableCell>
+                  {tab === "request" && (
+                    <TableCell>
+                      <StatusChip status={r.status} />
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
-    </div>
+    </Box>
   );
 }

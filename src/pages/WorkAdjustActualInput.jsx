@@ -1,6 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  InputAdornment,
+  MenuItem,
+  ScopedCssBaseline,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
+import {
   WA_PROJECT,
   WA_WORK_SCHEDULES,
   WA_DEFAULT_DATE,
@@ -31,42 +45,45 @@ function worksForCompany(company, date) {
   return WA_WORK_SCHEDULES.filter((w) => w.date === date && w.company === company);
 }
 
-// 通常作業／早出・残業作業 の1パターン分（予定を左に表示し、実績を入力）
+// 画面が縦に細いため、予定／実績／工数は常に3列で並べる
 function PatternRow({ label, planned, item, patch, wKey, hKey }) {
   return (
-    <div className="wg-row has-planned">
-      <span className="wg-label">{label}</span>
-      <div className="wg-cell wg-planned">
-        <small>作業人数（予定）</small>
-        <span className="wg-planned-val">{planned}</span>
-      </div>
-      <label className="wg-cell">
-        <small>作業人数（実績）</small>
-        <select
+    <Box sx={{ mb: 1.5 }}>
+      <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.75 }}>{label}</Typography>
+      <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
+        <TextField
+          size="small"
+          label="人数（予定）"
+          value={planned}
+          slotProps={{ input: { readOnly: true }, inputLabel: { shrink: true } }}
+          sx={{ "& .MuiOutlinedInput-root": { bgcolor: "action.hover" } }}
+        />
+        <TextField
+          select
+          size="small"
+          label="人数（実績）"
           value={item[wKey] ?? 0}
           onChange={(e) => patch({ [wKey]: Number(e.target.value) })}
         >
           {WORKER_OPTS.map((n) => (
-            <option key={n} value={n}>
+            <MenuItem key={n} value={n}>
               {n}
-            </option>
+            </MenuItem>
           ))}
-        </select>
-      </label>
-      <label className="wg-cell">
-        <small>工数</small>
-        <span className="wg-hours">
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            value={item[hKey] ?? 0}
-            onChange={(e) => patch({ [hKey]: Number(e.target.value) })}
-          />
-          <em>h</em>
-        </span>
-      </label>
-    </div>
+        </TextField>
+        <TextField
+          size="small"
+          type="number"
+          label="工数"
+          value={item[hKey] ?? 0}
+          onChange={(e) => patch({ [hKey]: Number(e.target.value) })}
+          slotProps={{
+            htmlInput: { min: 0, step: 0.5 },
+            input: { endAdornment: <InputAdornment position="end">h</InputAdornment> },
+          }}
+        />
+      </Box>
+    </Box>
   );
 }
 
@@ -95,66 +112,98 @@ function CompanyActualForm({ company, date, onSubmit, onBack }) {
 
   if (rows.length === 0) {
     return (
-      <div className="ai-step">
-        <div className="empty">この日（{formatDateStr(date)}）の {company} の作業予定はありません。</div>
-        <div className="ai-actions">
-          {onBack && (
-            <button className="ghost-btn" onClick={onBack}>
-              ← 会社を選び直す
-            </button>
-          )}
-        </div>
-      </div>
+      <Box>
+        <Typography sx={{ py: 4, textAlign: "center", fontSize: 13 }} color="text.secondary">
+          この日（{formatDateStr(date)}）の {company} の作業予定はありません。
+        </Typography>
+        {onBack && (
+          <Button variant="outlined" onClick={onBack}>
+            ← 会社を選び直す
+          </Button>
+        )}
+      </Box>
     );
   }
 
   return (
-    <div className="ai-step">
-      <div className="batch-company">
-        <div className="batch-company-head">
-          <span className="bc-name">{company}</span>
-          <span className="bc-attend" title="DNN（出面管理）連携の入場人数">
+    <Box>
+      <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, overflow: "hidden" }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            flexWrap: "wrap",
+            px: 2,
+            py: 1.25,
+            bgcolor: "primary.light",
+            color: "primary.main",
+            borderBottom: "1px solid",
+            borderColor: "divider",
+          }}
+        >
+          <Typography sx={{ fontSize: 14, fontWeight: 700, mr: "auto" }}>{company}</Typography>
+          <Typography
+            title="DNN（出面管理）連携の入場人数"
+            sx={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "text.primary",
+              bgcolor: "background.paper",
+              border: "1px solid",
+              borderColor: "primary.main",
+              borderRadius: 999,
+              px: 1.5,
+              py: 0.25,
+            }}
+          >
             入場人数 <strong>{attendance}</strong> 名
-          </span>
-        </div>
+          </Typography>
+        </Box>
         {rows.map((d, i) => (
-          <div className="batch-item" key={d.id}>
-            <div className="batch-head">
+          <Box
+            key={d.id}
+            sx={{
+              px: 2,
+              py: 1.75,
+              borderTop: i === 0 ? 0 : "1px dashed",
+              borderColor: "divider",
+            }}
+          >
+            <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 1.25 }}>
               {d.jobType}／{d.content}
-            </div>
-            <div className="worker-grid">
-              <PatternRow
-                label="通常作業"
-                planned={d.plannedNormal}
-                item={d}
-                patch={patchItem(i)}
-                wKey="actualNormalWorkers"
-                hKey="actualNormalHours"
-              />
-              <PatternRow
-                label="早出・残業作業"
-                planned={d.plannedOvertime}
-                item={d}
-                patch={patchItem(i)}
-                wKey="actualOvertimeWorkers"
-                hKey="actualOvertimeHours"
-              />
-            </div>
-          </div>
+            </Typography>
+            <PatternRow
+              label="通常作業"
+              planned={d.plannedNormal}
+              item={d}
+              patch={patchItem(i)}
+              wKey="actualNormalWorkers"
+              hKey="actualNormalHours"
+            />
+            <PatternRow
+              label="早出・残業作業"
+              planned={d.plannedOvertime}
+              item={d}
+              patch={patchItem(i)}
+              wKey="actualOvertimeWorkers"
+              hKey="actualOvertimeHours"
+            />
+          </Box>
         ))}
-      </div>
+      </Box>
 
-      <div className="ai-actions">
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap", mt: 2.25 }}>
         {onBack && (
-          <button className="ghost-btn" onClick={onBack}>
+          <Button variant="outlined" onClick={onBack}>
             ← 会社を選び直す
-          </button>
+          </Button>
         )}
-        <button className="primary-btn big spacer" onClick={onSubmit}>
+        <Button variant="contained" size="large" sx={{ ml: "auto" }} onClick={onSubmit}>
           送信
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Box>
+    </Box>
   );
 }
 
@@ -169,20 +218,30 @@ function NoAccountView({ date, onSubmit }) {
 
   if (!company) {
     return (
-      <div className="ai-step">
-        <h3 className="ai-step-title">会社名を選択してください</h3>
+      <Box>
+        <Typography sx={{ fontSize: 15, textAlign: "center", mb: 1.75, fontWeight: 600 }}>
+          会社名を選択してください
+        </Typography>
         {companies.length === 0 ? (
-          <div className="empty">この日（{formatDateStr(date)}）の作業予定はありません。</div>
+          <Typography sx={{ py: 4, textAlign: "center", fontSize: 13 }} color="text.secondary">
+            この日（{formatDateStr(date)}）の作業予定はありません。
+          </Typography>
         ) : (
-          <div className="ai-company-list">
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
             {companies.map((c) => (
-              <button key={c} className="ai-company-btn" onClick={() => setCompany(c)}>
+              <Button
+                key={c}
+                variant="outlined"
+                size="large"
+                onClick={() => setCompany(c)}
+                sx={{ py: 1.75, fontSize: 16, borderColor: "divider", color: "text.primary" }}
+              >
                 {c}
-              </button>
+              </Button>
             ))}
-          </div>
+          </Box>
         )}
-      </div>
+      </Box>
     );
   }
 
@@ -202,18 +261,38 @@ function WithAccountView({ date, onSubmit }) {
   return <CompanyActualForm key={ACCOUNT_COMPANY + date} company={ACCOUNT_COMPANY} date={date} onSubmit={onSubmit} />;
 }
 
+// 画面全体のシェル（独立ページなので各自 ScopedCssBaseline で包む）
+function Screen({ children }) {
+  return (
+    <ScopedCssBaseline
+      sx={{
+        minHeight: "100vh",
+        bgcolor: "background.default",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "flex-start",
+        p: { xs: "24px 16px" },
+      }}
+    >
+      <Card sx={{ width: "100%", maxWidth: 440 }}>
+        <CardContent sx={{ p: "20px 20px 24px" }}>{children}</CardContent>
+      </Card>
+    </ScopedCssBaseline>
+  );
+}
+
 // 送信後の完了画面
 function DoneScreen() {
   return (
-    <div className="ai-screen">
-      <div className="ai-card ai-done">
-        <div className="ai-done-check" aria-hidden="true">
-          ✓
-        </div>
-        <h1 className="ai-done-title">送信が完了しました</h1>
-        <p className="ai-done-text">ブラウザ画面を閉じてください。</p>
-      </div>
-    </div>
+    <Screen>
+      <Box sx={{ textAlign: "center", py: 5 }}>
+        <CheckCircleOutlineIcon sx={{ fontSize: 64, color: "primary.main" }} />
+        <Typography sx={{ fontSize: 20, fontWeight: 700, mt: 2 }}>送信が完了しました</Typography>
+        <Typography sx={{ fontSize: 14, mt: 1.5 }} color="text.secondary">
+          ブラウザ画面を閉じてください。
+        </Typography>
+      </Box>
+    </Screen>
   );
 }
 
@@ -227,53 +306,75 @@ export default function WorkAdjustActualInput() {
   const submit = () => setSubmitted(true);
 
   return (
-    <div className="ai-screen">
-      <div className="ai-card">
-        {/* デモ用：アカウントあり／なしの切替 */}
-        <div className="ai-viewswitch" role="group" aria-label="ビュー切替">
-          <button
-            className={"ai-seg" + (view === "with" ? " active" : "")}
-            onClick={() => setView("with")}
-            aria-pressed={view === "with"}
-          >
-            アカウントあり
-          </button>
-          <button
-            className={"ai-seg" + (view === "none" ? " active" : "")}
-            onClick={() => setView("none")}
-            aria-pressed={view === "none"}
-          >
-            アカウントなし
-          </button>
-        </div>
+    <Screen>
+      {/* デモ用：アカウントあり／なしの切替 */}
+      <ToggleButtonGroup
+        exclusive
+        fullWidth
+        size="small"
+        value={view}
+        onChange={(_, v) => v && setView(v)}
+        aria-label="ビュー切替"
+        sx={{ mb: 2.5 }}
+      >
+        <ToggleButton value="with">アカウントあり</ToggleButton>
+        <ToggleButton value="none">アカウントなし</ToggleButton>
+      </ToggleButtonGroup>
 
-        <div className="ai-head">
-          <h1 className="ai-project">{WA_PROJECT.name}</h1>
-          <h2 className="ai-title">作業実績入力</h2>
-          <div className="ai-datepick">
-            <label htmlFor="ai-date-input">対象作業日</label>
-            <input
-              id="ai-date-input"
-              type="date"
-              value={selectedDate}
-              max={TODAY}
-              onChange={(e) => setSelectedDate(e.target.value || TODAY)}
-            />
-            {view === "with" && <span className="ai-date-co">／{ACCOUNT_COMPANY}</span>}
-          </div>
-          <div className="ai-date-note">当日を既定表示。前日以前も選択して記入できます（未来日は不可）。</div>
-        </div>
+      <Box sx={{ textAlign: "center", mb: 2.75 }}>
+        <Typography sx={{ fontSize: 18, fontWeight: 700 }}>{WA_PROJECT.name}</Typography>
+        <Typography sx={{ fontSize: 20, fontWeight: 700, mt: 0.75, color: "#1e2a5a" }}>
+          作業実績入力
+        </Typography>
+        <Box
+          sx={{
+            mt: 1.25,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 1,
+            flexWrap: "wrap",
+          }}
+        >
+          <TextField
+            size="small"
+            type="date"
+            label="対象作業日"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value || TODAY)}
+            slotProps={{ inputLabel: { shrink: true }, htmlInput: { max: TODAY } }}
+          />
+          {view === "with" && (
+            <Typography sx={{ fontSize: 13 }} color="text.secondary">
+              ／{ACCOUNT_COMPANY}
+            </Typography>
+          )}
+        </Box>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75 }}>
+          当日を既定表示。前日以前も選択して記入できます（未来日は不可）。
+        </Typography>
+      </Box>
 
-        {view === "none" ? (
-          <NoAccountView date={selectedDate} onSubmit={submit} />
-        ) : (
-          <WithAccountView date={selectedDate} onSubmit={submit} />
-        )}
+      {view === "none" ? (
+        <NoAccountView date={selectedDate} onSubmit={submit} />
+      ) : (
+        <WithAccountView date={selectedDate} onSubmit={submit} />
+      )}
 
-        <Link to="/workadjust/qr" className="ai-back">
-          ← QR発行画面へ戻る（デモ用）
-        </Link>
-      </div>
-    </div>
+      <Typography
+        component={Link}
+        to="/workadjust/qr"
+        sx={{
+          display: "inline-block",
+          mt: 2.75,
+          fontSize: 12,
+          color: "text.secondary",
+          textDecoration: "none",
+          "&:hover": { color: "primary.main", textDecoration: "underline" },
+        }}
+      >
+        ← QR発行画面へ戻る（デモ用）
+      </Typography>
+    </Screen>
   );
 }

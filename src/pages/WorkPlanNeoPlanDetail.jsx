@@ -1,4 +1,8 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { Box, Button, Typography } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import DownloadIcon from "@mui/icons-material/FileDownloadOutlined";
+import EditIcon from "@mui/icons-material/EditOutlined";
 import { useWpn } from "../components/wpn/WpnContext.jsx";
 import PlanDetailContent from "../components/wpn/PlanDetailContent.jsx";
 import PlanDecisionActions from "../components/wpn/PlanDecisionActions.jsx";
@@ -12,10 +16,10 @@ export default function WorkPlanNeoPlanDetail() {
 
   if (!plan) {
     return (
-      <div className="wpn-blank">
-        <strong>作業計画書が見つかりません</strong>
-        <button className="wpn-linkbtn" onClick={() => navigate("/workplan-neo/plans")}>一覧に戻る</button>
-      </div>
+      <Box sx={{ textAlign: "center", py: 8 }}>
+        <Typography sx={{ fontWeight: 700, mb: 1 }}>作業計画書が見つかりません</Typography>
+        <Button onClick={() => navigate("/workplan-neo/plans")}>一覧に戻る</Button>
+      </Box>
     );
   }
 
@@ -23,18 +27,22 @@ export default function WorkPlanNeoPlanDetail() {
   const safetyEditable = role === "prime" && plan.status === "applying";
 
   return (
-    <div>
-      <div className="wpn-detail-bar">
-        <button className="wpn-linkbtn wpn-back-btn" onClick={() => navigate("/workplan-neo/plans")}>
-          ← 一覧に戻る
-        </button>
-        <span className="wpn-detail-title">作業計画書詳細</span>
-        <div className="wpn-detail-actions">
-          <button className="wpn-btn ghost sm">⭳ 出力</button>
-          <button className="wpn-btn plain sm">✎ 編集</button>
+    <Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+        <Button size="small" startIcon={<ArrowBackIcon />} onClick={() => navigate("/workplan-neo/plans")}>
+          一覧に戻る
+        </Button>
+        <Typography variant="h1">作業計画書詳細</Typography>
+        <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
+          <Button size="small" variant="outlined" startIcon={<DownloadIcon />}>
+            出力
+          </Button>
+          <Button size="small" startIcon={<EditIcon />}>
+            編集
+          </Button>
           <PlanDecisionActions plan={plan} />
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       <PlanDetailContent
         plan={plan}
@@ -47,7 +55,6 @@ export default function WorkPlanNeoPlanDetail() {
           ) : null
         }
       />
-
-    </div>
+    </Box>
   );
 }

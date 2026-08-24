@@ -1,105 +1,106 @@
 import {
+  Box,
+  Checkbox,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from "@mui/material";
+import {
   CRANE_AUTO_ITEMS,
   CRANE_INPUT_ITEMS,
   defaultCraneAuto,
 } from "../../workPlanNeoData.js";
 
+function Section({ title, hint, children }) {
+  return (
+    <Box sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2.5, p: 2, mb: 1.5 }}>
+      <Typography sx={{ fontSize: 12.5, fontWeight: 700, mb: 1.25 }}>
+        {title}
+        <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1, fontWeight: 400 }}>
+          {hint}
+        </Typography>
+      </Typography>
+      {children}
+    </Box>
+  );
+}
+
 /**
- * 「クレーンの自動入力」ブロックの設定。
+ * 「クレーンブロック」の設定。
  * 入力項目はブロック固有のため表示のみ（編集不可）。
  * 自動反映項目は使用／未使用をテンプレートごとに選び、安全率はこの画面で設定する。
  */
 export default function CraneAutoBlock({ value, onChange }) {
   const cfg = value || defaultCraneAuto();
   const auto = cfg.auto || {};
-  const setAuto = (key, on) =>
-    onChange({ ...cfg, auto: { ...auto, [key]: on } });
+  const setAuto = (key, on) => onChange({ ...cfg, auto: { ...auto, [key]: on } });
 
   return (
-    <div>
-      {/* 入力項目（職長が作業計画書で入力する。編集不可） */}
-      <div className="wpn-subcard">
-        <div className="wpn-sub-title">
-          入力項目
-          <span className="wpn-hint">職長が作業計画書で入力します（編集不可）</span>
-        </div>
-        <table className="wpn-table">
-          <thead>
-            <tr>
-              <th>項目</th>
-              <th style={{ width: "34%" }}>回答形式</th>
-              <th className="wpn-col-req">必須</th>
-            </tr>
-          </thead>
-          <tbody>
-            {CRANE_INPUT_ITEMS.map((it) => (
-              <tr key={it.label}>
-                <td>{it.label}</td>
-                <td>{it.type}</td>
-                <td>
-                  <input
-                    type="checkbox"
-                    className="wpn-check"
-                    checked
-                    disabled
-                    aria-label="必須（固定）"
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <Box>
+      <Section title="入力項目" hint="職長が作業計画書で入力します（編集不可）">
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>項目</TableCell>
+                <TableCell sx={{ width: "34%" }}>回答形式</TableCell>
+                <TableCell sx={{ width: 84 }}>必須</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {CRANE_INPUT_ITEMS.map((it) => (
+                <TableRow key={it.label}>
+                  <TableCell>{it.label}</TableCell>
+                  <TableCell>{it.type}</TableCell>
+                  <TableCell>
+                    <Checkbox size="small" checked disabled slotProps={{ input: { "aria-label": "必須（固定）" } }} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Section>
 
-      {/* 自動反映（使用／未使用のみ選べる） */}
-      <div className="wpn-subcard">
-        <div className="wpn-sub-title">
-          自動反映
-          <span className="wpn-hint">入力項目から自動で計算・取得します</span>
-        </div>
-        <table className="wpn-table">
-          <thead>
-            <tr>
-              <th>項目</th>
-              <th style={{ width: "42%" }}>反映元</th>
-              <th className="wpn-col-req center">使用</th>
-            </tr>
-          </thead>
-          <tbody>
-            {CRANE_AUTO_ITEMS.map((it) => (
-              <tr key={it.key}>
-                <td>{it.label}</td>
-                <td className="wpn-note-cell">{it.source}</td>
-                <td className="center">
-                  <input
-                    type="checkbox"
-                    className="wpn-check"
-                    checked={!!auto[it.key]}
-                    onChange={(e) => setAuto(it.key, e.target.checked)}
-                    aria-label={`${it.label}を使用する`}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Section title="自動反映" hint="入力項目から自動で計算・取得します">
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>項目</TableCell>
+                <TableCell sx={{ width: "42%" }}>反映元</TableCell>
+                <TableCell align="center" sx={{ width: 84 }}>使用</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {CRANE_AUTO_ITEMS.map((it) => (
+                <TableRow key={it.key}>
+                  <TableCell>{it.label}</TableCell>
+                  <TableCell sx={{ color: "text.secondary" }}>{it.source}</TableCell>
+                  <TableCell align="center">
+                    <Checkbox
+                      size="small"
+                      checked={!!auto[it.key]}
+                      onChange={(e) => setAuto(it.key, e.target.checked)}
+                      slotProps={{ input: { "aria-label": `${it.label}を使用する` } }}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Section>
 
-      {/* 設定（このテンプレートの判定基準） */}
-      <div className="wpn-subcard">
-        <div className="wpn-sub-title">
-          設定
-          <span className="wpn-hint">荷重率がこの値以下なら判定は「◯」になります</span>
-        </div>
-        <label className="wpn-label" htmlFor="wpn-crane-safety">
-          安全率（％）
-        </label>
-        <input
-          id="wpn-crane-safety"
-          className="wpn-input wpn-narrow"
+      <Section title="設定" hint="荷重率がこの値以下なら判定は「◯」になります">
+        <TextField
+          label="安全率（％）"
           type="number"
-          min="0"
-          max="100"
           value={cfg.safetyRate ?? ""}
           onChange={(e) =>
             onChange({
@@ -107,8 +108,10 @@ export default function CraneAutoBlock({ value, onChange }) {
               safetyRate: e.target.value === "" ? "" : Number(e.target.value),
             })
           }
+          slotProps={{ htmlInput: { min: 0, max: 100 } }}
+          sx={{ width: 160 }}
         />
-      </div>
-    </div>
+      </Section>
+    </Box>
   );
 }

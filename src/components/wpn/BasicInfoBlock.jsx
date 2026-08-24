@@ -1,3 +1,13 @@
+import {
+  Checkbox,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import { BASIC_ITEMS } from "../../workPlanNeoData.js";
 
 /**
@@ -6,34 +16,34 @@ import { BASIC_ITEMS } from "../../workPlanNeoData.js";
  */
 export default function BasicInfoBlock() {
   return (
-    <table className="wpn-table">
-      <thead>
-        <tr>
-          <th>項目</th>
-          <th style={{ width: "34%" }}>回答形式</th>
-          <th className="wpn-col-req">必須</th>
-        </tr>
-      </thead>
-      <tbody>
-        {BASIC_ITEMS.map((it) => (
-          <tr key={it.label}>
-            <td>
-              {it.label}
-              {it.hint && <span className="wpn-hint">{it.hint}</span>}
-            </td>
-            <td>{it.type}</td>
-            <td>
-              <input
-                type="checkbox"
-                className="wpn-check"
-                checked
-                disabled
-                aria-label="必須（固定）"
-              />
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <TableContainer>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>項目</TableCell>
+            <TableCell sx={{ width: "34%" }}>回答形式</TableCell>
+            <TableCell sx={{ width: 84 }}>必須</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {BASIC_ITEMS.map((it) => (
+            <TableRow key={it.label}>
+              <TableCell>
+                {it.label}
+                {it.hint && (
+                  <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                    {it.hint}
+                  </Typography>
+                )}
+              </TableCell>
+              <TableCell>{it.type}</TableCell>
+              <TableCell>
+                <Checkbox size="small" checked disabled slotProps={{ input: { "aria-label": "必須（固定）" } }} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }

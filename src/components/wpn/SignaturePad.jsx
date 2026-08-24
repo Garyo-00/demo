@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Box, Button, TextField, Typography } from "@mui/material";
 
 /**
  * デバイス上で手書きサインを描く枠。指／マウスどちらでも描ける。
@@ -72,70 +73,67 @@ export default function SignaturePad({ onSave, onCancel }) {
   }
 
   return (
-    <div className="wpn-sign-pad">
+    <Box>
       {/* canvas は非表示にすると描画内容が消えるため、切替時も DOM には残す */}
-      <div hidden={byName}>
-        <div className="wpn-sign-label">枠内にサインしてください</div>
-        <canvas
+      <Box hidden={byName}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+          枠内にサインしてください
+        </Typography>
+        <Box
+          component="canvas"
           ref={canvasRef}
-          className="wpn-sign-canvas"
           onPointerDown={start}
           onPointerMove={move}
           onPointerUp={end}
           onPointerLeave={end}
           onPointerCancel={end}
+          sx={{
+            display: "block",
+            width: "100%",
+            height: 180,
+            border: "1px dashed #c2c8d6",
+            borderRadius: 2.5,
+            bgcolor: "#fbfcfe",
+            touchAction: "none",
+            cursor: "crosshair",
+          }}
         />
-      </div>
+      </Box>
 
       {byName && (
-        <>
-          <label className="wpn-label" htmlFor="wpn-sign-name">
-            氏名
-          </label>
-          <input
-            id="wpn-sign-name"
-            className="wpn-input"
-            placeholder="氏名を入力"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </>
+        <TextField fullWidth label="氏名" value={name} onChange={(e) => setName(e.target.value)} />
       )}
 
-      <div className="wpn-sign-actions">
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mt: 1.5, flexWrap: "wrap" }}>
         {byName ? (
-          <button type="button" className="wpn-linkbtn" onClick={() => setByName(false)}>
+          <Button size="small" onClick={() => setByName(false)}>
             手書きでサインする
-          </button>
+          </Button>
         ) : (
           <>
-            <button type="button" className="wpn-btn ghost sm" onClick={clear} disabled={!dirty}>
+            <Button variant="outlined" size="small" onClick={clear} disabled={!dirty}>
               消去
-            </button>
-            <button type="button" className="wpn-linkbtn" onClick={() => setByName(true)}>
+            </Button>
+            <Button size="small" onClick={() => setByName(true)}>
               サインができない場合は氏名を入力
-            </button>
+            </Button>
           </>
         )}
         {onCancel && (
-          <button type="button" className="wpn-btn plain sm" onClick={onCancel}>
+          <Button size="small" color="inherit" onClick={onCancel}>
             キャンセル
-          </button>
+          </Button>
         )}
-        <button
-          type="button"
-          className="wpn-btn primary wpn-sign-save"
-          disabled={!canSave}
-          onClick={save}
-        >
+        <Button variant="contained" sx={{ ml: "auto" }} disabled={!canSave} onClick={save}>
           保存
-        </button>
-      </div>
+        </Button>
+      </Box>
+
       {!canSave && (
-        <div className="wpn-sign-note">
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
           {byName ? "氏名を入力してください。" : "枠内にサインしてください。"}
-        </div>
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 }

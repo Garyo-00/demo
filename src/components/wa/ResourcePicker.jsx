@@ -1,5 +1,19 @@
 import { useState } from "react";
 import {
+  Box,
+  Button,
+  Checkbox,
+  Chip,
+  FormControl,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import {
   RSV_KIND_LABEL,
   resKey,
   linkState,
@@ -24,17 +38,26 @@ export default function ResourcePicker({
   claims, // 予約ID → その予約を掴んでいる作業予定（1予約＝1予定の判定用）
   selfId, // 編集中の作業予定ID
 }) {
-  const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(null); // 予約作成中の資源キー
   const [draft, setDraft] = useState(null);
 
-  const picked = (kind, name) => value.some((v) => v.kind === kind && v.name === name);
-  function toggle(kind, name) {
-    onChange(
-      picked(kind, name)
-        ? value.filter((v) => !(v.kind === kind && v.name === name))
-        : [...value, { kind, name, rsvId: null }]
+  const selectedKeys = value.map((v) => resKey(v.kind, v.name));
+
+  // 選択済みの並び順は保つ。選択肢から外れた資源（予約表示OFF等）は残したまま扱う。
+  function handleSelect(e) {
+    const keys = new Set(e.target.value);
+    const isOption = (kind, name) => options.some((o) => o.kind === kind && o.name === name);
+    const kept = value.filter(
+      (v) => !isOption(v.kind, v.name) || keys.has(resKey(v.kind, v.name))
     );
+    const added = options
+      .filter(
+        (o) =>
+          keys.has(resKey(o.kind, o.name)) &&
+          !kept.some((v) => v.kind === o.kind && v.name === o.name)
+      )
+      .map((o) => ({ kind: o.kind, name: o.name, rsvId: null }));
+    onChange([...kept, ...added]);
     setCreating(null);
   }
 
@@ -58,50 +81,47 @@ export default function ResourcePicker({
   }
 
   return (
-    <div className="field full">
-      <label>使用する資機材・ゲート</label>
-      <div className="ms-dd">
-        <button
-          type="button"
-          className="ms-dd-btn"
-          onClick={() => setOpen((o) => !o)}
-          aria-expanded={open}
-          disabled={options.length === 0}
-        >
-          <span className="ms-dd-text">
-            {options.length === 0
+    <Box sx={{ gridColumn: "1 / -1" }}>
+      <FormControl fullWidth size="small" disabled={options.length === 0}>
+        {/* 未選択でも案内文を出すため、ラベルは常に縮小表示（notched）にする */}
+        <InputLabel shrink id="res-picker-label">
+          使用する資機材・ゲート
+        </InputLabel>
+        <Select
+          multiple
+          labelId="res-picker-label"
+          input={<OutlinedInput notched label="使用する資機材・ゲート" />}
+          value={selectedKeys}
+          onChange={handleSelect}
+          displayEmpty
+          renderValue={() =>
+            options.length === 0
               ? "予約表示ONの資機材・ゲートがありません"
               : value.length === 0
               ? "使用しない"
-              : value.map((v) => v.name).join("、")}
-          </span>
-          <span className="ms-dd-caret">▾</span>
-        </button>
-        {open && (
-          <>
-            <div className="ms-dd-backdrop" onClick={() => setOpen(false)} />
-            <div className="ms-dd-panel">
-              <div className="ms-dd-note">
-                使用する資機材・ゲートを選ぶと、その日の予約と紐づきます
-              </div>
-              {options.map((o) => (
-                <label className="ms-dd-item" key={resKey(o.kind, o.name)}>
-                  <input
-                    type="checkbox"
-                    checked={picked(o.kind, o.name)}
-                    onChange={() => toggle(o.kind, o.name)}
-                  />
-                  {o.name}
-                  <span className="res-kind">{RSV_KIND_LABEL[o.kind]}</span>
-                </label>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+              : value.map((v) => v.name).join("、")
+          }
+        >
+          <MenuItem disabled value="">
+            <Typography variant="caption" color="text.secondary">
+              使用する資機材・ゲートを選ぶと、その日の予約と紐づきます
+            </Typography>
+          </MenuItem>
+          {options.map((o) => {
+            const key = resKey(o.kind, o.name);
+            return (
+              <MenuItem key={key} value={key} dense>
+                <Checkbox size="small" checked={selectedKeys.includes(key)} sx={{ mr: 0.5 }} />
+                <ListItemText primary={o.name} slotProps={{ primary: { sx: { fontSize: 13 } } }} />
+                <Chip size="small" label={RSV_KIND_LABEL[o.kind]} sx={{ ml: 1 }} />
+              </MenuItem>
+            );
+          })}
+        </Select>
+      </FormControl>
 
       {value.length > 0 && (
-        <ul className="res-links">
+        <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.75 }}>
           {value.map((res) => {
             const { reservation, state, dateMismatch, owner } = linkState(
               reservations,
@@ -110,89 +130,119 @@ export default function ResourcePicker({
             );
             const key = resKey(res.kind, res.name);
             return (
-              <li className="res-link" key={key}>
-                <div className="res-link-head">
-                  <span className="res-link-name">{res.name}</span>
-                  <span className="res-kind">{RSV_KIND_LABEL[res.kind]}</span>
+              <Box
+                key={key}
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 1.5,
+                  p: 1.25,
+                  bgcolor: "action.hover",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                  <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{res.name}</Typography>
+                  <Chip size="small" label={RSV_KIND_LABEL[res.kind]} />
                   {state === "linked" ? (
-                    <span className={"res-badge " + (dateMismatch ? "warn" : "ok")}>
-                      予約 {rsvTimeLabel(reservation)} に紐づけ
-                      {dateMismatch && `（予約日 ${reservation.date}）`}
-                    </span>
+                    <Chip
+                      size="small"
+                      color={dateMismatch ? "warning" : "primary"}
+                      variant="outlined"
+                      label={
+                        `予約 ${rsvTimeLabel(reservation)} に紐づけ` +
+                        (dateMismatch ? `（予約日 ${reservation.date}）` : "")
+                      }
+                    />
                   ) : state === "claimed" ? (
                     // 1つの予約に紐づけられる作業予定は1件まで
                     <>
-                      <span className="res-badge warn">
-                        {rsvTimeLabel(reservation)} の予約は
-                        {owner ? `「${scheduleLabel(owner)}」` : "他の作業予定"}に紐づけ済み
-                      </span>
+                      <Chip
+                        size="small"
+                        color="warning"
+                        variant="outlined"
+                        label={
+                          `${rsvTimeLabel(reservation)} の予約は` +
+                          (owner ? `「${scheduleLabel(owner)}」` : "他の作業予定") +
+                          "に紐づけ済み"
+                        }
+                      />
                       {creating !== key && (
-                        <button className="mini-btn" onClick={() => startCreate(res)}>
-                          ＋ 別の予約を作成
-                        </button>
+                        <Button size="small" startIcon={<AddIcon />} onClick={() => startCreate(res)}>
+                          別の予約を作成
+                        </Button>
                       )}
                     </>
                   ) : state === "nocompany" ? (
                     // 予約は会社単位で持つため、協力会社名が決まるまで照合できない
-                    <span className="res-badge">協力会社名を入力すると予約を照合します</span>
+                    <Chip size="small" label="協力会社名を入力すると予約を照合します" />
                   ) : (
                     <>
-                      <span className="res-badge warn">
-                        {state === "others" ? "自社の予約なし（他社の予約あり）" : "予約なし"}
-                      </span>
+                      <Chip
+                        size="small"
+                        color="warning"
+                        variant="outlined"
+                        label={state === "others" ? "自社の予約なし（他社の予約あり）" : "予約なし"}
+                      />
                       {creating !== key && (
-                        <button className="mini-btn" onClick={() => startCreate(res)}>
-                          ＋ 予約を作成
-                        </button>
+                        <Button size="small" startIcon={<AddIcon />} onClick={() => startCreate(res)}>
+                          予約を作成
+                        </Button>
                       )}
                     </>
                   )}
-                </div>
+                </Box>
 
                 {creating === key && (
-                  <div className="res-create">
-                    <select
+                  <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+                    <Select
+                      size="small"
                       value={draft.start}
                       onChange={(e) => setDraft((d) => ({ ...d, start: e.target.value }))}
                     >
                       {timeOptions.map((t) => (
-                        <option key={t}>{t}</option>
+                        <MenuItem key={t} value={t}>
+                          {t}
+                        </MenuItem>
                       ))}
-                    </select>
-                    <span>〜</span>
-                    <select
+                    </Select>
+                    <Typography variant="body2">〜</Typography>
+                    <Select
+                      size="small"
                       value={draft.end}
                       onChange={(e) => setDraft((d) => ({ ...d, end: e.target.value }))}
                     >
                       {timeOptions.map((t) => (
-                        <option key={t}>{t}</option>
+                        <MenuItem key={t} value={t}>
+                          {t}
+                        </MenuItem>
                       ))}
-                    </select>
+                    </Select>
                     {res.kind === "gate" && (
-                      <select
+                      <Select
+                        size="small"
                         value={draft.vehicleType}
-                        onChange={(e) =>
-                          setDraft((d) => ({ ...d, vehicleType: e.target.value }))
-                        }
+                        onChange={(e) => setDraft((d) => ({ ...d, vehicleType: e.target.value }))}
                       >
                         {vehicleTypes.map((v) => (
-                          <option key={v}>{v}</option>
+                          <MenuItem key={v} value={v}>
+                            {v}
+                          </MenuItem>
                         ))}
-                      </select>
+                      </Select>
                     )}
-                    <button className="mini-btn primary" onClick={() => commitCreate(res)}>
+                    <Button size="small" variant="contained" onClick={() => commitCreate(res)}>
                       作成
-                    </button>
-                    <button className="mini-btn" onClick={() => setCreating(null)}>
+                    </Button>
+                    <Button size="small" variant="outlined" onClick={() => setCreating(null)}>
                       やめる
-                    </button>
-                  </div>
+                    </Button>
+                  </Box>
                 )}
-              </li>
+              </Box>
             );
           })}
-        </ul>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }

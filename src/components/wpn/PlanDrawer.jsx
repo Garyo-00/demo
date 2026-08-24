@@ -1,4 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import { Box, Button, Drawer, Typography } from "@mui/material";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import DownloadIcon from "@mui/icons-material/FileDownloadOutlined";
+import EditIcon from "@mui/icons-material/EditOutlined";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useWpn } from "./WpnContext.jsx";
 import PlanDetailContent from "./PlanDetailContent.jsx";
 import PlanDecisionActions from "./PlanDecisionActions.jsx";
@@ -14,41 +19,63 @@ export default function PlanDrawer({ planId, onClose }) {
   const safetyEditable = role === "prime" && plan.status === "applying";
 
   return (
-    <>
-      <div className="wpn-drawer-backdrop" onClick={onClose} />
-      <aside className="wpn-drawer" role="dialog" aria-label="作業計画書詳細">
-        <div className="wpn-drawer-top">
-          <button
-            className="wpn-btn ghost sm"
-            onClick={() => navigate(`/workplan-neo/plans/${plan.id}`)}
-          >
-            ⧉ 詳細ページを開く
-          </button>
-        </div>
-        <div className="wpn-drawer-head">
-          <button className="wpn-linkbtn wpn-back-btn" onClick={onClose}>← 閉じる</button>
-          <span className="wpn-drawer-title">作業計画書詳細</span>
-          <button className="wpn-btn ghost sm">⭳ 出力</button>
-        </div>
-        <div className="wpn-drawer-actions">
-          <button className="wpn-btn plain sm">✎ 編集</button>
+    <Drawer
+      anchor="right"
+      open
+      onClose={onClose}
+      slotProps={{ paper: { sx: { width: { xs: "100%", md: 720 }, bgcolor: "background.default" } } }}
+    >
+      <Box sx={{ p: 1.5, borderBottom: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<OpenInNewIcon />}
+          onClick={() => navigate(`/workplan-neo/plans/${plan.id}`)}
+        >
+          詳細ページを開く
+        </Button>
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          p: 1.5,
+          bgcolor: "background.paper",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Button size="small" startIcon={<ArrowBackIcon />} onClick={onClose}>
+          閉じる
+        </Button>
+        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>作業計画書詳細</Typography>
+        <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
+          <Button size="small" variant="outlined" startIcon={<DownloadIcon />}>
+            出力
+          </Button>
+          <Button size="small" startIcon={<EditIcon />}>
+            編集
+          </Button>
           <PlanDecisionActions plan={plan} />
-        </div>
-        <div className="wpn-drawer-body">
-          <PlanDetailContent
-            plan={plan}
-            compact
-            safetyEditor={
-              safetyEditable ? (
-                <SafetyInstructionEditor
-                  plan={plan}
-                  onChange={(list) => savePlan({ ...plan, safetyInstructions: list })}
-                />
-              ) : null
-            }
-          />
-        </div>
-      </aside>
-    </>
+        </Box>
+      </Box>
+
+      <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+        <PlanDetailContent
+          plan={plan}
+          compact
+          safetyEditor={
+            safetyEditable ? (
+              <SafetyInstructionEditor
+                plan={plan}
+                onChange={(list) => savePlan({ ...plan, safetyInstructions: list })}
+              />
+            ) : null
+          }
+        />
+      </Box>
+    </Drawer>
   );
 }

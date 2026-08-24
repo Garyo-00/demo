@@ -142,7 +142,19 @@
 
 ---
 
-## 7. デモ実装と実仕様の乖離（明記）
+## 7. デモの技術スタック
+
+- **UIは本番（/workplan）と同じ MUI**（`@mui/material` v9）で実装している。デモのJSXはそのまま実装の参考にできる。
+- テーマは `src/theme.js` に集約（primary `#4f5bd5`／`shape.borderRadius: 10`／ボタンはピル型・`textTransform: none`）。色や角丸は各画面でハードコードせず、`sx` からテーマを参照する。
+- CSSリセットは `ScopedCssBaseline` を各レイアウトのルートに当てている。
+- [ ] ⚠️ 本番の `createTheme` の設定をもらえれば差し替える。現状はキャプチャから起こした近似値。
+
+### MUI v9 での注意（デモ実装時に踏んだもの）
+- `ListItemText` の `primaryTypographyProps` は使えない → `slotProps={{ primary: { sx } }}`
+- `Checkbox` の `inputProps` は使えない → `slotProps={{ input }}`
+- アイコン名は `〜Outline` ではなく `〜Outlined`（例：`DeleteOutlined`）。存在しない名前はビルド時にしか落ちない
+
+## 8. デモ実装と実仕様の乖離（明記）
 
 - データはすべてブラウザ内のサンプル値。API/DB なし（リロードで初期化）。
 - 元請／職長はヘッダーのトグルで切替（本番は認証ベース）。

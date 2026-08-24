@@ -1,11 +1,21 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  Box,
+  Button,
+  Card,
+  CardActionArea,
+  CardContent,
+  ScopedCssBaseline,
+  Typography,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CheckIcon from "@mui/icons-material/Check";
 import { WpnProvider, useWpn } from "../components/wpn/WpnContext.jsx";
 import PlanDetailContent from "../components/wpn/PlanDetailContent.jsx";
 import SignaturePad from "../components/wpn/SignaturePad.jsx";
 import { WPN_PROJECT, newId } from "../workPlanNeoData.js";
 import { companiesWithApprovedPlans, machineById } from "../workPlanNeoPlanData.js";
-import "../components/wpn/wpn.css";
 
 // 打合せサイン用QRを読み取った後の画面（打合せ参加者が自分の端末で開く想定・ログイン不要）。
 // 協力会社を選ぶ → 承認済みの作業計画書を選ぶ → 詳細を確認して手書きサイン。
@@ -16,21 +26,56 @@ function nowStr() {
   return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+function StepTitle({ children }) {
+  return (
+    <Typography align="center" sx={{ fontSize: 14, fontWeight: 700, mb: 2 }}>
+      {children}
+    </Typography>
+  );
+}
+
+// 選択済みの内容を上部に出す帯
+function Picked({ label, value }) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "baseline",
+        gap: 1.25,
+        bgcolor: "primary.light",
+        border: "1px solid #ccd2f2",
+        borderRadius: 2.5,
+        p: 1.5,
+        mb: 2,
+      }}
+    >
+      <Typography variant="caption" color="text.secondary" sx={{ flex: "none" }}>
+        {label}
+      </Typography>
+      <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{value}</Typography>
+    </Box>
+  );
+}
+
 // 1. 協力会社の選択
 function CompanyStep({ companies, onPick }) {
   return (
     <>
-      <h2 className="wpn-sign-step-title">協力会社名を選択してください</h2>
+      <StepTitle>協力会社名を選択してください</StepTitle>
       {companies.length === 0 ? (
-        <div className="wpn-none">承認済みの作業計画書がありません。</div>
+        <Typography align="center" color="text.secondary" sx={{ fontSize: 12.5 }}>
+          承認済みの作業計画書がありません。
+        </Typography>
       ) : (
-        <div className="wpn-sign-companies">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
           {companies.map((c) => (
-            <button key={c} type="button" className="wpn-sign-company" onClick={() => onPick(c)}>
-              {c}
-            </button>
+            <Card key={c}>
+              <CardActionArea onClick={() => onPick(c)} sx={{ p: 2, textAlign: "center" }}>
+                <Typography sx={{ fontSize: 15, fontWeight: 600 }}>{c}</Typography>
+              </CardActionArea>
+            </Card>
           ))}
-        </div>
+        </Box>
       )}
     </>
   );
@@ -40,38 +85,50 @@ function CompanyStep({ companies, onPick }) {
 function PlanStep({ company, plans, onPick, onBack }) {
   return (
     <>
-      <div className="wpn-sign-picked">
-        <span className="wpn-sign-picked-label">協力会社</span>
-        <strong>{company}</strong>
-      </div>
-      <h2 className="wpn-sign-step-title">サインする作業計画書を選択してください</h2>
+      <Picked label="協力会社" value={company} />
+      <StepTitle>サインする作業計画書を選択してください</StepTitle>
       {plans.length === 0 ? (
-        <div className="wpn-none">{company} の承認済みの作業計画書はありません。</div>
+        <Typography align="center" color="text.secondary" sx={{ fontSize: 12.5 }}>
+          {company} の承認済みの作業計画書はありません。
+        </Typography>
       ) : (
-        <div className="wpn-sign-cards">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
           {plans.map((p) => {
             const machines = p.machineIds.map(machineById).filter(Boolean);
             return (
-              <button key={p.id} type="button" className="wpn-sign-card" onClick={() => onPick(p)}>
-                <div className="wpn-sign-card-name">{p.name}</div>
-                <dl className="wpn-sign-card-meta">
-                  <dt>使用機材</dt>
-                  <dd>
-                    {machines.length === 0
-                      ? "なし"
-                      : machines.map((m) => m.alias || m.name).join("、")}
-                  </dd>
-                  <dt>申請者</dt>
-                  <dd>{p.applicant}</dd>
-                </dl>
-              </button>
+              <Card key={p.id}>
+                <CardActionArea onClick={() => onPick(p)}>
+                  <CardContent>
+                    <Typography sx={{ fontSize: 15, fontWeight: 700, mb: 1.25 }}>{p.name}</Typography>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns: "68px 1fr",
+                        gap: "4px 10px",
+                        fontSize: 12.5,
+                      }}
+                    >
+                      <Box sx={{ color: "text.secondary" }}>使用機材</Box>
+                      <Box>
+                        {machines.length === 0
+                          ? "なし"
+                          : machines.map((m) => m.alias || m.name).join("、")}
+                      </Box>
+                      <Box sx={{ color: "text.secondary" }}>申請者</Box>
+                      <Box>{p.applicant}</Box>
+                    </Box>
+                  </CardContent>
+                </CardActionArea>
+              </Card>
             );
           })}
-        </div>
+        </Box>
       )}
-      <button type="button" className="wpn-linkbtn wpn-sign-back" onClick={onBack}>
-        ← 協力会社を選び直す
-      </button>
+      <Box sx={{ textAlign: "center", mt: 1 }}>
+        <Button size="small" startIcon={<ArrowBackIcon />} onClick={onBack}>
+          協力会社を選び直す
+        </Button>
+      </Box>
     </>
   );
 }
@@ -80,24 +137,27 @@ function PlanStep({ company, plans, onPick, onBack }) {
 function SignStep({ plan, onSaved, onBack }) {
   return (
     <>
-      <div className="wpn-sign-picked">
-        <span className="wpn-sign-picked-label">作業計画書</span>
-        <strong>{plan.name}</strong>
-      </div>
+      <Picked label="作業計画書" value={plan.name} />
 
       <PlanDetailContent plan={plan} compact />
 
-      <div className="wpn-card">
-        <h2 className="wpn-card-title">
-          打合せ参加者サイン
-          <span className="wpn-hint">内容を確認のうえ、サインしてください</span>
-        </h2>
-        <SignaturePad onSave={onSaved} onCancel={onBack} />
-      </div>
+      <Card sx={{ mb: 2 }}>
+        <CardContent>
+          <Typography variant="h2" sx={{ mb: 1.5 }}>
+            打合せ参加者サイン
+            <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1, fontWeight: 400 }}>
+              内容を確認のうえ、サインしてください
+            </Typography>
+          </Typography>
+          <SignaturePad onSave={onSaved} onCancel={onBack} />
+        </CardContent>
+      </Card>
 
-      <button type="button" className="wpn-linkbtn wpn-sign-back" onClick={onBack}>
-        ← 作業計画書を選び直す
-      </button>
+      <Box sx={{ textAlign: "center" }}>
+        <Button size="small" startIcon={<ArrowBackIcon />} onClick={onBack}>
+          作業計画書を選び直す
+        </Button>
+      </Box>
     </>
   );
 }
@@ -105,25 +165,54 @@ function SignStep({ plan, onSaved, onBack }) {
 // 保存後の完了画面
 function DoneStep({ sign, plan, onMore }) {
   return (
-    <div className="wpn-card wpn-sign-done">
-      <div className="wpn-sign-done-check" aria-hidden="true">
-        ✓
-      </div>
-      <h1 className="wpn-sign-done-title">サインを保存しました</h1>
-      <p className="wpn-sign-done-text">
-        {plan.name}
-        <br />
-        {sign.at}
-      </p>
-      {sign.image ? (
-        <img className="wpn-sign-done-img" src={sign.image} alt="保存したサイン" />
-      ) : (
-        <div className="wpn-sign-done-name">{sign.name}</div>
-      )}
-      <button type="button" className="wpn-btn ghost sm" onClick={onMore}>
-        別の作業計画書にサインする
-      </button>
-    </div>
+    <Card>
+      <CardContent sx={{ textAlign: "center", py: 4 }}>
+        <Box
+          sx={{
+            width: 60,
+            height: 60,
+            mx: "auto",
+            mb: 2,
+            borderRadius: "50%",
+            bgcolor: "primary.light",
+            color: "primary.main",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <CheckIcon sx={{ fontSize: 32 }} />
+        </Box>
+        <Typography sx={{ fontSize: 18, fontWeight: 700 }}>サインを保存しました</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1.25, mb: 2, lineHeight: 1.8 }}>
+          {plan.name}
+          <br />
+          {sign.at}
+        </Typography>
+        {sign.image ? (
+          <Box
+            component="img"
+            src={sign.image}
+            alt="保存したサイン"
+            sx={{
+              display: "block",
+              width: "100%",
+              maxWidth: 320,
+              mx: "auto",
+              mb: 2.25,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 2.5,
+            }}
+          />
+        ) : (
+          <Typography sx={{ fontSize: 18, fontWeight: 700, mb: 2.25 }}>{sign.name}</Typography>
+        )}
+        <Button variant="outlined" size="small" onClick={onMore}>
+          別の作業計画書にサインする
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -152,21 +241,19 @@ function SignFlow() {
   }
 
   return (
-    <div className="wpn-standalone wpn-sign-screen">
-      <div className="wpn-sign-inner">
-        <div className="wpn-sign-head">
-          <div className="wpn-sign-project">{WPN_PROJECT}</div>
-          <h1 className="wpn-sign-title">打合せ参加者サイン</h1>
-        </div>
+    <ScopedCssBaseline sx={{ minHeight: "100vh", bgcolor: "background.default", px: 1.75, py: 2.5, pb: 5 }}>
+      <Box sx={{ maxWidth: 720, mx: "auto" }}>
+        <Box sx={{ textAlign: "center", mb: 2.5 }}>
+          <Typography variant="body2" color="text.secondary">
+            {WPN_PROJECT}
+          </Typography>
+          <Typography sx={{ fontSize: 19, fontWeight: 700, mt: 0.75 }}>打合せ参加者サイン</Typography>
+        </Box>
 
         {saved ? (
           <DoneStep sign={saved} plan={plan} onMore={reset} />
         ) : plan ? (
-          <SignStep
-            plan={plan}
-            onBack={() => setPlanId(null)}
-            onSaved={saveSign}
-          />
+          <SignStep plan={plan} onBack={() => setPlanId(null)} onSaved={saveSign} />
         ) : company ? (
           <PlanStep
             company={company}
@@ -178,11 +265,13 @@ function SignFlow() {
           <CompanyStep companies={companies} onPick={setCompany} />
         )}
 
-        <Link to="/workplan-neo/qr" className="wpn-sign-demolink">
-          ← QR発行画面へ戻る（デモ用）
-        </Link>
-      </div>
-    </div>
+        <Box sx={{ textAlign: "center", mt: 2.75 }}>
+          <Button component={Link} to="/workplan-neo/qr" size="small" color="inherit" sx={{ fontSize: 11.5 }}>
+            ← QR発行画面へ戻る（デモ用）
+          </Button>
+        </Box>
+      </Box>
+    </ScopedCssBaseline>
   );
 }
 

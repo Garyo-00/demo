@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import { Box, Card, CardContent, Typography } from "@mui/material";
 
 // 未実装メニュー用の空ページ（後日実装予定）
 const TITLES = {
@@ -24,12 +25,18 @@ export default function WorkPlanNeoBlank() {
   const { pathname } = useLocation();
   const info = TITLES[pathname] || { title: "準備中", desc: "" };
   return (
-    <div>
-      <h1 className="wpn-page-title">{info.title}</h1>
-      <div className="wpn-blank">
-        <strong>この画面は後日実装予定です</strong>
-        {info.desc}
-      </div>
-    </div>
+    <Box>
+      <Typography variant="h1" sx={{ mb: 2 }}>
+        {info.title}
+      </Typography>
+      <Card>
+        <CardContent sx={{ textAlign: "center", py: 8 }}>
+          <Typography sx={{ fontWeight: 700, mb: 1 }}>この画面は後日実装予定です</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {info.desc}
+          </Typography>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }

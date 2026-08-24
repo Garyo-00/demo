@@ -1,23 +1,19 @@
 import { useState } from "react";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  TextField,
+} from "@mui/material";
 import { useWpn } from "./WpnContext.jsx";
 
 function today() {
   const d = new Date();
   const p = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}`;
-}
-
-function Dialog({ title, children, onClose, actions }) {
-  return (
-    <>
-      <div className="wpn-dialog-backdrop" onClick={onClose} />
-      <div className="wpn-dialog" role="dialog" aria-label={title}>
-        <h3>{title}</h3>
-        {children}
-        <div className="wpn-dialog-actions">{actions}</div>
-      </div>
-    </>
-  );
 }
 
 /**
@@ -52,77 +48,84 @@ export default function PlanDecisionActions({ plan }) {
     setReason("");
   }
 
+  const close = () => setDialog(null);
+
   return (
     <>
       {canApprove && (
         <>
-          <button className="wpn-btn primary sm" onClick={() => setDialog("approve")}>承認</button>
-          <button className="wpn-btn outline-danger sm" onClick={() => setDialog("reject")}>否認</button>
+          <Button variant="contained" size="small" onClick={() => setDialog("approve")}>
+            承認
+          </Button>
+          <Button variant="outlined" color="error" size="small" onClick={() => setDialog("reject")}>
+            否認
+          </Button>
         </>
       )}
       {canWithdraw && (
-        <button className="wpn-btn danger sm" onClick={() => setDialog("withdraw")}>取下</button>
+        <Button variant="contained" color="error" size="small" onClick={() => setDialog("withdraw")}>
+          取下
+        </Button>
       )}
 
-      {dialog === "approve" && (
-        <Dialog
-          title="申請の承認"
-          onClose={() => setDialog(null)}
-          actions={
-            <>
-              <button className="wpn-btn plain sm" onClick={() => setDialog(null)}>キャンセル</button>
-              <button className="wpn-btn primary sm" onClick={() => decide("approved")}>承認</button>
-            </>
-          }
-        >
-          <p>この作業計画書の申請を承認します。よろしいですか？</p>
-        </Dialog>
-      )}
+      <Dialog open={dialog === "approve"} onClose={close} fullWidth maxWidth="xs">
+        <DialogTitle>申請の承認</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: 13 }}>
+            この作業計画書の申請を承認します。よろしいですか？
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={close}>キャンセル</Button>
+          <Button variant="contained" onClick={() => decide("approved")}>
+            承認
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {dialog === "reject" && (
-        <Dialog
-          title="申請の否認"
-          onClose={() => setDialog(null)}
-          actions={
-            <>
-              <button className="wpn-btn plain sm" onClick={() => setDialog(null)}>キャンセル</button>
-              <button
-                className="wpn-btn plain sm"
-                disabled={!reason.trim()}
-                onClick={() => decide("rejected", reason.trim())}
-              >
-                否認
-              </button>
-            </>
-          }
-        >
-          <p>この作業計画書の申請を否認します。否認理由を入力してください。</p>
-          <label className="wpn-label" htmlFor="wpn-reject-reason">
-            否認理由<span className="wpn-req-mark">*</span>
-          </label>
-          <textarea
-            id="wpn-reject-reason"
-            className="wpn-input wpn-textarea lg"
+      <Dialog open={dialog === "reject"} onClose={close} fullWidth maxWidth="xs">
+        <DialogTitle>申請の否認</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: 13, mb: 2 }}>
+            この作業計画書の申請を否認します。否認理由を入力してください。
+          </DialogContentText>
+          <TextField
+            fullWidth
+            required
+            multiline
+            minRows={3}
+            label="否認理由"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
           />
-        </Dialog>
-      )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={close}>キャンセル</Button>
+          <Button
+            variant="contained"
+            color="error"
+            disabled={!reason.trim()}
+            onClick={() => decide("rejected", reason.trim())}
+          >
+            否認
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      {dialog === "withdraw" && (
-        <Dialog
-          title="申請の取下"
-          onClose={() => setDialog(null)}
-          actions={
-            <>
-              <button className="wpn-btn plain sm" onClick={() => setDialog(null)}>キャンセル</button>
-              <button className="wpn-btn danger sm" onClick={() => decide("withdrawn")}>取下</button>
-            </>
-          }
-        >
-          <p>この作業計画書の申請を取り下げます。よろしいですか？</p>
-        </Dialog>
-      )}
+      <Dialog open={dialog === "withdraw"} onClose={close} fullWidth maxWidth="xs">
+        <DialogTitle>申請の取下</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: 13 }}>
+            この作業計画書の申請を取り下げます。よろしいですか？
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={close}>キャンセル</Button>
+          <Button variant="contained" color="error" onClick={() => decide("withdrawn")}>
+            取下
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

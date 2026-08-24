@@ -1,4 +1,18 @@
 import { Link } from "react-router-dom";
+import {
+  Box,
+  Button,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import EditIcon from "@mui/icons-material/EditOutlined";
 
 // サンプル承認フロー（申請種別ごとの承認ステップ）
 const FLOWS = [
@@ -20,44 +34,59 @@ const FLOWS = [
 
 export default function WorkPlanApprovalFlowSetting() {
   return (
-    <div>
-      <div className="crumb">設定 ＞ 承認フロー設定</div>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <Link className="back" to="/workplan/settings">← 設定へ戻る</Link>
-        <strong style={{ fontSize: 15 }}>承認フロー設定</strong>
-      </div>
+    <Box>
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.75 }}>
+        設定 ＞ 承認フロー設定
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Button
+          component={Link}
+          to="/workplan/settings"
+          size="small"
+          variant="outlined"
+          color="inherit"
+          startIcon={<ArrowBackIcon />}
+        >
+          設定へ戻る
+        </Button>
+        <Typography sx={{ fontSize: 15, fontWeight: 700 }}>承認フロー設定</Typography>
+      </Box>
 
-      <p className="tab-note">
+      <Typography variant="body2" color="text.secondary" sx={{ my: 1.75 }}>
         申請種別ごとに承認ステップと承認者を設定します。承認は設定した順に行われます。
-      </p>
+      </Typography>
 
       {FLOWS.map((flow) => (
-        <div key={flow.type} style={{ marginBottom: 22 }}>
-          <div className="section-title" style={{ marginTop: 0 }}>{flow.type}</div>
-          <table>
-            <thead>
-              <tr>
-                <th>承認ステップ</th>
-                <th>役割</th>
-                <th>承認者</th>
-              </tr>
-            </thead>
-            <tbody>
-              {flow.steps.map(([step, role, approver]) => (
-                <tr key={step}>
-                  <td>{step}</td>
-                  <td>{role}</td>
-                  <td>{approver}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Box key={flow.type} sx={{ mb: 2.75 }}>
+          <Typography variant="h2" color="text.secondary" sx={{ letterSpacing: ".04em", mb: 1.25 }}>
+            {flow.type}
+          </Typography>
+          <TableContainer component={Paper} variant="outlined">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>承認ステップ</TableCell>
+                  <TableCell>役割</TableCell>
+                  <TableCell>承認者</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {flow.steps.map(([step, role, approver]) => (
+                  <TableRow key={step}>
+                    <TableCell>{step}</TableCell>
+                    <TableCell>{role}</TableCell>
+                    <TableCell>{approver}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
       ))}
 
-      <div>
-        <button className="primary-btn">承認フローを編集</button>
-      </div>
-    </div>
+      <Button variant="contained" startIcon={<EditIcon />}>
+        承認フローを編集
+      </Button>
+    </Box>
   );
 }

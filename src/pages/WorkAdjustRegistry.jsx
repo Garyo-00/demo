@@ -1,5 +1,28 @@
 import { useState } from "react";
 import {
+  Box,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import SyncOutlinedIcon from "@mui/icons-material/SyncOutlined";
+import {
   WA_EQUIP_CATEGORIES,
   WA_COMPANIES,
   WA_SAFETY_MACHINES,
@@ -7,9 +30,10 @@ import {
   formatDateStr,
 } from "../data.js";
 import Modal from "../components/wa/Modal.jsx";
-import { SuggestField } from "../components/wa/Field.jsx";
+import { SuggestField, FormGrid } from "../components/wa/Field.jsx";
 import { useWaSettings } from "../components/wa/WaSettingsContext.jsx";
 import TablePagination from "../components/wa/TablePagination.jsx";
+import { useIsNarrow } from "../components/wa/useIsNarrow.js";
 
 // 表示名（現場内呼称）サジェスト候補
 const EQUIP_NAMES = [
@@ -29,17 +53,21 @@ function nextIds(list, prefix, count) {
   });
   return Array.from({ length: count }, (_, i) => prefix + "-" + String(max + i + 1).padStart(3, "0"));
 }
-const cellInput = {
-  width: "100%",
-  border: "1px solid var(--line)",
-  borderRadius: 6,
-  padding: "6px 8px",
-  fontSize: 13,
-  fontFamily: "inherit",
-};
 
 // 揚重機登録・資機材登録の共通セクション（テーブル構成は同一）。list/setListは共有状態
 const RESERVE_TYPES = ["2部制", "時間制"]; // 予約方法（既定は2部制）
+
+// カード表示の1項目
+function CardField({ label, children }) {
+  return (
+    <Box sx={{ display: "grid", gridTemplateColumns: "118px 1fr", gap: 1.25, fontSize: 13, alignItems: "center" }}>
+      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+        {label}
+      </Typography>
+      <Box sx={{ fontSize: 13 }}>{children}</Box>
+    </Box>
+  );
+}
 
 function EquipmentSection({
   label, list, setList, idPrefix, withReserveType = false,
@@ -51,6 +79,7 @@ function EquipmentSection({
   const [importKind, setImportKind] = useState("safety"); // "safety"（持込機械）| "rental"（レンタル品）
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(50);
+  const narrow = useIsNarrow();
 
   // ページネーション（ページ範囲外になったら丸める）
   const pageCount = Math.max(1, Math.ceil(list.length / pageSize));
@@ -154,144 +183,127 @@ function EquipmentSection({
     setImportSel(null);
   }
 
+  const reserveTypeSelect = (e) => (
+    <TextField
+      select
+      size="small"
+      value={e.reserveType || "2部制"}
+      onChange={(ev) => setReserveType(e, ev.target.value)}
+      title="予約方法（時間制／2部制）"
+      sx={{ minWidth: 100 }}
+    >
+      {RESERVE_TYPES.map((t) => (
+        <MenuItem key={t} value={t}>
+          {t}
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+  const showCheck = (e) => (
+    <FormControlLabel
+      control={<Checkbox size="small" checked={e.show} onChange={() => toggleShow(e)} />}
+      label="表示する"
+      title="予約ページへの表示／非表示"
+      slotProps={{ typography: { sx: { fontSize: 13 } } }}
+    />
+  );
+  const rowActions = (e) => (
+    <Box sx={{ display: "flex", gap: 0.75 }}>
+      <Button size="small" variant="outlined" onClick={() => setEdit({ ...e })}>
+        編集
+      </Button>
+      <Button size="small" variant="outlined" color="error" onClick={() => unsync(e)}>
+        同期解除
+      </Button>
+    </Box>
+  );
+
   return (
     <>
-      <div className="toolbar">
-        <span className="subtle">全 {list.length} 件</span>
-        <div className="stack-actions spacer">
-          <div className="stack-row">
-            <button className="ghost-btn accent-outline" onClick={() => openImport("safety")}>
-              ⭳ 持込機械から同期
-            </button>
-            <button className="ghost-btn accent-outline" onClick={() => openImport("rental")}>
-              ⭳ レンタル品から同期
-            </button>
-          </div>
-          <div className="stack-row">
-            <button className="ghost-btn" onClick={openBulk}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap", my: 2 }}>
+        <Typography variant="caption" color="text.secondary">
+          全 {list.length} 件
+        </Typography>
+        <Box sx={{ ml: "auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="outlined" startIcon={<SyncOutlinedIcon />} onClick={() => openImport("safety")}>
+              持込機械から同期
+            </Button>
+            <Button variant="outlined" startIcon={<SyncOutlinedIcon />} onClick={() => openImport("rental")}>
+              レンタル品から同期
+            </Button>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <Button variant="outlined" onClick={openBulk}>
               一括登録
-            </button>
-            <button className="primary-btn" onClick={() => setEdit(emptyEquip())}>
-              ＋ 新規登録
-            </button>
-          </div>
-        </div>
-      </div>
-      {/* デスクトップ：テーブル表示 */}
-      <table className="reg-table">
-        <thead>
-          <tr>
-            <th>ArchID</th>
-            <th>カテゴリ</th>
-            <th>表示名（現場内呼称）</th>
-            <th>持込会社名</th>
-            <th>一次会社</th>
-            {withReserveType && <th>予約方法</th>}
-            <th>予約表示</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pageRows.map((e) => (
-            <tr key={e.id}>
-              <td>{e.id}</td>
-              <td>{e.category}</td>
-              <td>{e.name}</td>
-              <td>{e.bringIn}</td>
-              <td>{e.primary}</td>
-              {withReserveType && (
-                <td>
-                  <select
-                    className="reg-rtype"
-                    value={e.reserveType || "2部制"}
-                    onChange={(ev) => setReserveType(e, ev.target.value)}
-                    title="予約方法（時間制／2部制）"
-                  >
-                    {RESERVE_TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-              )}
-              <td>
-                <label className="cmp-check" title="予約ページへの表示／非表示">
-                  <input type="checkbox" checked={e.show} onChange={() => toggleShow(e)} />
-                  表示する
-                </label>
-              </td>
-              <td>
-                <div className="row-actions">
-                  <button className="mini-btn" onClick={() => setEdit({ ...e })}>
-                    編集
-                  </button>
-                  <button className="mini-btn danger" onClick={() => unsync(e)}>
-                    同期解除
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+            </Button>
+            <Button variant="contained" startIcon={<AddIcon />} onClick={() => setEdit(emptyEquip())}>
+              新規登録
+            </Button>
+          </Box>
+        </Box>
+      </Box>
 
-      {/* モバイル：カード表示（横スクロール不要） */}
-      <div className="wa-card-list">
-        {pageRows.map((e) => (
-          <div className="wa-card" key={e.id}>
-            <div className="wa-card-top">
-              <span className="wa-card-id">ArchID {e.id}</span>
-              <strong className="wa-card-co">{e.name}</strong>
-            </div>
-            <div className="wa-card-grid">
-              <div className="wa-card-field">
-                <span className="wa-card-label">カテゴリ</span>
-                <span>{e.category}</span>
-              </div>
-              <div className="wa-card-field">
-                <span className="wa-card-label">持込会社名</span>
-                <span>{e.bringIn}</span>
-              </div>
-              <div className="wa-card-field">
-                <span className="wa-card-label">一次会社</span>
-                <span>{e.primary}</span>
-              </div>
-              {withReserveType && (
-                <div className="wa-card-field">
-                  <span className="wa-card-label">予約方法</span>
-                  <select
-                    className="reg-rtype"
-                    value={e.reserveType || "2部制"}
-                    onChange={(ev) => setReserveType(e, ev.target.value)}
-                  >
-                    {RESERVE_TYPES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              <div className="wa-card-field">
-                <span className="wa-card-label">予約表示</span>
-                <label className="cmp-check">
-                  <input type="checkbox" checked={e.show} onChange={() => toggleShow(e)} />
-                  表示する
-                </label>
-              </div>
-            </div>
-            <div className="wa-card-actions">
-              <button className="mini-btn" onClick={() => setEdit({ ...e })}>
-                編集
-              </button>
-              <button className="mini-btn danger" onClick={() => unsync(e)}>
-                同期解除
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      {narrow ? (
+        // モバイル：カード表示（横スクロール不要）
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {pageRows.map((e) => (
+            <Box key={e.id} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 1.5 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ fontWeight: 600, bgcolor: "action.hover", borderRadius: 1, px: 1, py: 0.25 }}
+                  color="text.secondary"
+                >
+                  ArchID {e.id}
+                </Typography>
+                <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{e.name}</Typography>
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+                <CardField label="カテゴリ">{e.category}</CardField>
+                <CardField label="持込会社名">{e.bringIn}</CardField>
+                <CardField label="一次会社">{e.primary}</CardField>
+                {withReserveType && <CardField label="予約方法">{reserveTypeSelect(e)}</CardField>}
+                <CardField label="予約表示">{showCheck(e)}</CardField>
+              </Box>
+              <Box sx={{ mt: 1.75, pt: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+                {rowActions(e)}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      ) : (
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>ArchID</TableCell>
+                <TableCell>カテゴリ</TableCell>
+                <TableCell>表示名（現場内呼称）</TableCell>
+                <TableCell>持込会社名</TableCell>
+                <TableCell>一次会社</TableCell>
+                {withReserveType && <TableCell>予約方法</TableCell>}
+                <TableCell>予約表示</TableCell>
+                <TableCell>操作</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {pageRows.map((e) => (
+                <TableRow key={e.id} hover>
+                  <TableCell>{e.id}</TableCell>
+                  <TableCell>{e.category}</TableCell>
+                  <TableCell>{e.name}</TableCell>
+                  <TableCell>{e.bringIn}</TableCell>
+                  <TableCell>{e.primary}</TableCell>
+                  {withReserveType && <TableCell>{reserveTypeSelect(e)}</TableCell>}
+                  <TableCell>{showCheck(e)}</TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>{rowActions(e)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       <TablePagination
         total={list.length}
@@ -308,21 +320,21 @@ function EquipmentSection({
           onClose={() => setEdit(null)}
           footer={
             <>
-              <button className="ghost-btn" onClick={() => setEdit(null)}>
+              <Button variant="outlined" onClick={() => setEdit(null)}>
                 キャンセル
-              </button>
-              <button className="primary-btn" onClick={save}>
+              </Button>
+              <Button variant="contained" onClick={save}>
                 保存
-              </button>
+              </Button>
             </>
           }
         >
           {!edit.id && (
-            <p className="wa-note" style={{ marginTop: 0 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               ※ 登録したアイテムは<strong>持込機械</strong>として登録されます。
-            </p>
+            </Typography>
           )}
-          <div className="form-grid">
+          <FormGrid>
             <SuggestField
               label="カテゴリ"
               required
@@ -355,7 +367,7 @@ function EquipmentSection({
               options={WA_COMPANIES}
               hint="サジェスト＋自由記述"
             />
-          </div>
+          </FormGrid>
         </Modal>
       )}
 
@@ -367,59 +379,69 @@ function EquipmentSection({
           onClose={() => setBulk(null)}
           footer={
             <>
-              <button
-                className="ghost-btn"
-                onClick={() => setBulk((b) => [...b, emptyEquip()])}
-              >
-                ＋ 行を追加
-              </button>
-              <button className="ghost-btn spacer" onClick={() => setBulk(null)}>
+              <Button startIcon={<AddIcon />} onClick={() => setBulk((b) => [...b, emptyEquip()])}>
+                行を追加
+              </Button>
+              <Button variant="outlined" sx={{ ml: "auto" }} onClick={() => setBulk(null)}>
                 キャンセル
-              </button>
-              <button className="primary-btn" onClick={commitBulk}>
+              </Button>
+              <Button variant="contained" onClick={commitBulk}>
                 まとめて登録
-              </button>
+              </Button>
             </>
           }
         >
-          <p className="subtle" style={{ marginTop: 0 }}>
+          <Typography variant="body2" color="text.secondary">
             4項目すべて入力された行のみ登録されます（カテゴリ／表示名（現場内呼称）／持込会社名／一次会社）。
-          </p>
-          <p className="wa-note" style={{ marginTop: 0 }}>
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             ※ 登録したアイテムは<strong>持込機械</strong>として登録されます。
-          </p>
-          <table className="bulk-table">
-            <thead>
-              <tr>
-                <th>カテゴリ*</th>
-                <th>表示名（現場内呼称）*</th>
-                <th>持込会社名*</th>
-                <th>一次会社*</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bulk.map((r, i) => (
-                <tr key={i}>
-                  <td data-label="カテゴリ">
-                    <input list="cat-list" value={r.category} style={cellInput}
-                      onChange={(e) => setBulkRow(i, "category", e.target.value)} />
-                  </td>
-                  <td data-label="表示名（現場内呼称）">
-                    <input list="name-list" value={r.name} style={cellInput}
-                      onChange={(e) => setBulkRow(i, "name", e.target.value)} />
-                  </td>
-                  <td data-label="持込会社名">
-                    <input list="co-list" value={r.bringIn} style={cellInput}
-                      onChange={(e) => setBulkRow(i, "bringIn", e.target.value)} />
-                  </td>
-                  <td data-label="一次会社">
-                    <input list="co-list" value={r.primary} style={cellInput}
-                      onChange={(e) => setBulkRow(i, "primary", e.target.value)} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            {bulk.map((r, i) => (
+              <Box
+                key={i}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "repeat(4, minmax(0, 1fr))" },
+                  gap: 1.25,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  p: 1.5,
+                }}
+              >
+                <SuggestField
+                  label="カテゴリ"
+                  required
+                  value={r.category}
+                  options={WA_EQUIP_CATEGORIES}
+                  onChange={(v) => setBulkRow(i, "category", v)}
+                />
+                <SuggestField
+                  label="表示名（現場内呼称）"
+                  required
+                  value={r.name}
+                  options={EQUIP_NAMES}
+                  onChange={(v) => setBulkRow(i, "name", v)}
+                />
+                <SuggestField
+                  label="持込会社名"
+                  required
+                  value={r.bringIn}
+                  options={WA_COMPANIES}
+                  onChange={(v) => setBulkRow(i, "bringIn", v)}
+                />
+                <SuggestField
+                  label="一次会社"
+                  required
+                  value={r.primary}
+                  options={WA_COMPANIES}
+                  onChange={(v) => setBulkRow(i, "primary", v)}
+                />
+              </Box>
+            ))}
+          </Box>
         </Modal>
       )}
 
@@ -431,48 +453,72 @@ function EquipmentSection({
           onClose={() => setImportSel(null)}
           footer={
             <>
-              <button className="ghost-btn spacer" onClick={() => setImportSel(null)}>
+              <Button variant="outlined" onClick={() => setImportSel(null)}>
                 キャンセル
-              </button>
-              <button className="primary-btn" onClick={commitImport}>
+              </Button>
+              <Button variant="contained" onClick={commitImport}>
                 取り込む（{importSel.size}件）
-              </button>
+              </Button>
             </>
           }
         >
-          <p className="subtle" style={{ marginTop: 0 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {importMeta.desc}
-          </p>
-          <table className="import-table">
-            <thead>
-              <tr>
-                <th className="col-check"></th>
-                <th>ArchID</th>
-                <th>カテゴリ</th>
-                <th>表示名（現場内呼称）</th>
-                <th>持込会社名</th>
-                <th>一次会社</th>
-              </tr>
-            </thead>
-            <tbody>
+          </Typography>
+          {narrow ? (
+            <List dense disablePadding>
               {importSource.map((m) => (
-                <tr key={m.id}>
-                  <td className="col-check" data-label="選択">
-                    <input
-                      type="checkbox"
-                      checked={importSel.has(m.id)}
-                      onChange={() => toggleImport(m.id)}
+                <ListItem key={m.id} disablePadding divider>
+                  <ListItemButton onClick={() => toggleImport(m.id)}>
+                    <Checkbox size="small" edge="start" checked={importSel.has(m.id)} tabIndex={-1} />
+                    <ListItemText
+                      primary={m.name}
+                      secondary={`${m.archId}／${m.category}／${m.bringIn}／${m.primary}`}
+                      slotProps={{
+                        primary: { sx: { fontSize: 13, fontWeight: 600 } },
+                        secondary: { sx: { fontSize: 11.5 } },
+                      }}
                     />
-                  </td>
-                  <td data-label="ArchID">{m.archId}</td>
-                  <td data-label="カテゴリ">{m.category}</td>
-                  <td data-label="表示名（現場内呼称）">{m.name}</td>
-                  <td data-label="持込会社名">{m.bringIn}</td>
-                  <td data-label="一次会社">{m.primary}</td>
-                </tr>
+                  </ListItemButton>
+                </ListItem>
               ))}
-            </tbody>
-          </table>
+            </List>
+          ) : (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox" />
+                    <TableCell>ArchID</TableCell>
+                    <TableCell>カテゴリ</TableCell>
+                    <TableCell>表示名（現場内呼称）</TableCell>
+                    <TableCell>持込会社名</TableCell>
+                    <TableCell>一次会社</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {importSource.map((m) => (
+                    <TableRow
+                      key={m.id}
+                      hover
+                      selected={importSel.has(m.id)}
+                      onClick={() => toggleImport(m.id)}
+                      sx={{ cursor: "pointer" }}
+                    >
+                      <TableCell padding="checkbox">
+                        <Checkbox size="small" checked={importSel.has(m.id)} onChange={() => toggleImport(m.id)} />
+                      </TableCell>
+                      <TableCell>{m.archId}</TableCell>
+                      <TableCell>{m.category}</TableCell>
+                      <TableCell>{m.name}</TableCell>
+                      <TableCell>{m.bringIn}</TableCell>
+                      <TableCell>{m.primary}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </Modal>
       )}
     </>
@@ -495,6 +541,7 @@ export default function WorkAdjustRegistry() {
   const [gateEdit, setGateEdit] = useState(null);
   const [gPage, setGPage] = useState(0);
   const [gPageSize, setGPageSize] = useState(50);
+  const narrow = useIsNarrow();
   const gPageCount = Math.max(1, Math.ceil(gates.length / gPageSize));
   const gSafePage = Math.min(gPage, gPageCount - 1);
   const gatePageRows = gates.slice(gSafePage * gPageSize, gSafePage * gPageSize + gPageSize);
@@ -525,106 +572,118 @@ export default function WorkAdjustRegistry() {
     setGates((gs) => gs.map((x) => (x.id === g.id ? { ...x, show: !x.show } : x)));
   }
 
-  return (
-    <div>
-      <div className="page-title">資機材・ゲート登録</div>
+  const gateShowCheck = (g) => (
+    <FormControlLabel
+      control={<Checkbox size="small" checked={g.show} onChange={() => toggleGateShow(g)} />}
+      label="表示する"
+      title="予約ページへの表示／非表示"
+      slotProps={{ typography: { sx: { fontSize: 13 } } }}
+    />
+  );
+  const gateActions = (g) => (
+    <Box sx={{ display: "flex", gap: 0.75 }}>
+      <Button size="small" variant="outlined" onClick={() => setGateEdit({ ...g })}>
+        編集
+      </Button>
+      <Button size="small" variant="outlined" color="error" onClick={() => removeGate(g)}>
+        削除
+      </Button>
+    </Box>
+  );
 
-      <div className="tabs">
-        <button className={"tab" + (tab === "lift" ? " on" : "")} onClick={() => setTab("lift")}>
-          揚重機
-        </button>
-        <button className={"tab" + (tab === "gate" ? " on" : "")} onClick={() => setTab("gate")}>
-          ゲート
-        </button>
-        <button className={"tab" + (tab === "equip" ? " on" : "")} onClick={() => setTab("equip")}>
-          資機材・その他
-        </button>
-      </div>
+  return (
+    <Box>
+      <Typography variant="h1" sx={{ mb: 1.75 }}>
+        資機材・ゲート登録
+      </Typography>
+
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+      >
+        <Tab value="lift" label="揚重機" />
+        <Tab value="gate" label="ゲート" />
+        <Tab value="equip" label="資機材・その他" />
+      </Tabs>
 
       {tab === "gate" && (
         <>
-          <div className="toolbar">
-            <span className="subtle">全 {gates.length} 件</span>
-            <button className="primary-btn spacer" onClick={() => setGateEdit(emptyGate())}>
-              ＋ ゲート登録
-            </button>
-          </div>
-          {/* デスクトップ：テーブル表示 */}
-          <table className="reg-table">
-            <thead>
-              <tr>
-                <th>ゲートID</th>
-                <th>ゲート名</th>
-                <th>設置場所</th>
-                <th>備考</th>
-                <th>予約表示</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {gatePageRows.map((g) => (
-                <tr key={g.id}>
-                  <td>{g.id}</td>
-                  <td>{g.name}</td>
-                  <td>{g.location}</td>
-                  <td>{g.note || <span className="subtle">—</span>}</td>
-                  <td>
-                    <label className="cmp-check" title="予約ページへの表示／非表示">
-                      <input type="checkbox" checked={g.show} onChange={() => toggleGateShow(g)} />
-                      表示する
-                    </label>
-                  </td>
-                  <td>
-                    <div className="row-actions">
-                      <button className="mini-btn" onClick={() => setGateEdit({ ...g })}>
-                        編集
-                      </button>
-                      <button className="mini-btn danger" onClick={() => removeGate(g)}>
-                        削除
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap", my: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              全 {gates.length} 件
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              sx={{ ml: "auto" }}
+              onClick={() => setGateEdit(emptyGate())}
+            >
+              ゲート登録
+            </Button>
+          </Box>
 
-          {/* モバイル：カード表示（横スクロール不要） */}
-          <div className="wa-card-list">
-            {gatePageRows.map((g) => (
-              <div className="wa-card" key={g.id}>
-                <div className="wa-card-top">
-                  <span className="wa-card-id">{g.id}</span>
-                  <strong className="wa-card-co">{g.name}</strong>
-                </div>
-                <div className="wa-card-grid">
-                  <div className="wa-card-field">
-                    <span className="wa-card-label">設置場所</span>
-                    <span>{g.location || "—"}</span>
-                  </div>
-                  <div className="wa-card-field">
-                    <span className="wa-card-label">備考</span>
-                    <span>{g.note || "—"}</span>
-                  </div>
-                  <div className="wa-card-field">
-                    <span className="wa-card-label">予約表示</span>
-                    <label className="cmp-check">
-                      <input type="checkbox" checked={g.show} onChange={() => toggleGateShow(g)} />
-                      表示する
-                    </label>
-                  </div>
-                </div>
-                <div className="wa-card-actions">
-                  <button className="mini-btn" onClick={() => setGateEdit({ ...g })}>
-                    編集
-                  </button>
-                  <button className="mini-btn danger" onClick={() => removeGate(g)}>
-                    削除
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+          {narrow ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {gatePageRows.map((g) => (
+                <Box key={g.id} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 1.5 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ fontWeight: 600, bgcolor: "action.hover", borderRadius: 1, px: 1, py: 0.25 }}
+                      color="text.secondary"
+                    >
+                      {g.id}
+                    </Typography>
+                    <Typography sx={{ fontSize: 15, fontWeight: 700 }}>{g.name}</Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+                    <CardField label="設置場所">{g.location || "—"}</CardField>
+                    <CardField label="備考">{g.note || "—"}</CardField>
+                    <CardField label="予約表示">{gateShowCheck(g)}</CardField>
+                  </Box>
+                  <Box sx={{ mt: 1.75, pt: 1.5, borderTop: "1px solid", borderColor: "divider" }}>
+                    {gateActions(g)}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>ゲートID</TableCell>
+                    <TableCell>ゲート名</TableCell>
+                    <TableCell>設置場所</TableCell>
+                    <TableCell>備考</TableCell>
+                    <TableCell>予約表示</TableCell>
+                    <TableCell>操作</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {gatePageRows.map((g) => (
+                    <TableRow key={g.id} hover>
+                      <TableCell>{g.id}</TableCell>
+                      <TableCell>{g.name}</TableCell>
+                      <TableCell>{g.location}</TableCell>
+                      <TableCell>
+                        {g.note || (
+                          <Typography component="span" variant="caption" color="text.secondary">
+                            —
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>{gateShowCheck(g)}</TableCell>
+                      <TableCell sx={{ whiteSpace: "nowrap" }}>{gateActions(g)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
 
           <TablePagination
             total={gates.length}
@@ -643,17 +702,6 @@ export default function WorkAdjustRegistry() {
         <EquipmentSection label="資機材・その他" list={equipment} setList={setEquipment} idPrefix="E" withReserveType {...poolProps} />
       )}
 
-      {/* 共通 datalist */}
-      <datalist id="cat-list">
-        {WA_EQUIP_CATEGORIES.map((o) => <option key={o} value={o} />)}
-      </datalist>
-      <datalist id="name-list">
-        {EQUIP_NAMES.map((o) => <option key={o} value={o} />)}
-      </datalist>
-      <datalist id="co-list">
-        {WA_COMPANIES.map((o) => <option key={o} value={o} />)}
-      </datalist>
-
       {/* ゲート登録／編集 */}
       {gateEdit && (
         <Modal
@@ -661,42 +709,39 @@ export default function WorkAdjustRegistry() {
           onClose={() => setGateEdit(null)}
           footer={
             <>
-              <button className="ghost-btn" onClick={() => setGateEdit(null)}>
+              <Button variant="outlined" onClick={() => setGateEdit(null)}>
                 キャンセル
-              </button>
-              <button className="primary-btn" onClick={saveGate}>
+              </Button>
+              <Button variant="contained" onClick={saveGate}>
                 保存
-              </button>
+              </Button>
             </>
           }
         >
-          <div className="form-grid">
-            <div className="field">
-              <label>
-                ゲート名<span className="req">*</span>
-              </label>
-              <input
-                value={gateEdit.name}
-                onChange={(e) => setGateEdit((x) => ({ ...x, name: e.target.value }))}
-              />
-            </div>
-            <div className="field">
-              <label>設置場所</label>
-              <input
-                value={gateEdit.location}
-                onChange={(e) => setGateEdit((x) => ({ ...x, location: e.target.value }))}
-              />
-            </div>
-            <div className="field full">
-              <label>備考</label>
-              <input
-                value={gateEdit.note}
-                onChange={(e) => setGateEdit((x) => ({ ...x, note: e.target.value }))}
-              />
-            </div>
-          </div>
+          <FormGrid>
+            <TextField
+              size="small"
+              required
+              label="ゲート名"
+              value={gateEdit.name}
+              onChange={(e) => setGateEdit((x) => ({ ...x, name: e.target.value }))}
+            />
+            <TextField
+              size="small"
+              label="設置場所"
+              value={gateEdit.location}
+              onChange={(e) => setGateEdit((x) => ({ ...x, location: e.target.value }))}
+            />
+            <TextField
+              size="small"
+              label="備考"
+              value={gateEdit.note}
+              onChange={(e) => setGateEdit((x) => ({ ...x, note: e.target.value }))}
+              sx={{ gridColumn: "1 / -1" }}
+            />
+          </FormGrid>
         </Modal>
       )}
-    </div>
+    </Box>
   );
 }

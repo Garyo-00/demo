@@ -1,14 +1,23 @@
 import { useState } from "react";
+import {
+  Box,
+  Checkbox,
+  IconButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+} from "@mui/material";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import AddIcon from "@mui/icons-material/Add";
 import { makeCheckRow, makeChecklist } from "../../workPlanNeoData.js";
-
-function TrashIcon({ size = 15 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 7h16M10 11v6M14 11v6" />
-      <path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13M9 7V4h6v3" />
-    </svg>
-  );
-}
 
 /**
  * チェックリスト編集（タブで複数リストを切り替え）。
@@ -48,149 +57,157 @@ export default function ChecklistEditor({ lists, onChange }) {
   }
 
   return (
-    <>
-      <div className="wpn-tabs">
-        {lists.map((l, i) => (
-          <button
-            key={l.id}
-            className={"wpn-tab" + (i === active ? " active" : "")}
-            onClick={() => setActive(i)}
-          >
-            {l.name?.trim() || `チェックリスト${i + 1}`}
-            {i === active && (
-              <span
-                className="wpn-tab-del"
-                role="button"
-                tabIndex={0}
-                aria-label="このチェックリストを削除"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (confirm("このチェックリストを削除しますか？")) removeList(i);
-                }}
-              >
-                <TrashIcon size={13} />
-              </span>
-            )}
-          </button>
-        ))}
-        <button className="wpn-tab-add" onClick={addList} aria-label="チェックリストを追加">
-          ＋
-        </button>
-      </div>
+    <Box>
+      <Box sx={{ display: "flex", alignItems: "center", borderBottom: 1, borderColor: "divider", mb: 2 }}>
+        <Tabs
+          value={Math.min(active, Math.max(0, lists.length - 1))}
+          onChange={(_, v) => setActive(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ flex: 1, minWidth: 0 }}
+        >
+          {lists.map((l, i) => (
+            <Tab
+              key={l.id}
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  {l.name?.trim() || `チェックリスト${i + 1}`}
+                  {i === active && (
+                    <DeleteOutlinedIcon
+                      role="button"
+                      aria-label="このチェックリストを削除"
+                      sx={{ fontSize: 15, "&:hover": { color: "error.main" } }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (confirm("このチェックリストを削除しますか？")) removeList(i);
+                      }}
+                    />
+                  )}
+                </Box>
+              }
+            />
+          ))}
+        </Tabs>
+        <IconButton size="small" onClick={addList} aria-label="チェックリストを追加">
+          <AddIcon fontSize="small" />
+        </IconButton>
+      </Box>
 
       {!cur ? (
-        <div className="wpn-empty">
+        <Typography align="center" color="text.secondary" sx={{ py: 4, fontSize: 12.5 }}>
           チェックリストがありません。「＋」で追加してください。
-        </div>
+        </Typography>
       ) : (
         <>
-          <input
-            className="wpn-input wpn-mb8"
+          <TextField
+            fullWidth
+            sx={{ mb: 1 }}
             value={cur.name}
             placeholder="チェックリスト名"
             onChange={(e) => updateList({ name: e.target.value })}
           />
-          <input
-            className="wpn-input wpn-mb8"
+          <TextField
+            fullWidth
+            sx={{ mb: 2 }}
             value={cur.role}
             placeholder="実施者の役割"
             onChange={(e) => updateList({ role: e.target.value })}
           />
 
-          <table className="wpn-table">
-            <thead>
-              <tr>
-                <th className="wpn-col-handle" />
-                <th>内容</th>
-                <th className="wpn-col-req center">必須</th>
-                <th style={{ width: "34%" }}>備考</th>
-                <th className="wpn-col-del" />
-              </tr>
-            </thead>
-            <tbody>
-              {cur.rows.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="wpn-empty">
-                    確認項目がありません。「＋」で追加してください。
-                  </td>
-                </tr>
-              )}
-              {cur.rows.map((r, i) => (
-                <tr
-                  key={r.id}
-                  className={
-                    (dragIdx === i ? "wpn-row-dragging " : "") +
-                    (overIdx === i && dragIdx !== i ? "wpn-row-over" : "")
-                  }
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setOverIdx(i);
-                  }}
-                  onDrop={() => drop(i)}
-                >
-                  <td>
-                    <button
-                      type="button"
-                      className="wpn-drag"
-                      draggable
-                      onDragStart={() => setDragIdx(i)}
-                      onDragEnd={() => {
-                        setDragIdx(null);
-                        setOverIdx(null);
-                      }}
-                      aria-label="行を並べ替え"
-                    >
-                      ⠿
-                    </button>
-                  </td>
-                  <td>
-                    <input
-                      className="wpn-input sm"
-                      value={r.label}
-                      placeholder="例：作業計画書を確認しましたか"
-                      onChange={(e) => updateRow(r.id, { label: e.target.value })}
-                    />
-                  </td>
-                  <td className="center">
-                    <input
-                      type="checkbox"
-                      className="wpn-check"
-                      checked={r.required}
-                      onChange={(e) => updateRow(r.id, { required: e.target.checked })}
-                      aria-label="必須"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      className="wpn-input sm"
-                      value={r.note}
-                      onChange={(e) => updateRow(r.id, { note: e.target.value })}
-                    />
-                  </td>
-                  <td className="center">
-                    <button
-                      type="button"
-                      className="wpn-icon-btn"
-                      onClick={() => removeRow(r.id)}
-                      aria-label="行を削除"
-                    >
-                      <TrashIcon />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button
-            type="button"
-            className="wpn-addrow"
-            onClick={() => updateList({ rows: [...cur.rows, makeCheckRow()] })}
-            aria-label="行を追加"
-          >
-            ＋
-          </button>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ width: 34 }} />
+                  <TableCell>内容</TableCell>
+                  <TableCell align="center" sx={{ width: 84 }}>必須</TableCell>
+                  <TableCell sx={{ width: "34%" }}>備考</TableCell>
+                  <TableCell sx={{ width: 48 }} />
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {cur.rows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ color: "text.secondary", py: 4 }}>
+                      確認項目がありません。「＋」で追加してください。
+                    </TableCell>
+                  </TableRow>
+                )}
+                {cur.rows.map((r, i) => (
+                  <TableRow
+                    key={r.id}
+                    sx={{
+                      opacity: dragIdx === i ? 0.4 : 1,
+                      ...(overIdx === i && dragIdx !== i
+                        ? { boxShadow: "inset 0 2px 0 0 var(--mui-palette-primary-main, #4f5bd5)" }
+                        : null),
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setOverIdx(i);
+                    }}
+                    onDrop={() => drop(i)}
+                  >
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        draggable
+                        onDragStart={() => setDragIdx(i)}
+                        onDragEnd={() => {
+                          setDragIdx(null);
+                          setOverIdx(null);
+                        }}
+                        aria-label="行を並べ替え"
+                        sx={{ cursor: "grab", color: "#c2c7d2" }}
+                      >
+                        <DragIndicatorIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        fullWidth
+                        value={r.label}
+                        placeholder="例：作業計画書を確認しましたか"
+                        onChange={(e) => updateRow(r.id, { label: e.target.value })}
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Checkbox
+                        size="small"
+                        checked={r.required}
+                        onChange={(e) => updateRow(r.id, { required: e.target.checked })}
+                        slotProps={{ input: { "aria-label": "必須" } }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        fullWidth
+                        value={r.note}
+                        onChange={(e) => updateRow(r.id, { note: e.target.value })}
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton size="small" onClick={() => removeRow(r.id)} aria-label="行を削除">
+                        <DeleteOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+            <IconButton
+              size="small"
+              onClick={() => updateList({ rows: [...cur.rows, makeCheckRow()] })}
+              aria-label="行を追加"
+            >
+              <AddIcon fontSize="small" />
+            </IconButton>
+          </Box>
         </>
       )}
-    </>
+    </Box>
   );
 }

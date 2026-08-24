@@ -1,5 +1,22 @@
 import { useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { useWpn } from "../components/wpn/WpnContext.jsx";
 import ItemTable from "../components/wpn/ItemTable.jsx";
 import BlockCard from "../components/wpn/BlockCard.jsx";
@@ -22,6 +39,24 @@ function todayStr() {
   return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}`;
 }
 
+function SectionCard({ title, hint, children }) {
+  return (
+    <Card sx={{ mb: 2 }}>
+      <CardContent>
+        <Typography variant="h2" sx={{ mb: 1.75 }}>
+          {title}
+          {hint && (
+            <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1, fontWeight: 400 }}>
+              {hint}
+            </Typography>
+          )}
+        </Typography>
+        {children}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function WorkPlanNeoTemplateForm() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -29,9 +64,7 @@ export default function WorkPlanNeoTemplateForm() {
   const editing = getTemplate(id);
 
   const [name, setName] = useState(editing?.name || "");
-  const [blocks, setBlocks] = useState(
-    editing?.blocks || defaultBlocks(["basic", "other"])
-  );
+  const [blocks, setBlocks] = useState(editing?.blocks || defaultBlocks(["basic", "other"]));
   const [craneAuto, setCraneAuto] = useState(editing?.craneAuto || defaultCraneAuto());
   const [other, setOther] = useState(editing?.other || []);
   const [checklists, setChecklists] = useState(editing?.checklists || [makeChecklist()]);
@@ -39,10 +72,7 @@ export default function WorkPlanNeoTemplateForm() {
   const fileRef = useRef(null);
 
   function pickFiles(e) {
-    const picked = Array.from(e.target.files || []).map((f) => ({
-      id: newId("f"),
-      name: f.name,
-    }));
+    const picked = Array.from(e.target.files || []).map((f) => ({ id: newId("f"), name: f.name }));
     setFiles((list) => [...list, ...picked]);
     e.target.value = "";
   }
@@ -76,56 +106,52 @@ export default function WorkPlanNeoTemplateForm() {
   }
 
   return (
-    <div>
-      <h1 className="wpn-page-title">
+    <Box>
+      <Typography variant="h1" sx={{ mb: 1 }}>
         作業計画書テンプレート設定{editing ? "編集" : "作成"}
-      </h1>
-      <p className="wpn-page-note">
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.7 }}>
         作業計画書の書式はゼネコン各社で異なるため、元請ユーザーが項目を自由に設定します。
         ここで作成したテンプレートを、職長ユーザーが作業計画書を新規作成する際に選択します。
-      </p>
+      </Typography>
 
-      {/* テンプレート名 */}
-      <div className="wpn-card">
-        <label className="wpn-label" htmlFor="wpn-tpl-name">
-          テンプレート名
-        </label>
-        <input
-          id="wpn-tpl-name"
-          className="wpn-input"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="例：移動式クレーン作業"
-        />
-      </div>
+      <Card sx={{ mb: 2 }}>
+        <CardContent>
+          <TextField
+            fullWidth
+            label="テンプレート名"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="例：移動式クレーン作業"
+          />
+        </CardContent>
+      </Card>
 
       {/* 必須項目（全テンプレート共通・編集不可） */}
-      <div className="wpn-card">
-        <h2 className="wpn-card-title">
-          必須項目
-          <span className="wpn-hint">全テンプレート共通で作業計画書に入る項目です（編集不可）</span>
-        </h2>
-        <table className="wpn-table">
-          <thead>
-            <tr>
-              <th>項目</th>
-              <th style={{ width: "34%" }}>回答形式</th>
-              <th className="wpn-col-req">必須</th>
-            </tr>
-          </thead>
-          <tbody>
-            {FIXED_ITEMS.map((it) => (
-              <tr key={it.label}>
-                <td>{it.label}</td>
-                <td>{it.type}</td>
-                <td>
-                  <input type="checkbox" className="wpn-check" checked disabled aria-label="必須（固定）" />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <SectionCard title="必須項目" hint="全テンプレート共通で作業計画書に入る項目です（編集不可）">
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>項目</TableCell>
+                <TableCell sx={{ width: "34%" }}>回答形式</TableCell>
+                <TableCell sx={{ width: 84 }}>必須</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {FIXED_ITEMS.map((it) => (
+                <TableRow key={it.label}>
+                  <TableCell>{it.label}</TableCell>
+                  <TableCell>{it.type}</TableCell>
+                  <TableCell>
+                    <Checkbox size="small" checked disabled slotProps={{ input: { "aria-label": "必須（固定）" } }} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </SectionCard>
 
       {/* ブロック（作業計画書はブロック単位で構成する） */}
       {TEMPLATE_BLOCKS.map((b) => (
@@ -139,56 +165,41 @@ export default function WorkPlanNeoTemplateForm() {
         </BlockCard>
       ))}
 
-      {/* 書類添付 */}
-      <div className="wpn-card">
-        <h2 className="wpn-card-title">
-          書類添付
-          <span className="wpn-hint">作業手順書など、この計画書に常に添付する書類</span>
-        </h2>
+      <SectionCard title="書類添付" hint="作業手順書など、この計画書に常に添付する書類">
         {files.length > 0 && (
-          <ul className="wpn-files">
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
             {files.map((f) => (
-              <li key={f.id}>
-                <span>{f.name}</span>
-                <button
-                  type="button"
-                  className="wpn-icon-btn"
-                  onClick={() => setFiles((list) => list.filter((x) => x.id !== f.id))}
-                  aria-label="添付を削除"
-                >
-                  ×
-                </button>
-              </li>
+              <Chip
+                key={f.id}
+                label={f.name}
+                variant="outlined"
+                onDelete={() => setFiles((list) => list.filter((x) => x.id !== f.id))}
+                deleteIcon={<CloseIcon />}
+              />
             ))}
-          </ul>
+          </Box>
         )}
-        <div className="wpn-file-row">
-          <input ref={fileRef} type="file" multiple hidden onChange={pickFiles} />
-          <button type="button" className="wpn-btn primary sm" onClick={() => fileRef.current?.click()}>
-            ファイルを選択
-          </button>
-        </div>
-      </div>
+        <input ref={fileRef} type="file" multiple hidden onChange={pickFiles} />
+        <Button variant="contained" size="small" onClick={() => fileRef.current?.click()}>
+          ファイルを選択
+        </Button>
+      </SectionCard>
 
-      {/* チェックリスト */}
-      <div className="wpn-card">
-        <h2 className="wpn-card-title">
-          チェックリスト
-          <span className="wpn-hint">
-            承認後、点検QR（機械個体）から作業計画書を閲覧する際に、運転者が確認する項目
-          </span>
-        </h2>
+      <SectionCard
+        title="チェックリスト"
+        hint="承認後、点検QR（機械個体）から作業計画書を閲覧する際に、運転者が確認する項目"
+      >
         <ChecklistEditor lists={checklists} onChange={setChecklists} />
-      </div>
+      </SectionCard>
 
-      <div className="wpn-actions">
-        <button type="button" className="wpn-btn ghost" onClick={() => navigate("/workplan-neo/templates")}>
-          ✕ キャンセル
-        </button>
-        <button type="button" className="wpn-btn primary" onClick={submit}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.25, pb: 1 }}>
+        <Button variant="outlined" onClick={() => navigate("/workplan-neo/templates")}>
+          キャンセル
+        </Button>
+        <Button variant="contained" onClick={submit}>
           登録
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Box>
+    </Box>
   );
 }

@@ -93,12 +93,7 @@ function WorkPlanNeoLayoutInner() {
   const navItems = NAV.filter((n) => role === "prime" || FOREMAN_MENU.includes(n.key));
 
   return (
-    // className="wpn" は MUI 化が済んでいない画面のために残している（CSS変数の供給元）。
-    // 全画面の変換が終わったら外す。
-    <ScopedCssBaseline
-      className="wpn"
-      sx={{ display: "flex", height: "100vh", overflow: "hidden", bgcolor: "background.default" }}
-    >
+    <ScopedCssBaseline sx={{ display: "flex", height: "100vh", overflow: "hidden", bgcolor: "background.default" }}>
       <Drawer
         variant="permanent"
         sx={{

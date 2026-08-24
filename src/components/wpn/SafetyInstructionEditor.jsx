@@ -1,3 +1,6 @@
+import { Box, Button, Card, CardContent, Chip, IconButton, TextField, Typography } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import { newId } from "../../workPlanNeoData.js";
 
 function nowStr() {
@@ -22,70 +25,75 @@ export default function SafetyInstructionEditor({ plan, onChange }) {
     );
 
   return (
-    <div className="wpn-card">
-      <div className="wpn-card-head">
-        <h2 className="wpn-card-title">
-          安全指示事項
-          <span className="wpn-hint">作業内容ごとに、任意の数だけ登録できます</span>
-        </h2>
-        <button
-          className="wpn-linkbtn"
-          onClick={() =>
-            onChange([
-              ...list,
-              {
-                id: newId("si"),
-                workLabel: "",
-                text: "",
-                updatedAt: nowStr(),
-                updatedBy: "元請 田中",
-                version: 1,
-              },
-            ])
-          }
-        >
-          ＋ 追加
-        </button>
-      </div>
+    <Card sx={{ mb: 2 }}>
+      <CardContent>
+        <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
+          <Typography variant="h2">
+            安全指示事項
+            <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1, fontWeight: 400 }}>
+              作業内容ごとに、任意の数だけ登録できます
+            </Typography>
+          </Typography>
+          <Button
+            size="small"
+            startIcon={<AddIcon />}
+            sx={{ ml: "auto" }}
+            onClick={() =>
+              onChange([
+                ...list,
+                {
+                  id: newId("si"),
+                  workLabel: "",
+                  text: "",
+                  updatedAt: nowStr(),
+                  updatedBy: "元請 田中",
+                  version: 1,
+                },
+              ])
+            }
+          >
+            追加
+          </Button>
+        </Box>
 
-      {list.length === 0 && (
-        <div className="wpn-none">
-          安全指示事項は入力されていません。「＋ 追加」で作業内容ごとに登録できます。
-        </div>
-      )}
+        {list.length === 0 && (
+          <Typography color="text.secondary" sx={{ fontSize: 12.5 }}>
+            安全指示事項は入力されていません。「＋ 追加」で作業内容ごとに登録できます。
+          </Typography>
+        )}
 
-      {list.map((si, i) => (
-        <div className="wpn-si edit" key={si.id}>
-          <div className="wpn-si-head">
-            <span className="wpn-si-no">No.{i + 1}</span>
-            <input
-              className="wpn-input wpn-si-select"
-              placeholder="作業内容を入力"
-              value={si.workLabel}
-              onChange={(e) => update(si.id, { workLabel: e.target.value })}
+        {list.map((si, i) => (
+          <Box key={si.id} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 1.5, mb: 1.25 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <Chip size="small" label={`No.${i + 1}`} variant="outlined" />
+              <TextField
+                sx={{ flex: 1 }}
+                placeholder="作業内容を入力"
+                value={si.workLabel}
+                onChange={(e) => update(si.id, { workLabel: e.target.value })}
+              />
+              <IconButton
+                size="small"
+                aria-label="削除"
+                onClick={() => onChange(list.filter((x) => x.id !== si.id))}
+              >
+                <DeleteOutlinedIcon fontSize="small" />
+              </IconButton>
+            </Box>
+            <TextField
+              fullWidth
+              multiline
+              minRows={2}
+              placeholder="安全指示事項を入力"
+              value={si.text}
+              onChange={(e) => update(si.id, { text: e.target.value })}
             />
-            <button
-              className="wpn-icon-btn"
-              onClick={() => onChange(list.filter((x) => x.id !== si.id))}
-              aria-label="削除"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 7h16M10 11v6M14 11v6" />
-                <path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13M9 7V4h6v3" />
-              </svg>
-            </button>
-          </div>
-          <textarea
-            className="wpn-input wpn-textarea"
-            placeholder="安全指示事項を入力"
-            value={si.text}
-            onChange={(e) => update(si.id, { text: e.target.value })}
-          />
-          <div className="wpn-si-meta">
-            最終更新：{si.updatedAt} {si.updatedBy}
-          </div>
-        </div>
-      ))}
-    </div>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75 }}>
+              最終更新：{si.updatedAt} {si.updatedBy}
+            </Typography>
+          </Box>
+        ))}
+      </CardContent>
+    </Card>
   );
 }

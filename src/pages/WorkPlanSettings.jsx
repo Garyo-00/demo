@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { Box, Card, CardActionArea, CardContent, Typography } from "@mui/material";
 
 const ITEMS = [
   {
@@ -15,16 +16,24 @@ const ITEMS = [
 
 export default function WorkPlanSettings() {
   return (
-    <div>
-      <div className="section-title first">設定</div>
-      <div className="grid">
+    <Box>
+      <Typography variant="h2" color="text.secondary" sx={{ letterSpacing: ".04em", mb: 1.25 }}>
+        設定
+      </Typography>
+      <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))" }}>
         {ITEMS.map((it) => (
-          <Link key={it.to} className="demo" to={it.to}>
-            <h2>{it.title}</h2>
-            <p>{it.desc}</p>
-          </Link>
+          <Card key={it.to} sx={{ "&:hover": { borderColor: "primary.main" } }}>
+            <CardActionArea component={Link} to={it.to} sx={{ height: "100%" }}>
+              <CardContent>
+                <Typography sx={{ fontSize: 16, fontWeight: 700, mb: 0.75 }}>{it.title}</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.5 }}>
+                  {it.desc}
+                </Typography>
+              </CardContent>
+            </CardActionArea>
+          </Card>
         ))}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
