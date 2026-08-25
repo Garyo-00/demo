@@ -7,6 +7,7 @@ import {
   CardActionArea,
   CardContent,
   ScopedCssBaseline,
+  TextField,
   Typography,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -15,7 +16,14 @@ import { WpnProvider, useWpn } from "../components/wpn/WpnContext.jsx";
 import PlanDetailContent from "../components/wpn/PlanDetailContent.jsx";
 import SignaturePad from "../components/wpn/SignaturePad.jsx";
 import { WPN_PROJECT, newId } from "../workPlanNeoData.js";
-import { companiesWithApprovedPlans, machineById } from "../workPlanNeoPlanData.js";
+import {
+  WPN_TODAY,
+  approvedPlansForDate,
+  clampSignDate,
+  companiesWithApprovedPlans,
+  machineById,
+  signDateRange,
+} from "../workPlanNeoPlanData.js";
 
 // 打合せサイン用QRを読み取った後の画面（打合せ参加者が自分の端末で開く想定・ログイン不要）。
 // 協力会社を選ぶ → 承認済みの作業計画書を選ぶ → 詳細を確認して手書きサイン。
@@ -24,6 +32,26 @@ function nowStr() {
   const d = new Date();
   const p = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+// 対象作業日の選択。当日を基準に前後7日だけ選べる（作業間調整proの実績入力に合わせた構成）
+function DatePicker({ value, onChange }) {
+  const { min, max } = signDateRange();
+  return (
+    <Box sx={{ textAlign: "center", mb: 2.5 }}>
+      <TextField
+        type="date"
+        label="対象作業日"
+        value={value}
+        onChange={(e) => onChange(e.target.value || WPN_TODAY)}
+        slotProps={{ inputLabel: { shrink: true }, htmlInput: { min, max } }}
+        sx={{ width: 200 }}
+      />
+      <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.75 }}>
+        当日を既定表示。前後7日（{min.replaceAll("-", "/")}〜{max.replaceAll("-", "/")}）まで選択できます。
+      </Typography>
+    </Box>
+  );
 }
 
 function StepTitle({ children }) {
@@ -58,13 +86,13 @@ function Picked({ label, value }) {
 }
 
 // 1. 協力会社の選択
-function CompanyStep({ companies, onPick }) {
+function CompanyStep({ companies, date, onPick }) {
   return (
     <>
       <StepTitle>協力会社名を選択してください</StepTitle>
       {companies.length === 0 ? (
         <Typography align="center" color="text.secondary" sx={{ fontSize: 12.5 }}>
-          承認済みの作業計画書がありません。
+          {date.replaceAll("-", "/")} に作業予定の承認済み作業計画書はありません。
         </Typography>
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
@@ -89,7 +117,7 @@ function PlanStep({ company, plans, onPick, onBack }) {
       <StepTitle>サインする作業計画書を選択してください</StepTitle>
       {plans.length === 0 ? (
         <Typography align="center" color="text.secondary" sx={{ fontSize: 12.5 }}>
-          {company} の承認済みの作業計画書はありません。
+          {company} の承認済み作業計画書はありません。
         </Typography>
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -218,15 +246,24 @@ function DoneStep({ sign, plan, onMore }) {
 
 function SignFlow() {
   const { plans, savePlan } = useWpn();
+  // 対象作業日。既定は当日で、この日に作業予定のある計画書だけを出す
+  const [date, setDate] = useState(WPN_TODAY);
   const [company, setCompany] = useState(null);
   // 保存のたびに最新の計画書を参照したいので、ID で保持して都度引き直す
   const [planId, setPlanId] = useState(null);
   const [saved, setSaved] = useState(null);
 
-  const approved = plans.filter((p) => p.status === "approved");
-  const companies = companiesWithApprovedPlans(plans);
-  const companyPlans = approved.filter((p) => p.company === company);
+  const companies = companiesWithApprovedPlans(plans, date);
+  const companyPlans = approvedPlansForDate(plans, date).filter((p) => p.company === company);
   const plan = plans.find((p) => p.id === planId) || null;
+
+  // 日付を変えたら選択をやり直す（その日の計画書一覧から選び直すため）
+  function changeDate(d) {
+    setDate(clampSignDate(d));
+    setCompany(null);
+    setPlanId(null);
+    setSaved(null);
+  }
 
   function reset() {
     setSaved(null);
@@ -235,7 +272,7 @@ function SignFlow() {
 
   // サインは作業計画書に紐づけて保存する（詳細ページに表示される）
   function saveSign(s) {
-    const sign = { id: newId("sg"), image: s.image, name: s.name, at: nowStr() };
+    const sign = { id: newId("sg"), image: s.image, name: s.name, workDate: date, at: nowStr() };
     savePlan({ ...plan, meetingSigns: [...(plan.meetingSigns || []), sign] });
     setSaved(sign);
   }
@@ -250,6 +287,8 @@ function SignFlow() {
           <Typography sx={{ fontSize: 19, fontWeight: 700, mt: 0.75 }}>打合せ参加者サイン</Typography>
         </Box>
 
+        {!saved && <DatePicker value={date} onChange={changeDate} />}
+
         {saved ? (
           <DoneStep sign={saved} plan={plan} onMore={reset} />
         ) : plan ? (
@@ -262,7 +301,7 @@ function SignFlow() {
             onBack={() => setCompany(null)}
           />
         ) : (
-          <CompanyStep companies={companies} onPick={setCompany} />
+          <CompanyStep companies={companies} date={date} onPick={setCompany} />
         )}
 
         <Box sx={{ textAlign: "center", mt: 2.75 }}>

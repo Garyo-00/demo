@@ -66,6 +66,7 @@ export default function PlanDrawer({ planId, onClose }) {
         <PlanDetailContent
           plan={plan}
           compact
+          canSign
           safetyEditor={
             safetyEditable ? (
               <SafetyInstructionEditor

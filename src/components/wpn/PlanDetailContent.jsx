@@ -5,6 +5,9 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Table,
   TableBody,
   TableCell,
@@ -16,10 +19,18 @@ import {
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
+import DrawOutlinedIcon from "@mui/icons-material/DrawOutlined";
 import { PLAN_STATUS, machineById } from "../../workPlanNeoPlanData.js";
 import { TEMPLATE_BLOCKS } from "../../workPlanNeoData.js";
 import { useWpn } from "./WpnContext.jsx";
 import { AnswerTable } from "./AnswerField.jsx";
+import SignaturePad from "./SignaturePad.jsx";
+
+function nowStr() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
 // 申請ステータス → MUI の色。一覧の絞り込みチップでも使う。
 export const STATUS_COLOR = {
@@ -88,12 +99,27 @@ function KeyValue({ rows }) {
  * 作業計画書の詳細本文。詳細ページ・ドロワー・打合せサイン画面で共用する。
  * compact=true でドロワー向けの詰めたレイアウトになる。
  */
-export default function PlanDetailContent({ plan, compact = false, safetyEditor = null }) {
-  const { getTemplate, settings } = useWpn();
+export default function PlanDetailContent({
+  plan,
+  compact = false,
+  safetyEditor = null,
+  // 管理画面の詳細ではこの画面から直接サインできる（QR側は独自のサイン欄を持つため false）
+  canSign = false,
+}) {
+  const { getTemplate, settings, savePlan } = useWpn();
+  const [signing, setSigning] = useState(false);
   const tpl = getTemplate(plan.templateId);
   const machines = plan.machineIds.map(machineById).filter(Boolean);
   const blocks = tpl?.blocks || {};
   const signs = plan.meetingSigns || [];
+  // サインできるのは承認済みの計画書のみ。ログイン後の画面なので期限は設けない
+  const signable = canSign && plan.status === "approved";
+
+  function addSign(s) {
+    const sign = { id: `sg${Date.now()}`, image: s.image, name: s.name, at: nowStr() };
+    savePlan({ ...plan, meetingSigns: [...signs, sign] });
+    setSigning(false);
+  }
 
   return (
     <Box sx={{ "& .MuiCard-root": compact ? { boxShadow: "none" } : null }}>
@@ -246,6 +272,13 @@ export default function PlanDetailContent({ plan, compact = false, safetyEditor 
         <Section
           title="打合せ参加者サイン"
           hint={signs.length > 0 ? `${signs.length}名` : "打合せサイン用QRから参加者が登録します"}
+          action={
+            signable && (
+              <Button size="small" variant="outlined" startIcon={<DrawOutlinedIcon />} onClick={() => setSigning(true)}>
+                サインする
+              </Button>
+            )
+          }
         >
           {signs.length === 0 ? (
             <None>サインは登録されていません</None>
@@ -282,20 +315,35 @@ export default function PlanDetailContent({ plan, compact = false, safetyEditor 
                       <Chip size="small" label="氏名入力" variant="outlined" />
                     </Box>
                   )}
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    align="center"
-                    sx={{ display: "block", mt: 1, pt: 1, borderTop: "1px solid", borderColor: "divider" }}
+                  <Box
+                    sx={{ mt: 1, pt: 1, borderTop: "1px solid", borderColor: "divider", textAlign: "center" }}
                   >
-                    {sg.at}
-                  </Typography>
+                    {sg.workDate && (
+                      <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                        対象作業日 {sg.workDate.replaceAll("-", "/")}
+                      </Typography>
+                    )}
+                    <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                      {sg.at}
+                    </Typography>
+                  </Box>
                 </Box>
               ))}
             </Box>
           )}
         </Section>
       )}
+
+      {/* 詳細画面からのサイン。canvas の実寸を正しく測るため transition なしで開く */}
+      <Dialog open={signing} onClose={() => setSigning(false)} fullWidth maxWidth="sm" transitionDuration={0}>
+        <DialogTitle>打合せ参加者サイン</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {plan.name}
+          </Typography>
+          <SignaturePad onSave={addSign} onCancel={() => setSigning(false)} />
+        </DialogContent>
+      </Dialog>
 
       <Section title="メモ">
         {plan.memo ? (

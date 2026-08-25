@@ -46,6 +46,7 @@ export default function WorkPlanNeoPlanDetail() {
 
       <PlanDetailContent
         plan={plan}
+        canSign
         safetyEditor={
           safetyEditable ? (
             <SafetyInstructionEditor

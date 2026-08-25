@@ -16,12 +16,8 @@ const DEMOS = [
     title: "ダッシュボード",
     ready: true,
   },
-  {
-    to: "/workplan",
-    badge: "作業計画書",
-    title: "ダッシュボード",
-    ready: true,
-  },
+  // 旧「作業計画書 ダッシュボード」（/workplan）は一覧から外した。
+  // 作業計画書NEOに置き換わったため。ルート自体は残してあるので直接URLでは開ける。
   {
     to: "/workplan-neo",
     badge: "作業計画書NEO",

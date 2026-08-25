@@ -222,9 +222,9 @@ export function initialPlans(templates) {
       checklistResults: [],
       safetyInstructions: [],
       meetingSigns: [
-        { id: "sg1", image: SIG_A, name: "", at: "2026/07/21 07:52" },
-        { id: "sg2", image: SIG_B, name: "", at: "2026/07/21 07:54" },
-        { id: "sg3", image: null, name: "五十嵐 雄人", at: "2026/07/21 07:58" },
+        { id: "sg1", image: SIG_A, name: "", workDate: "2026-07-21", at: "2026/07/21 07:52" },
+        { id: "sg2", image: SIG_B, name: "", workDate: "2026-07-21", at: "2026/07/21 07:54" },
+        { id: "sg3", image: null, name: "五十嵐 雄人", workDate: "2026-07-21", at: "2026/07/21 07:58" },
       ],
     },
     {
@@ -246,7 +246,7 @@ export function initialPlans(templates) {
       memo: "",
       checklistResults: [],
       safetyInstructions: [],
-      meetingSigns: [{ id: "sg4", image: SIG_C, name: "", at: "2026/07/22 08:05" }],
+      meetingSigns: [{ id: "sg4", image: SIG_C, name: "", workDate: "2026-07-22", at: "2026/07/22 08:05" }],
     },
     {
       id: "plan6",
@@ -271,9 +271,41 @@ export function initialPlans(templates) {
   ];
 }
 
-// 打合せサイン用QRの会社選択で使う、承認済の作業計画書がある協力会社
-export function companiesWithApprovedPlans(plans) {
-  return [...new Set(plans.filter((p) => p.status === "approved").map((p) => p.company))];
+// デモの「当日」。本番では実際の当日を使う。
+// サンプルの承認済み計画書（7/21〜7/24）に合わせてこの日にしている。
+export const WPN_TODAY = "2026-07-22";
+
+// "2026/07/21" ⇔ "2026-07-21" の差を吸収して比較できるようにする
+function ymd(v) {
+  return (v || "").replaceAll("/", "-");
+}
+
+// 指定日が作業期間に含まれる、承認済みの作業計画書
+export function approvedPlansForDate(plans, date) {
+  return plans.filter(
+    (p) => p.status === "approved" && ymd(p.start) <= date && date <= ymd(p.end)
+  );
+}
+
+// 打合せサイン用QRの会社選択で使う、指定日に承認済みの作業計画書がある協力会社
+export function companiesWithApprovedPlans(plans, date) {
+  return [...new Set(approvedPlansForDate(plans, date).map((p) => p.company))];
+}
+
+// 対象作業日として選べる範囲（当日を基準に前後7日）。
+// ローカル時刻で計算すると toISOString() で日付がずれるため、UTC で足し引きする。
+export function signDateRange(today = WPN_TODAY) {
+  const [y, m, d] = today.split("-").map(Number);
+  const shift = (days) =>
+    new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+  return { min: shift(-7), max: shift(7) };
+}
+
+// 範囲外の日付は端に丸める（input の min/max は手入力を防げないため）
+export function clampSignDate(date, today = WPN_TODAY) {
+  const { min, max } = signDateRange(today);
+  if (!date) return today;
+  return date < min ? min : date > max ? max : date;
 }
 
 // 一覧の「持込/レンタル機械カテゴリ」チップ用に、カテゴリごとの台数を集計
