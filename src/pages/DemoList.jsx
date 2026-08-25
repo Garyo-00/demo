@@ -1,62 +1,29 @@
 import { Link } from "react-router-dom";
-import {
-  Box,
-  Card,
-  CardActionArea,
-  CardContent,
-  Chip,
-  ScopedCssBaseline,
-  Typography,
-} from "@mui/material";
+import { Box, Card, CardActionArea, CardContent, ScopedCssBaseline, Typography } from "@mui/material";
 
-const DEMOS = [
+// サービスのカテゴリごとに画面をまとめる
+const GROUPS = [
   {
-    to: "/app",
-    badge: "点検",
-    title: "ダッシュボード",
-    ready: true,
-  },
-  // 旧「作業計画書 ダッシュボード」（/workplan）は一覧から外した。
-  // 作業計画書NEOに置き換わったため。ルート自体は残してあるので直接URLでは開ける。
-  {
-    to: "/workplan-neo",
-    badge: "作業計画書NEO",
-    title: "作業計画書一覧・テンプレート設定",
-    ready: true,
+    category: "点検",
+    items: [
+      { to: "/app", title: "ダッシュボード" },
+      { to: "/inspection-run", title: "点検実施画面" },
+      // 遷移先は未定（今後追加する）
+      { title: "持込機械", ready: false },
+    ],
   },
   {
-    to: "/workadjust",
-    badge: "作業間調整pro",
-    title: "作業予定一覧",
-    ready: true,
+    category: "作業計画書",
+    items: [
+      { to: "/workplan-neo", title: "作業計画書NEO" },
+      { to: "/workplan/output-preview", title: "作業計画書出力イメージ" },
+    ],
   },
   {
-    to: "/inspection-run",
-    badge: "点検",
-    title: "点検実施画面",
-    ready: true,
-  },
-  {
-    to: "/workplan/output-preview",
-    badge: "作業計画書",
-    title: "作業計画書出力イメージ",
-    ready: true,
+    category: "作業間調整pro",
+    items: [{ to: "/workadjust", title: "作業予定一覧" }],
   },
 ];
-
-// カードの中身。準備中はリンクにしないため CardActionArea の外に切り出す。
-function DemoBody({ badge, title }) {
-  return (
-    <CardContent>
-      <Chip
-        size="small"
-        label={badge}
-        sx={{ bgcolor: "primary.light", color: "primary.main", mb: 1.25 }}
-      />
-      <Typography sx={{ fontSize: 16, fontWeight: 700 }}>{title}</Typography>
-    </CardContent>
-  );
-}
 
 export default function DemoList() {
   return (
@@ -69,33 +36,52 @@ export default function DemoList() {
           デジタル点検システムの画面デモ集。各リンクから個別のデモ画面へ移動します。
         </Typography>
 
-        <Box
-          sx={{
-            display: "grid",
-            gap: 2,
-            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-          }}
-        >
-          {DEMOS.map((d, i) =>
-            d.ready ? (
-              <Card
-                key={i}
-                sx={{
-                  transition: "box-shadow .15s, transform .15s, border-color .15s",
-                  "&:hover": { transform: "translateY(-2px)", borderColor: "primary.main" },
-                }}
-              >
-                <CardActionArea component={Link} to={d.to} sx={{ height: "100%" }}>
-                  <DemoBody badge={d.badge} title={d.title} />
-                </CardActionArea>
-              </Card>
-            ) : (
-              <Card key={i} sx={{ opacity: 0.55, pointerEvents: "none" }}>
-                <DemoBody badge={d.badge} title={`${d.title}（準備中）`} />
-              </Card>
-            )
-          )}
-        </Box>
+        {GROUPS.map((g) => (
+          <Box key={g.category} sx={{ mb: 4 }}>
+            <Typography
+              component="h2"
+              sx={{ fontSize: 13, fontWeight: 700, color: "text.secondary", letterSpacing: ".04em", mb: 1.5 }}
+            >
+              {g.category}
+            </Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gap: 2,
+                gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+              }}
+            >
+              {g.items.map((d) => {
+                const ready = d.ready !== false;
+                return (
+                  <Card
+                    key={d.title}
+                    sx={
+                      ready
+                        ? {
+                            transition: "box-shadow .15s, transform .15s, border-color .15s",
+                            "&:hover": { transform: "translateY(-2px)", borderColor: "primary.main" },
+                          }
+                        : { opacity: 0.55, pointerEvents: "none" }
+                    }
+                  >
+                    {ready ? (
+                      <CardActionArea component={Link} to={d.to} sx={{ height: "100%" }}>
+                        <CardContent>
+                          <Typography sx={{ fontSize: 16, fontWeight: 700 }}>{d.title}</Typography>
+                        </CardContent>
+                      </CardActionArea>
+                    ) : (
+                      <CardContent>
+                        <Typography sx={{ fontSize: 16, fontWeight: 700 }}>{d.title}（準備中）</Typography>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })}
+            </Box>
+          </Box>
+        ))}
 
         <Typography color="text.secondary" sx={{ fontSize: 12, mt: 5 }}>
           ※ デモ用。データはすべてブラウザ上のサンプル値です。
