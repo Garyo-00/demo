@@ -29,107 +29,70 @@
     padding:12mm 0;
     -webkit-font-smoothing:antialiased;
   }
+  /* A4 210x297mm — 全ブロックをKY-NEXTチラシの実測位置(mm)で絶対配置 */
   .page{
     position:relative;
     width:210mm;
     height:297mm;
-    background:
-      radial-gradient(650px 320px at 90% -8%, rgba(160,110,220,.30), rgba(160,110,220,0) 65%),
-      radial-gradient(500px 260px at -6% 8%, rgba(230,220,255,.55), rgba(230,220,255,0) 70%),
-      linear-gradient(178deg, #FFFFFF 0%, #F9F4FD 55%, #F0E5FA 100%);
+    background:#fff;
     box-shadow:0 12px 44px rgba(0,0,0,.35);
     overflow:hidden;
-    display:flex; flex-direction:column;
-    padding:7mm 10mm 6mm;
-  }
-  .page > *{ flex-shrink:0; }
-  .page::before{
-    content:""; position:absolute; top:-40mm; right:-45mm;
-    width:150mm; height:150mm; border-radius:50%;
-    background:radial-gradient(circle, rgba(102,54,181,.10), rgba(102,54,181,0) 70%);
-    pointer-events:none;
-  }
-  .page::after{
-    content:""; position:absolute; bottom:-55mm; left:-35mm;
-    width:140mm; height:140mm; border-radius:50%;
-    background:radial-gradient(circle, rgba(102,54,181,.08), rgba(102,54,181,0) 70%);
-    pointer-events:none;
   }
 
-  /* ============ HEADER ============ */
+  /* ============ 円状背景（参照: 直径1100.6mm 上端71.5mm）============ */
+  .bg-circle{
+    position:absolute;
+    left:-452mm; top:71.5mm;
+    width:1100.6mm; height:1100.6mm;
+    border-radius:50%;
+    background:linear-gradient(100deg,
+      #FFFFFF 0%,
+      #C9ABE9 40%,
+      #9D6FD0 61%,
+      #9D6FD0 92%,
+      #6636B5 98%);
+    z-index:0;
+  }
+
+  /* ============ タイトル（参照: 上端5.2mm 高さ10.6mm 黒 中央）============ */
+  .flyer-title{
+    position:absolute; top:5.2mm; left:0; right:0;
+    text-align:center;
+    font-size:11.3mm; font-weight:900; line-height:1;
+    letter-spacing:.02em;
+    color:#000;
+    z-index:3;
+  }
+
+  /* ============ アイコン＋サービス名（参照: 上端17.3mm 高さ21.7mm 黒）============ */
   .brand-row{
-    display:flex; align-items:center; justify-content:space-between;
-    position:relative; z-index:2;
+    position:absolute; top:21.3mm; left:0; right:0;
+    display:flex; align-items:center; justify-content:center; gap:2.2mm;
+    z-index:3;
   }
-  .brand-left{ display:flex; align-items:center; gap:3mm; }
-  .new-badge{
-    display:inline-flex; align-items:center; justify-content:center;
-    width:10mm; height:10mm; border-radius:50%;
-    background:linear-gradient(135deg,var(--purple-600),var(--purple-800));
-    color:#fff; font-size:2.5mm; font-weight:800;
-    letter-spacing:.4px;
-    box-shadow:0 3px 8px rgba(52,26,99,.30);
-  }
-  .app-icon{ width:12mm; height:12mm; display:block; filter:drop-shadow(0 3px 6px rgba(52,26,99,.22)); }
+  .app-icon{ width:21.7mm; height:21.7mm; display:block; filter:drop-shadow(0 3px 6px rgba(52,26,99,.22)); }
   .app-name{
-    font-size:7.4mm; font-weight:900; color:var(--ink);
-    letter-spacing:.5px; line-height:1;
+    font-size:23.5mm; font-weight:900; color:#000;
+    letter-spacing:0; line-height:1;
+    white-space:nowrap;
   }
   .app-name .pro{
-    display:inline-block; margin-left:1.8mm;
-    font-size:3.8mm; font-weight:800;
+    display:inline-block; margin-left:2.5mm;
+    font-size:9mm; font-weight:800;
     color:#fff; background:linear-gradient(135deg,var(--purple-500),var(--purple-800));
-    padding:.9mm 2.2mm; border-radius:1.4mm;
-    vertical-align:.9mm;
+    padding:1.5mm 3.5mm; border-radius:2.2mm;
+    vertical-align:4mm;
     letter-spacing:.6px;
   }
 
-  /* ============ HEADLINE ============ */
-  .headline{
-    margin-top:4mm; position:relative; z-index:2;
-    text-align:left;
-  }
-  .headline .kicker{
-    display:inline-flex; align-items:center; gap:2mm;
-    font-size:3.2mm; font-weight:700; color:var(--purple-800);
-    background:#fff; border:.35mm solid var(--purple-200);
-    padding:1.3mm 3.4mm; border-radius:20mm;
-    box-shadow:0 2px 6px rgba(52,26,99,.08);
-    margin-bottom:3.5mm;
-  }
-  .headline .kicker::before{
-    content:""; width:2.6mm; height:2.6mm; border-radius:50%;
-    background:linear-gradient(135deg,#6FD3C7,#B9E36B 55%,#EAD95C);
-    display:inline-block;
-  }
-  .headline h1{
-    font-size:8.6mm;
-    line-height:1.38;
-    font-weight:900;
-    letter-spacing:.3px;
-    color:var(--ink);
-  }
-  .headline h1 .em{ color:var(--purple-700); }
-  .headline h1 .hl{
-    background:linear-gradient(180deg, transparent 60%, rgba(163,110,230,.32) 60%);
-    padding:0 .4mm;
-  }
-  .headline h1 .big{
-    font-size:10.4mm;
-    color:var(--purple-700);
-    letter-spacing:1px;
-  }
-
-  /* ============ HERO MOCK (full width) ============ */
+  /* ============ HERO MOCK（参照: PC高さ93.2mm / スマホ高さ61.8mm）============ */
   .hero-mock{
-    position:relative; z-index:2;
-    margin-top:2mm;
-    height:82mm;
+    position:absolute; inset:0;
+    z-index:1;
   }
   .laptop{
-    position:absolute; left:2mm; top:4mm; width:130mm;
+    position:absolute; left:45mm; top:47.7mm; width:120mm;
     filter:drop-shadow(0 14px 22px rgba(52,26,99,.32));
-    transform:rotate(-1.5deg);
   }
   .laptop-bezel{
     background:#211932;
@@ -156,11 +119,10 @@
   }
   /* Custom CSS iPhone frame */
   .phone{
-    position:absolute; left:124mm; top:1mm;
-    width:42mm;
+    position:absolute; left:48mm; top:73.7mm;
+    width:22mm;
     filter:drop-shadow(0 12px 20px rgba(52,26,99,.38));
     z-index:2;
-    transform:rotate(3deg);
   }
   .phone-body{
     position:relative;
@@ -200,42 +162,47 @@
     border-radius:1mm 0 0 1mm;
   }
   .ai-badge{
-    position:absolute; right:0mm; bottom:2mm; width:28mm; height:28mm;
+    position:absolute; left:168.6mm; top:40.3mm; width:28.2mm; height:28.2mm;
     filter:drop-shadow(0 6px 12px rgba(52,26,99,.28));
     z-index:3;
   }
-  .hero-caption{
-    position:absolute; left:1mm; bottom:-2mm;
-    font-size:2.9mm; font-weight:700; color:var(--purple-800);
-    background:#fff; padding:1.3mm 3.4mm; border-radius:20mm;
-    border:.3mm solid var(--purple-200);
-    box-shadow:0 3px 8px rgba(52,26,99,.10);
-  }
 
-  /* ============ SECTION HEADER ============ */
-  .section{ margin-top:4mm; position:relative; z-index:2; }
-  .section-head{
-    display:flex; align-items:flex-end; gap:5mm;
-    padding-bottom:2mm;
-    border-bottom:.5mm solid var(--purple-300);
-    position:relative;
+  /* ============ 白角丸パネル（参照: 4.9mm/111.7mm 200.2x181.8mm r3.7mm）============ */
+  .panel{
+    position:absolute;
+    left:4.9mm; top:111.7mm;
+    width:200.2mm; height:181.8mm;
+    background:#fff;
+    border-radius:3.7mm;
+    box-shadow:.75mm .75mm 1.4mm rgba(0,0,0,.4);
+    z-index:2;
   }
-  .section-head::after{
-    content:""; position:absolute; left:0; bottom:-.5mm;
-    width:36mm; height:.9mm;
-    background:linear-gradient(90deg,var(--purple-700),var(--purple-400));
-    border-radius:2px;
+  .sec{ position:absolute; }
+  .sec-function{ left:8.6mm; top:3.6mm; width:183.8mm; }
+  .sec-flow{ left:8.3mm; top:101.4mm; width:185.4mm; }
+
+  /* 見出し行（参照: FUNCTION 10.9mm 細字 黒 / FLOW 9.2mm。右テキスト 4.5mm / 4.0mm） */
+  .sec-head{ position:relative; }
+  .sec-function .sec-head{ height:14.8mm; }
+  .sec-flow .sec-head{ height:12.4mm; }
+  .sec-head h2{
+    position:absolute; left:0; top:-1.4mm;
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-weight:200; color:#000;
+    line-height:1; letter-spacing:.01em;
   }
-  .section-head h2{
-    font-size:8mm; font-weight:900; color:var(--purple-800);
-    letter-spacing:1.5px; line-height:1;
+  .sec-function h2{ font-size:10.9mm; letter-spacing:.05em; }
+  .sec-flow h2{ font-size:9.2mm; top:-1.1mm; }
+  .sec-head p{
+    position:absolute; top:0;
+    font-weight:700; color:var(--ink);
+    line-height:1.53;
   }
-  .section-head p{
-    flex:1;
-    font-size:3.15mm; line-height:1.55; font-weight:700; color:var(--ink);
-    padding-bottom:.6mm;
-  }
-  .section-head p .em{ color:var(--purple-700); }
+  .sec-function .sec-head p{ left:63.8mm; font-size:4.5mm; }
+  .sec-flow .sec-head p{ left:31.6mm; font-size:4mm; }
+  .sec-head p .em{ color:var(--purple-700); }
+  /* 見出し下の線（参照: 黒 極細 全幅） */
+  .sec-rule{ height:.26mm; background:#000; }
   .section-note{
     display:block; margin-top:2.6mm;
     font-size:2.5mm; font-weight:600; color:var(--sub);
@@ -245,7 +212,7 @@
   /* ============ FUNCTION ============ */
   .features{
     display:grid; grid-template-columns:1fr 1fr 1fr;
-    gap:3mm; margin-top:3.5mm;
+    gap:3mm; margin-top:9.5mm;
   }
   .feature{
     background:#fff;
@@ -295,7 +262,7 @@
   /* ============ FLOW ============ */
   .flow-steps{
     display:flex; align-items:stretch; gap:0;
-    margin-top:3mm;
+    margin-top:8.9mm;
   }
   .step{
     flex:1;
@@ -346,25 +313,18 @@
 
 <div class="page">
 
-  <!-- HEADER -->
+  <div class="bg-circle"></div>
+
+  <!-- タイトル -->
+  <h1 class="flyer-title">作業調整を一元管理</h1>
+
+  <!-- アイコン＋サービス名 -->
   <div class="brand-row">
-    <div class="brand-left">
-      <span class="new-badge">NEW</span>
-      <img class="app-icon" src="../../screenshots/flyer-icon-workadjust.png" alt="作業間調整アイコン">
-      <span class="app-name">作業間調整<span class="pro">pro</span></span>
-    </div>
+    <img class="app-icon" src="../../screenshots/flyer-icon-workadjust.png" alt="作業間調整アイコン">
+    <span class="app-name">作業間調整<span class="pro">pro</span></span>
   </div>
 
-  <!-- HEADLINE (full width) -->
-  <div class="headline">
-    <span class="kicker">Arch Intelligence 搭載 &nbsp;|&nbsp; 現場の作業調整をひとつの画面で</span>
-    <h1>
-      翌日の作業予定と<span class="em">重機・ゲート・資機材</span>の<br>
-      <span class="hl">調整が<span class="big">その場で完結</span>。</span>
-    </h1>
-  </div>
-
-  <!-- HERO MOCK (full width) -->
+  <!-- HERO MOCK -->
   <div class="hero-mock">
     <div class="laptop">
       <div class="laptop-bezel">
@@ -384,100 +344,107 @@
     <img class="ai-badge" src="../../screenshots/flyer-ai-badge.png" alt="Arch Intelligence">
   </div>
 
-  <!-- FUNCTION -->
-  <div class="section">
-    <div class="section-head">
-      <h2>FUNCTION</h2>
-      <p>現場の<span class="em">予定・予約・配置図</span>を、ひとつの画面に。<br>既存の作業間調整ルールからも、スムーズに移行可能。</p>
+  <!-- 白角丸パネル（FUNCTION + FLOW） -->
+  <div class="panel">
+
+    <!-- FUNCTION -->
+    <div class="sec sec-function">
+      <div class="sec-head">
+        <h2>FUNCTION</h2>
+        <p>現場の<span class="em">予定・予約・配置図</span>を、ひとつの画面に。<br>既存の作業間調整ルールからも、スムーズに移行可能。</p>
+      </div>
+      <div class="sec-rule"></div>
+
+      <div class="features">
+        <!-- Feature 1 -->
+        <div class="feature">
+          <img class="feature-pill" src="../../screenshots/flyer-label-1-work.png" alt="作業内容・人員予定">
+          <h3>作業予定と人員を一元管理</h3>
+          <p>各社の作業予定を1画面に集約。作成から確定、翌日の作業実績入力までを一元管理できます。</p>
+          <div class="feature-tags">
+            <span>作業予定作成</span>
+            <span>コピー作成</span>
+            <span>予定確定</span>
+            <span>実績入力</span>
+          </div>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature">
+          <span class="feature-pill-text">ゲート・資機材予約</span>
+          <h3>予約状況可視化で作業干渉を調整</h3>
+          <p>ゲートや重機予約を時間帯別に可視化。ダブルブッキング・作業干渉を事前に調整できます。</p>
+          <div class="feature-tags">
+            <span>時間帯予約</span>
+            <span>スポット予約</span>
+            <span>予約票出力</span>
+            <span>予約実績出力</span>
+          </div>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature">
+          <span class="feature-pill-text">配置図作成</span>
+          <h3>当日作業配置図をシステムで再現</h3>
+          <p>調整した作業を元に、作業エリア・重機・資機材の配置を画面上で作成し、現場と共有できます。</p>
+          <div class="feature-tags">
+            <span>配置図作成</span>
+            <span>コピー作成</span>
+            <span>元請安全指示事項</span>
+            <span>重機スタンプ</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="features">
-      <!-- Feature 1 -->
-      <div class="feature">
-        <img class="feature-pill" src="../../screenshots/flyer-label-1-work.png" alt="作業内容・人員予定">
-        <h3>作業予定と人員を一元管理</h3>
-        <p>各社の作業予定を1画面に集約。作成から確定、翌日の作業実績入力までを一元管理できます。</p>
-        <div class="feature-tags">
-          <span>作業予定作成</span>
-          <span>コピー作成</span>
-          <span>予定確定</span>
-          <span>実績入力</span>
-        </div>
+    <!-- FLOW -->
+    <div class="sec sec-flow">
+      <div class="sec-head">
+        <h2>FLOW</h2>
+        <p>AIが作業間調整の情報からKYシートを自動生成！</p>
       </div>
+      <div class="sec-rule"></div>
 
-      <!-- Feature 2 -->
-      <div class="feature">
-        <span class="feature-pill-text">ゲート・資機材予約</span>
-        <h3>予約状況可視化で作業干渉を調整</h3>
-        <p>ゲートや重機予約を時間帯別に可視化。ダブルブッキング・作業干渉を事前に調整できます。</p>
-        <div class="feature-tags">
-          <span>時間帯予約</span>
-          <span>スポット予約</span>
-          <span>予約票出力</span>
-          <span>予約実績出力</span>
+      <div class="flow-steps">
+        <div class="step">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4z" stroke="#4E2B95" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 9h10M7 12h7M7 15h5" stroke="#8354C4" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <span class="num">STEP 01</span>
+          <h4>作業予定を入力</h4>
+          <p>翌日の作業内容・人員を<br>各社の職長が<br>モバイルから簡単入力</p>
+        </div>
+        <div class="arrow">›</div>
+        <div class="step">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="2" stroke="#4E2B95" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="#4E2B95" stroke-width="1.6" stroke-linecap="round"/><path d="M9 14.5l2 2 4-4" stroke="#8354C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="num">STEP 02</span>
+          <h4>使用する資機材を予約</h4>
+          <p>作業予定の入力と同時に、<br>資機材の予約まで<br>同じ画面で完了</p>
+        </div>
+        <div class="arrow">›</div>
+        <div class="step">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="#4E2B95" stroke-width="1.6"/><path d="M9 12l2 2 4-4" stroke="#8354C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2" stroke="#4E2B95" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <span class="num">STEP 03</span>
+          <h4>AIが自動生成</h4>
+          <p>Arch Intelligenceが全作業<br>情報をもとにKYシートを自動<br>作成。朝には翌日分が準備完了</p>
+        </div>
+        <div class="arrow">›</div>
+        <div class="step">
+          <div class="step-icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 7l3-3h10l3 3v13H4z" stroke="#4E2B95" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 12l3 3 5-6" stroke="#8354C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span class="num">STEP 04</span>
+          <h4>リスク評価</h4>
+          <p>当日の作業に合わせて<br>リスク評価を行うだけで<br>KYシートが完成</p>
         </div>
       </div>
-
-      <!-- Feature 3 -->
-      <div class="feature">
-        <span class="feature-pill-text">配置図作成</span>
-        <h3>当日作業配置図をシステムで再現</h3>
-        <p>調整した作業を元に、作業エリア・重機・資機材の配置を画面上で作成し、現場と共有できます。</p>
-        <div class="feature-tags">
-          <span>配置図作成</span>
-          <span>コピー作成</span>
-          <span>元請安全指示事項</span>
-          <span>重機スタンプ</span>
-        </div>
-      </div>
+      <p class="section-note">※KYシート自動生成は、当社KY-NEXTの別途利用が必要です</p>
     </div>
-  </div>
 
-  <!-- FLOW -->
-  <div class="section">
-    <div class="section-head">
-      <h2>FLOW</h2>
-      <p>AIが作業間調整の情報から<span class="em">KYシートまで自動作成します！</span><br>当日の作業に合わせてAIが精度の高いKYシートを生成し、安全管理の質を高めます。</p>
-    </div>
-
-    <div class="flow-steps">
-      <div class="step">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16v14H4z" stroke="#4E2B95" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 9h10M7 12h7M7 15h5" stroke="#8354C4" stroke-width="1.6" stroke-linecap="round"/></svg>
-        </div>
-        <span class="num">STEP 01</span>
-        <h4>作業予定を入力</h4>
-        <p>翌日の作業内容・人員を<br>各社の職長が<br>モバイルから簡単入力</p>
-      </div>
-      <div class="arrow">›</div>
-      <div class="step">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="2" stroke="#4E2B95" stroke-width="1.6"/><path d="M3.5 9.5h17M8 3.5v3M16 3.5v3" stroke="#4E2B95" stroke-width="1.6" stroke-linecap="round"/><path d="M9 14.5l2 2 4-4" stroke="#8354C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <span class="num">STEP 02</span>
-        <h4>使用する資機材を予約</h4>
-        <p>作業予定の入力と同時に、<br>資機材の予約まで<br>同じ画面で完了</p>
-      </div>
-      <div class="arrow">›</div>
-      <div class="step">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="#4E2B95" stroke-width="1.6"/><path d="M9 12l2 2 4-4" stroke="#8354C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2" stroke="#4E2B95" stroke-width="1.6" stroke-linecap="round"/></svg>
-        </div>
-        <span class="num">STEP 03</span>
-        <h4>AIが自動生成</h4>
-        <p>Arch Intelligenceが全作業<br>情報をもとにKYシートを自動<br>作成。朝には翌日分が準備完了</p>
-      </div>
-      <div class="arrow">›</div>
-      <div class="step">
-        <div class="step-icon">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M4 7l3-3h10l3 3v13H4z" stroke="#4E2B95" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 12l3 3 5-6" stroke="#8354C4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <span class="num">STEP 04</span>
-        <h4>リスク評価</h4>
-        <p>当日の作業に合わせて<br>リスク評価を行うだけで<br>KYシートが完成</p>
-      </div>
-    </div>
-    <p class="section-note">※KYシート自動生成は、当社KY NEXTの別途利用が必要です</p>
   </div>
 
 </div>
