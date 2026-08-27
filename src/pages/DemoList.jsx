@@ -8,8 +8,7 @@ const GROUPS = [
     items: [
       { to: "/app", title: "ダッシュボード" },
       { to: "/inspection-run", title: "点検実施画面" },
-      // 遷移先は未定（今後追加する）
-      { title: "持込機械", ready: false },
+      { to: "/app/machines", title: "持込機械" },
     ],
   },
   {

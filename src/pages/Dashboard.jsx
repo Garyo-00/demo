@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { Box, Button, Card, CardContent, Typography } from "@mui/material";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { MACHINES, TEMPS, summarize, MONTHLY, ASSEMBLY, UNAPPROVED } from "../data.js";
+import { useMachines } from "../components/BroughtMachineContext.jsx";
+import { NOTIFY_DAYS_BEFORE, inspectionSummary } from "../broughtMachineData.js";
 
 const mSum = summarize(MACHINES);
 const tSum = summarize(TEMPS);
@@ -67,6 +69,8 @@ function CardGrid({ columns = 4, children }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  // 特定自主検査は期限の30日前から通知する
+  const insp = inspectionSummary(useMachines().machines);
 
   // 点検記録確認へ（種別・状態で絞り込み）
   function go(category, status) {
@@ -100,6 +104,34 @@ export default function Dashboard() {
         <SummaryCard label="月例点検対象数" value={MONTHLY.target} unit="件" onLink={() => go(null, null)} />
         <SummaryCard label="月例点検実施数" value={MONTHLY.done} unit="件" tone="ok" onLink={() => go(null, null)} />
         <SummaryCard label="組立後等点検実施数" value={ASSEMBLY.done} unit="件" tone="ok" onLink={() => go(null, null)} />
+      </CardGrid>
+
+      <SectionTitle>特定自主検査 ｜ 期限管理</SectionTitle>
+      <CardGrid columns={3}>
+        <SummaryCard
+          label="期限超過"
+          value={insp.overdue}
+          unit="台"
+          tone={insp.overdue > 0 ? "warn" : "idle"}
+          onLink={() => navigate("/app/machines?attention=1")}
+          linkLabel="持込機械へ"
+        />
+        <SummaryCard
+          label={`期限まで${NOTIFY_DAYS_BEFORE}日以内`}
+          value={insp.due}
+          unit="台"
+          tone={insp.due > 0 ? "warn" : "idle"}
+          onLink={() => navigate("/app/machines?attention=1")}
+          linkLabel="持込機械へ"
+        />
+        <SummaryCard
+          label="検査記録なし"
+          value={insp.none}
+          unit="台"
+          tone="idle"
+          onLink={() => navigate("/app/machines?attention=1")}
+          linkLabel="持込機械へ"
+        />
       </CardGrid>
 
       <SectionTitle>未承認</SectionTitle>

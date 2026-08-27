@@ -32,6 +32,9 @@ import WorkAdjustFloorPlanSetting from "./pages/WorkAdjustFloorPlanSetting.jsx";
 import WorkAdjustCompanies from "./pages/WorkAdjustCompanies.jsx";
 import WorkAdjustSettings from "./pages/WorkAdjustSettings.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
+import MachineList from "./pages/MachineList.jsx";
+import MachineDetail from "./pages/MachineDetail.jsx";
+import MachineForm from "./pages/MachineForm.jsx";
 import InspectionRun from "./pages/InspectionRun.jsx";
 import WorkPlanOutputPreview from "./pages/WorkPlanOutputPreview.jsx";
 
@@ -52,6 +55,10 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="inspection" element={<InspectionRecords />} />
         <Route path="approval" element={<ApprovalRequests />} />
+        <Route path="machines" element={<MachineList />} />
+        <Route path="machines/new" element={<MachineForm />} />
+        <Route path="machines/:id" element={<MachineDetail />} />
+        <Route path="machines/:id/edit" element={<MachineForm />} />
         <Route path="placeholder/:name" element={<Placeholder />} />
       </Route>
       <Route path="/workplan" element={<WorkPlanLayout />}>
