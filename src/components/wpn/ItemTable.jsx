@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Box,
   Button,
+  FormControlLabel,
   IconButton,
   MenuItem,
   Select,
@@ -12,12 +13,14 @@ import {
   TableHead,
   TableRow,
   TextField,
+  Typography,
   Checkbox,
 } from "@mui/material";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import AddIcon from "@mui/icons-material/Add";
 import { makeRow, needsOptions } from "../../workPlanNeoData.js";
+import { useIsNarrow } from "./Responsive.jsx";
 
 /**
  * テンプレートの項目行テーブル。
@@ -33,6 +36,7 @@ export default function ItemTable({
 }) {
   const [dragIdx, setDragIdx] = useState(null);
   const [overIdx, setOverIdx] = useState(null);
+  const narrow = useIsNarrow();
 
   const update = (id, patch) => onChange(rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   const remove = (id) => onChange(rows.filter((r) => r.id !== id));
@@ -57,6 +61,73 @@ export default function ItemTable({
         </Button>
       </Box>
 
+      {/* 狭い画面では列が入りきらないため、1項目を1枚のカードに積む（並べ替えは非対応） */}
+      {narrow ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {rows.length === 0 && (
+            <Typography align="center" color="text.secondary" sx={{ py: 4, fontSize: 12.5 }}>
+              {emptyText}
+            </Typography>
+          )}
+          {rows.map((r, i) => (
+            <Box key={r.id} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 1.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  {i + 1}
+                </Typography>
+                <IconButton size="small" sx={{ ml: "auto" }} onClick={() => remove(r.id)} aria-label="行を削除">
+                  <DeleteOutlinedIcon fontSize="small" />
+                </IconButton>
+              </Box>
+              <TextField
+                fullWidth
+                label={labelHeader}
+                value={r.label}
+                placeholder={labelPlaceholder}
+                onChange={(e) => update(r.id, { label: e.target.value })}
+                sx={{ mb: 1 }}
+              />
+              {needsOptions(types, r.type) && (
+                <TextField
+                  fullWidth
+                  value={r.options}
+                  placeholder="選択肢をカンマ区切りで入力（例：晴, 曇, 雨）"
+                  onChange={(e) => update(r.id, { options: e.target.value })}
+                  sx={{ mb: 1 }}
+                />
+              )}
+              <TextField
+                select
+                fullWidth
+                label="回答形式"
+                value={r.type}
+                onChange={(e) => update(r.id, { type: e.target.value })}
+                sx={{ mb: 1 }}
+              >
+                {types.map((t) => (
+                  <MenuItem key={t.value} value={t.value}>
+                    {t.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                fullWidth
+                label="備考"
+                value={r.note}
+                onChange={(e) => update(r.id, { note: e.target.value })}
+                sx={{ mb: 1 }}
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox size="small" checked={r.required} onChange={(e) => update(r.id, { required: e.target.checked })} />
+                }
+                label="必須"
+                slotProps={{ typography: { sx: { fontSize: 12.5 } } }}
+              />
+            </Box>
+          ))}
+        </Box>
+      ) : (
       <TableContainer>
         <Table size="small">
           <TableHead>
@@ -164,6 +235,7 @@ export default function ItemTable({
           </TableBody>
         </Table>
       </TableContainer>
+      )}
 
       <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
         <IconButton size="small" onClick={() => addRows(1)} aria-label="行を追加">

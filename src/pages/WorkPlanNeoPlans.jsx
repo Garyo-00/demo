@@ -36,6 +36,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useWpn } from "../components/wpn/WpnContext.jsx";
 import PlanDrawer from "../components/wpn/PlanDrawer.jsx";
 import { StatusBadge, STATUS_COLOR } from "../components/wpn/PlanDetailContent.jsx";
+import { CardList, RecordCard, useIsNarrow } from "../components/wpn/Responsive.jsx";
 import {
   APPLICANTS,
   COMPANIES,
@@ -59,6 +60,7 @@ export default function WorkPlanNeoPlans() {
   const [expanded, setExpanded] = useState({});
   const [drawerId, setDrawerId] = useState(null);
   const [perPage, setPerPage] = useState(50);
+  const narrow = useIsNarrow();
 
   const filtered = plans.filter((p) => {
     if (!applied.statuses.includes(p.status)) return false;
@@ -131,7 +133,7 @@ export default function WorkPlanNeoPlans() {
                 <IconButton size="small" onClick={() => shiftDate(-1)} aria-label="前日">
                   <ChevronLeftIcon fontSize="small" />
                 </IconButton>
-                <TextField type="date" value={date} onChange={(e) => setDate(e.target.value)} sx={{ width: 165 }} />
+                <TextField type="date" value={date} onChange={(e) => setDate(e.target.value)} sx={{ width: { xs: "100%", sm: 165 } }} />
                 <IconButton size="small" onClick={() => shiftDate(1)} aria-label="翌日">
                   <ChevronRightIcon fontSize="small" />
                 </IconButton>
@@ -145,7 +147,7 @@ export default function WorkPlanNeoPlans() {
                   displayEmpty
                   value={cond.category}
                   onChange={(e) => setCond({ ...cond, category: e.target.value })}
-                  sx={{ width: 240 }}
+                  sx={{ width: { xs: "100%", sm: 240 } }}
                 >
                   <MenuItem value="">持込/レンタル機械カテゴリ</MenuItem>
                   {MACHINE_CATEGORIES.map((c) => (
@@ -156,13 +158,13 @@ export default function WorkPlanNeoPlans() {
                   placeholder="現場内呼称"
                   value={cond.alias}
                   onChange={(e) => setCond({ ...cond, alias: e.target.value })}
-                  sx={{ width: 200 }}
+                  sx={{ width: { xs: "100%", sm: 200 } }}
                 />
                 <Select
                   displayEmpty
                   value={cond.applicant}
                   onChange={(e) => setCond({ ...cond, applicant: e.target.value })}
-                  sx={{ width: 180 }}
+                  sx={{ width: { xs: "100%", sm: 180 } }}
                 >
                   <MenuItem value="">申請者</MenuItem>
                   {APPLICANTS.map((a) => (
@@ -173,7 +175,7 @@ export default function WorkPlanNeoPlans() {
                   displayEmpty
                   value={cond.company}
                   onChange={(e) => setCond({ ...cond, company: e.target.value })}
-                  sx={{ width: 180 }}
+                  sx={{ width: { xs: "100%", sm: 180 } }}
                 >
                   <MenuItem value="">協力会社名</MenuItem>
                   {COMPANIES.map((c) => (
@@ -221,7 +223,78 @@ export default function WorkPlanNeoPlans() {
             </AccordionDetails>
           </Accordion>
 
-          {/* 一覧 */}
+          {/* 一覧。狭い画面ではテーブルの代わりにカードで出す */}
+          {narrow ? (
+            <CardList empty="条件に一致する作業計画書はありません。">
+              {rows.map((p) => {
+                const cats = categoryCounts(p.machineIds);
+                const open = !!expanded[p.id];
+                return (
+                  <RecordCard
+                    key={p.id}
+                    title={p.name}
+                    headRight={
+                      <>
+                        <StatusBadge status={p.status} />
+                        <IconButton size="small" onClick={() => setDrawerId(p.id)} aria-label="詳細">
+                          <OpenInNewIcon fontSize="small" />
+                        </IconButton>
+                      </>
+                    }
+                    rows={[
+                      ["申請者", p.applicant],
+                      ["協力会社名", p.company],
+                      [
+                        "機械",
+                        <Box key="m">
+                          <Button
+                            size="small"
+                            sx={{ minWidth: 0, p: 0 }}
+                            endIcon={
+                              <ExpandMoreIcon
+                                sx={{ transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }}
+                              />
+                            }
+                            onClick={() => setExpanded((e) => ({ ...e, [p.id]: !open }))}
+                          >
+                            {p.machineIds.length}台
+                          </Button>
+                          {cats.length > 0 && (
+                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.5 }}>
+                              {cats.map((c) => (
+                                <Chip key={c.category} size="small" variant="outlined" label={`${c.category}（${c.count}台）`} />
+                              ))}
+                            </Box>
+                          )}
+                          <Collapse in={open} unmountOnExit>
+                            <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 0.75 }}>
+                              {p.machineIds.length === 0 && (
+                                <Typography color="text.secondary" sx={{ fontSize: 12 }}>
+                                  機械は登録されていません。
+                                </Typography>
+                              )}
+                              {p.machineIds.map((id) => {
+                                const m = machineById(id);
+                                if (!m) return null;
+                                return (
+                                  <Box key={id} sx={{ bgcolor: "#f7f8fb", borderRadius: 1.5, p: 1 }}>
+                                    <Typography sx={{ fontSize: 12, fontWeight: 600 }}>{m.name}</Typography>
+                                    <Typography color="text.secondary" sx={{ fontSize: 11.5 }}>
+                                      {[m.alias, m.category].filter(Boolean).join("／")}
+                                    </Typography>
+                                  </Box>
+                                );
+                              })}
+                            </Box>
+                          </Collapse>
+                        </Box>,
+                      ],
+                    ]}
+                  />
+                );
+              })}
+            </CardList>
+          ) : (
           <TableContainer>
             <Table size="small">
               <TableHead>
@@ -338,6 +411,7 @@ export default function WorkPlanNeoPlans() {
               </TableBody>
             </Table>
           </TableContainer>
+          )}
 
           <TablePagination
             component="div"

@@ -25,6 +25,7 @@ import { TEMPLATE_BLOCKS } from "../../workPlanNeoData.js";
 import { useWpn } from "./WpnContext.jsx";
 import { AnswerTable } from "./AnswerField.jsx";
 import SignaturePad from "./SignaturePad.jsx";
+import { CardList, RecordCard, useIsNarrow } from "./Responsive.jsx";
 
 function nowStr() {
   const d = new Date();
@@ -75,10 +76,25 @@ function None({ children }) {
   );
 }
 
-// ラベル / 値 の2列テーブル
+// ラベル / 値 の2列テーブル。狭い画面ではラベルを上に積む
 function KeyValue({ rows }) {
+  const narrow = useIsNarrow();
+  if (narrow) {
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column" }}>
+        {rows.map(([k, v]) => (
+          <Box key={k} sx={{ py: 1, borderBottom: "1px solid", borderColor: "divider" }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+              {k}
+            </Typography>
+            <Box sx={{ fontSize: 12.5, overflowWrap: "anywhere" }}>{v || "—"}</Box>
+          </Box>
+        ))}
+      </Box>
+    );
+  }
   return (
-    <TableContainer>
+    <TableContainer sx={{ overflowX: "auto" }}>
       <Table size="small">
         <TableBody>
           {rows.map(([k, v]) => (
@@ -112,6 +128,7 @@ export default function PlanDetailContent({
   const machines = plan.machineIds.map(machineById).filter(Boolean);
   const blocks = tpl?.blocks || {};
   const signs = plan.meetingSigns || [];
+  const narrow = useIsNarrow();
   // サインできるのは承認済みの計画書のみ。ログイン後の画面なので期限は設けない
   const signable = canSign && plan.status === "approved";
 
@@ -138,33 +155,48 @@ export default function PlanDetailContent({
       </Section>
 
       <Section title={`使用機材一覧（${machines.length}台）`}>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>機械名</TableCell>
-                <TableCell sx={{ width: "28%" }}>現場内呼称</TableCell>
-                <TableCell sx={{ width: "22%" }}>カテゴリ</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {machines.length === 0 && (
+        {narrow ? (
+          <CardList empty="使用機材は登録されていません。">
+            {machines.map((m) => (
+              <RecordCard
+                key={m.id}
+                title={m.name}
+                rows={[
+                  ["現場内呼称", m.alias],
+                  ["カテゴリ", m.category],
+                ]}
+              />
+            ))}
+          </CardList>
+        ) : (
+          <TableContainer sx={{ overflowX: "auto" }}>
+            <Table size="small">
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={3} align="center" sx={{ color: "text.secondary", py: 3 }}>
-                    使用機材は登録されていません。
-                  </TableCell>
+                  <TableCell>機械名</TableCell>
+                  <TableCell sx={{ width: "28%" }}>現場内呼称</TableCell>
+                  <TableCell sx={{ width: "22%" }}>カテゴリ</TableCell>
                 </TableRow>
-              )}
-              {machines.map((m) => (
-                <TableRow key={m.id}>
-                  <TableCell>{m.name}</TableCell>
-                  <TableCell>{m.alias}</TableCell>
-                  <TableCell>{m.category}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {machines.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} align="center" sx={{ color: "text.secondary", py: 3 }}>
+                      使用機材は登録されていません。
+                    </TableCell>
+                  </TableRow>
+                )}
+                {machines.map((m) => (
+                  <TableRow key={m.id}>
+                    <TableCell>{m.name}</TableCell>
+                    <TableCell>{m.alias}</TableCell>
+                    <TableCell>{m.category}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Section>
 
       {/* 作業計画書の内容（テンプレートでONにしたブロックを順に表示） */}
@@ -241,8 +273,14 @@ export default function PlanDetailContent({
       </Section>
 
       <Section title="チェックリスト">
-        {plan.checklistResults?.length ? (
-          <TableContainer>
+        {plan.checklistResults?.length && narrow ? (
+          <CardList>
+            {plan.checklistResults.map((r, i) => (
+              <RecordCard key={i} title={r.name} rows={[["実施者", r.by], ["実施日時", r.at]]} />
+            ))}
+          </CardList>
+        ) : plan.checklistResults?.length ? (
+          <TableContainer sx={{ overflowX: "auto" }}>
             <Table size="small">
               <TableHead>
                 <TableRow>
@@ -368,6 +406,7 @@ export default function PlanDetailContent({
  */
 function ApprovalStep({ step }) {
   const [open, setOpen] = useState(false);
+  const narrow = useIsNarrow();
   const decided = step.rows.filter((r) => r.status !== "applying");
   const pending = step.rows.filter((r) => r.status === "applying");
   // 誰も決裁していないときは全員（＝未決裁）を出す。畳むと空表示になってしまうため。
@@ -384,30 +423,46 @@ function ApprovalStep({ step }) {
         {step.group}
       </Typography>
 
-      <TableContainer>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ width: "18%" }}>決裁日</TableCell>
-              <TableCell>決裁者</TableCell>
-              <TableCell sx={{ width: "18%" }}>決裁状況</TableCell>
-              <TableCell sx={{ width: "24%" }}>コメント</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((r, i) => (
-              <TableRow key={i}>
-                <TableCell>{r.date || "-"}</TableCell>
-                <TableCell>{r.approver}</TableCell>
-                <TableCell>
-                  <StatusBadge status={r.status} />
-                </TableCell>
-                <TableCell>{r.comment || "-"}</TableCell>
+      {narrow ? (
+        <CardList empty="決裁者はいません。">
+          {rows.map((r, i) => (
+            <RecordCard
+              key={i}
+              title={r.approver}
+              headRight={<StatusBadge status={r.status} />}
+              rows={[
+                ["決裁日", r.date || "-"],
+                ["コメント", r.comment || "-"],
+              ]}
+            />
+          ))}
+        </CardList>
+      ) : (
+        <TableContainer sx={{ overflowX: "auto" }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: "18%" }}>決裁日</TableCell>
+                <TableCell>決裁者</TableCell>
+                <TableCell sx={{ width: "18%" }}>決裁状況</TableCell>
+                <TableCell sx={{ width: "24%" }}>コメント</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {rows.map((r, i) => (
+                <TableRow key={i}>
+                  <TableCell>{r.date || "-"}</TableCell>
+                  <TableCell>{r.approver}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={r.status} />
+                  </TableCell>
+                  <TableCell>{r.comment || "-"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {decided.length > 0 && pending.length > 0 && (
         <Button

@@ -16,7 +16,7 @@ import { BASIC_ITEMS } from "../../workPlanNeoData.js";
  */
 export default function BasicInfoBlock() {
   return (
-    <TableContainer>
+    <TableContainer sx={{ overflowX: "auto" }}>
       <Table size="small">
         <TableHead>
           <TableRow>

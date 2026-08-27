@@ -43,7 +43,7 @@ export default function CraneAutoBlock({ value, onChange }) {
   return (
     <Box>
       <Section title="入力項目" hint="職長が作業計画書で入力します（編集不可）">
-        <TableContainer>
+        <TableContainer sx={{ overflowX: "auto" }}>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -68,7 +68,7 @@ export default function CraneAutoBlock({ value, onChange }) {
       </Section>
 
       <Section title="自動反映" hint="入力項目から自動で計算・取得します">
-        <TableContainer>
+        <TableContainer sx={{ overflowX: "auto" }}>
           <Table size="small">
             <TableHead>
               <TableRow>

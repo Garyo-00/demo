@@ -41,6 +41,7 @@ export default function PlanDrawer({ planId, onClose }) {
           display: "flex",
           alignItems: "center",
           gap: 1,
+          flexWrap: "wrap",
           p: 1.5,
           bgcolor: "background.paper",
           borderBottom: "1px solid",
@@ -51,7 +52,7 @@ export default function PlanDrawer({ planId, onClose }) {
           閉じる
         </Button>
         <Typography sx={{ fontSize: 13, fontWeight: 700 }}>作業計画書詳細</Typography>
-        <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
+        <Box sx={{ ml: "auto", display: "flex", gap: 1, flexWrap: "wrap" }}>
           <Button size="small" variant="outlined" startIcon={<DownloadIcon />}>
             出力
           </Button>

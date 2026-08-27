@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@mui/material";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
+import { useIsNarrow } from "./Responsive.jsx";
 
 // 「持込機械選択」「作業員選択」はマスタ連携が前提のため、デモでは固定の選択肢を出す
 const MACHINE_OPTS = ["移動式クレーン（クローラー式）", "ブレーカ（油圧式）", "ホイールローダ"];
@@ -138,8 +139,11 @@ export default function AnswerField({ item, value, onChange, readOnly = false })
   }
 }
 
-// 項目 / 回答内容 / 備考 の3列テーブル（作成・詳細で共用）
+// 項目 / 回答内容 / 備考 の3列テーブル（作成・詳細で共用）。
+// 狭い画面では3列が入らないため、項目→回答→備考を縦積みにする。
 export function AnswerTable({ items, values, onChange, readOnly = false, leadingRow = null }) {
+  const narrow = useIsNarrow();
+
   if (!items?.length && !leadingRow) {
     return (
       <Typography align="center" color="text.secondary" sx={{ py: 4, fontSize: 12.5 }}>
@@ -147,6 +151,38 @@ export function AnswerTable({ items, values, onChange, readOnly = false, leading
       </Typography>
     );
   }
+
+  if (narrow) {
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {leadingRow}
+        {items?.map((it) => (
+          <Box key={it.id}>
+            <Typography sx={{ fontSize: 12.5, fontWeight: 600, mb: 0.75 }}>
+              {it.label}
+              {it.required && (
+                <Box component="span" sx={{ color: "error.main", ml: 0.25 }}>
+                  *
+                </Box>
+              )}
+            </Typography>
+            <AnswerField
+              item={it}
+              value={values?.[it.id]}
+              readOnly={readOnly}
+              onChange={(v) => onChange && onChange(it.id, v)}
+            />
+            {it.note && (
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                {it.note}
+              </Typography>
+            )}
+          </Box>
+        ))}
+      </Box>
+    );
+  }
+
   return (
     <TableContainer>
       <Table size="small">

@@ -129,7 +129,7 @@ export default function WorkPlanNeoTemplateForm() {
 
       {/* 必須項目（全テンプレート共通・編集不可） */}
       <SectionCard title="必須項目" hint="全テンプレート共通で作業計画書に入る項目です（編集不可）">
-        <TableContainer>
+        <TableContainer sx={{ overflowX: "auto" }}>
           <Table size="small">
             <TableHead>
               <TableRow>

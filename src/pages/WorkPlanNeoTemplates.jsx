@@ -23,6 +23,7 @@ import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { useWpn } from "../components/wpn/WpnContext.jsx";
 import { newId } from "../workPlanNeoData.js";
+import { CardList, RecordCard, useIsNarrow } from "../components/wpn/Responsive.jsx";
 
 // 行ごとの操作メニュー（⋮）。マスタは編集・削除不可で、複製して自現場用に使う。
 function RowMenu({ template, onEdit, onDuplicate, onDelete }) {
@@ -56,6 +57,7 @@ export default function WorkPlanNeoTemplates() {
   const { templates, saveTemplate, removeTemplate } = useWpn();
   const [perPage, setPerPage] = useState(50);
   const [page, setPage] = useState(0);
+  const narrow = useIsNarrow();
 
   const total = templates.length;
   const start = page * perPage;
@@ -87,6 +89,30 @@ export default function WorkPlanNeoTemplates() {
           </Button>
         </Box>
 
+        {narrow ? (
+          <CardList empty="テンプレートがありません。">
+            {rows.map((t) => (
+              <RecordCard
+                key={t.id}
+                title={t.name}
+                headRight={
+                  <>
+                    {t.kind === "master" && <Chip size="small" label="マスタ" variant="outlined" />}
+                    <RowMenu
+                      template={t}
+                      onEdit={() => navigate(`/workplan-neo/templates/${t.id}`)}
+                      onDuplicate={() => duplicate(t)}
+                      onDelete={() => {
+                        if (confirm(`「${t.name}」を削除しますか？`)) removeTemplate(t.id);
+                      }}
+                    />
+                  </>
+                }
+                onClick={() => navigate(`/workplan-neo/templates/${t.id}`)}
+              />
+            ))}
+          </CardList>
+        ) : (
         <TableContainer>
           <Table size="small">
             <TableHead>
@@ -139,6 +165,7 @@ export default function WorkPlanNeoTemplates() {
             </TableBody>
           </Table>
         </TableContainer>
+        )}
 
         <TablePagination
           component="div"

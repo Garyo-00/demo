@@ -30,6 +30,7 @@ import { useWpn } from "../components/wpn/WpnContext.jsx";
 import { AnswerTable } from "../components/wpn/AnswerField.jsx";
 import { TEMPLATE_BLOCKS, newId } from "../workPlanNeoData.js";
 import { APPROVAL_FLOWS, MACHINES, MACHINE_CATEGORIES, flowById } from "../workPlanNeoPlanData.js";
+import { CardList, RecordCard, useIsNarrow } from "../components/wpn/Responsive.jsx";
 
 function SectionCard({ title, hint, children }) {
   return (
@@ -66,6 +67,7 @@ export default function WorkPlanNeoPlanNew() {
   // テンプレート項目（その他ブロック）への回答
   const [other, setOther] = useState({});
   const [floorPlanMode, setFloorPlanMode] = useState("upload"); // draw | upload
+  const narrow = useIsNarrow();
 
   const tpl = templates.find((t) => t.id === templateId) || null;
   const blocks = tpl?.blocks || {};
@@ -147,7 +149,7 @@ export default function WorkPlanNeoPlanNew() {
         </Tabs>
 
         <Box sx={{ display: "flex", gap: 1.5, mb: 2, flexWrap: "wrap" }}>
-          <Select displayEmpty value={category} onChange={(e) => setCategory(e.target.value)} sx={{ width: 240 }}>
+          <Select displayEmpty value={category} onChange={(e) => setCategory(e.target.value)} sx={{ width: { xs: "100%", sm: 240 } }}>
             <MenuItem value="">カテゴリで絞り込み</MenuItem>
             {MACHINE_CATEGORIES.map((c) => (
               <MenuItem key={c} value={c}>{c}</MenuItem>
@@ -157,10 +159,42 @@ export default function WorkPlanNeoPlanNew() {
             placeholder="協力会社名・現場内呼称で検索"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            sx={{ width: 280 }}
+            sx={{ width: { xs: "100%", sm: 280 } }}
           />
         </Box>
 
+        {narrow ? (
+          <>
+            <FormControlLabel
+              sx={{ mb: 1 }}
+              control={<Checkbox size="small" checked={allChecked} onChange={toggleAll} />}
+              label="表示中をすべて選択"
+              slotProps={{ typography: { sx: { fontSize: 12.5 } } }}
+            />
+            <CardList empty="行がありません。">
+              {rows.map((m) => (
+                <RecordCard
+                  key={m.id}
+                  title={m.name}
+                  headRight={
+                    <Checkbox
+                      size="small"
+                      checked={selected.includes(m.id)}
+                      onChange={() => toggle(m.id)}
+                      slotProps={{ input: { "aria-label": m.name } }}
+                    />
+                  }
+                  rows={[
+                    ["カテゴリ", m.category],
+                    ["現場内呼称", m.alias],
+                    ["管理番号", m.mgmtNo],
+                    ["協力会社", m.company],
+                  ]}
+                />
+              ))}
+            </CardList>
+          </>
+        ) : (
         <TableContainer>
           <Table size="small">
             <TableHead>
@@ -203,6 +237,7 @@ export default function WorkPlanNeoPlanNew() {
             </TableBody>
           </Table>
         </TableContainer>
+        )}
 
         <TablePagination
           component="div"
@@ -250,7 +285,51 @@ export default function WorkPlanNeoPlanNew() {
       {tpl &&
         TEMPLATE_BLOCKS.filter((b) => blocks[b.key]).map((b) => (
           <SectionCard key={b.key} title={b.label} hint={b.hint}>
-            {b.key === "basic" ? (
+            {b.key === "basic" && narrow ? (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <Box>
+                  <Typography sx={{ fontSize: 12.5, fontWeight: 600, mb: 0.75 }}>
+                    作業配置図
+                    <Box component="span" sx={{ color: "error.main", ml: 0.25 }}>*</Box>
+                  </Typography>
+                  <RadioGroup row value={floorPlanMode} onChange={(e) => setFloorPlanMode(e.target.value)} sx={{ mb: 1 }}>
+                    <FormControlLabel value="draw" control={<Radio size="small" />} label="作図" />
+                    <FormControlLabel value="upload" control={<Radio size="small" />} label="アップロード" />
+                  </RadioGroup>
+                  {floorPlanMode === "upload" ? (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Button variant="contained" size="small">ファイルを選択</Button>
+                      <PhotoCameraOutlinedIcon fontSize="small" sx={{ color: "text.secondary" }} />
+                    </Box>
+                  ) : (
+                    <Button variant="outlined" size="small">配置図を作図する</Button>
+                  )}
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: 12.5, fontWeight: 600, mb: 0.75 }}>
+                    作業期間
+                    <Box component="span" sx={{ color: "error.main", ml: 0.25 }}>*</Box>
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    type="date"
+                    label="作業開始日"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    value={start}
+                    onChange={(e) => setStart(e.target.value)}
+                    sx={{ mb: 1 }}
+                  />
+                  <TextField
+                    fullWidth
+                    type="date"
+                    label="作業終了日"
+                    slotProps={{ inputLabel: { shrink: true } }}
+                    value={end}
+                    onChange={(e) => setEnd(e.target.value)}
+                  />
+                </Box>
+              </Box>
+            ) : b.key === "basic" ? (
               <TableContainer>
                 <Table size="small">
                   <TableBody>

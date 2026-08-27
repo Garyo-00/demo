@@ -9,6 +9,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  FormControlLabel,
   Tab,
   Tabs,
   TextField,
@@ -18,6 +19,7 @@ import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import AddIcon from "@mui/icons-material/Add";
 import { makeCheckRow, makeChecklist } from "../../workPlanNeoData.js";
+import { useIsNarrow } from "./Responsive.jsx";
 
 /**
  * チェックリスト編集（タブで複数リストを切り替え）。
@@ -27,6 +29,7 @@ export default function ChecklistEditor({ lists, onChange }) {
   const [active, setActive] = useState(0);
   const [dragIdx, setDragIdx] = useState(null);
   const [overIdx, setOverIdx] = useState(null);
+  const narrow = useIsNarrow();
 
   const cur = lists[active];
 
@@ -114,6 +117,49 @@ export default function ChecklistEditor({ lists, onChange }) {
             onChange={(e) => updateList({ role: e.target.value })}
           />
 
+          {narrow ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+              {cur.rows.length === 0 && (
+                <Typography align="center" color="text.secondary" sx={{ py: 4, fontSize: 12.5 }}>
+                  確認項目がありません。「＋」で追加してください。
+                </Typography>
+              )}
+              {cur.rows.map((r, i) => (
+                <Box key={r.id} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 1.5 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      {i + 1}
+                    </Typography>
+                    <IconButton size="small" sx={{ ml: "auto" }} onClick={() => removeRow(r.id)} aria-label="行を削除">
+                      <DeleteOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                  <TextField
+                    fullWidth
+                    label="内容"
+                    value={r.label}
+                    placeholder="例：作業計画書を確認しましたか"
+                    onChange={(e) => updateRow(r.id, { label: e.target.value })}
+                    sx={{ mb: 1 }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="備考"
+                    value={r.note}
+                    onChange={(e) => updateRow(r.id, { note: e.target.value })}
+                    sx={{ mb: 1 }}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox size="small" checked={r.required} onChange={(e) => updateRow(r.id, { required: e.target.checked })} />
+                    }
+                    label="必須"
+                    slotProps={{ typography: { sx: { fontSize: 12.5 } } }}
+                  />
+                </Box>
+              ))}
+            </Box>
+          ) : (
           <TableContainer>
             <Table size="small">
               <TableHead>
@@ -196,6 +242,7 @@ export default function ChecklistEditor({ lists, onChange }) {
               </TableBody>
             </Table>
           </TableContainer>
+          )}
 
           <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
             <IconButton

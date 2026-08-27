@@ -16,6 +16,7 @@ import {
   Toolbar,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import TableChartOutlinedIcon from "@mui/icons-material/TableChartOutlined";
@@ -27,6 +28,7 @@ import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import MenuIcon from "@mui/icons-material/Menu";
 import { WpnProvider, useWpn } from "./wpn/WpnContext.jsx";
 import { WPN_PROJECT } from "../workPlanNeoData.js";
 
@@ -85,8 +87,13 @@ function WorkPlanNeoLayoutInner() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { role } = useWpn();
+  // 768px 以下はサイドメニューをドロワー（一時表示）に切り替える
+  const mobile = useMediaQuery("(max-width:768px)");
   const [collapsed, setCollapsed] = useState(false);
-  const width = collapsed ? MINI : WIDTH;
+  const [navOpen, setNavOpen] = useState(false);
+  const width = mobile ? WIDTH : collapsed ? MINI : WIDTH;
+  // モバイルでは常にラベルを出す（畳んだ状態を持ち込まない）
+  const mini = collapsed && !mobile;
 
   // 設定系メニューは元請（ゼネコン）のみ。職長には一覧とマニュアルのみ見せる。
   const FOREMAN_MENU = ["plans", "manual"];
@@ -95,9 +102,12 @@ function WorkPlanNeoLayoutInner() {
   return (
     <ScopedCssBaseline sx={{ display: "flex", height: "100vh", overflow: "hidden", bgcolor: "background.default" }}>
       <Drawer
-        variant="permanent"
+        variant={mobile ? "temporary" : "permanent"}
+        open={mobile ? navOpen : true}
+        onClose={() => setNavOpen(false)}
+        ModalProps={{ keepMounted: true }}
         sx={{
-          width,
+          width: mobile ? 0 : width,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
             width,
@@ -129,14 +139,16 @@ function WorkPlanNeoLayoutInner() {
           >
             Arch
           </Box>
-          {!collapsed && (
+          {!mini && (
             <>
               <Typography noWrap sx={{ fontSize: 14, fontWeight: 700 }}>
                 作業計画書
               </Typography>
-              <IconButton size="small" sx={{ ml: "auto" }} onClick={() => setCollapsed(true)} aria-label="メニューを折りたたむ">
-                <ChevronLeftIcon fontSize="small" />
-              </IconButton>
+              {!mobile && (
+                <IconButton size="small" sx={{ ml: "auto" }} onClick={() => setCollapsed(true)} aria-label="メニューを折りたたむ">
+                  <ChevronLeftIcon fontSize="small" />
+                </IconButton>
+              )}
             </>
           )}
         </Toolbar>
@@ -146,10 +158,13 @@ function WorkPlanNeoLayoutInner() {
           {navItems.map(({ key, label, to, Icon }) => {
             const active = pathname.startsWith(to);
             return (
-              <Tooltip key={key} title={collapsed ? label : ""} placement="right">
+              <Tooltip key={key} title={mini ? label : ""} placement="right">
                 <ListItemButton
                   selected={active}
-                  onClick={() => navigate(to)}
+                  onClick={() => {
+                    setNavOpen(false);
+                    navigate(to);
+                  }}
                   sx={{
                     borderRadius: 2,
                     mb: 0.25,
@@ -162,10 +177,10 @@ function WorkPlanNeoLayoutInner() {
                     },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 0, mr: collapsed ? 0 : 1.25, color: "inherit" }}>
+                  <ListItemIcon sx={{ minWidth: 0, mr: mini ? 0 : 1.25, color: "inherit" }}>
                     <Icon fontSize="small" />
                   </ListItemIcon>
-                  {!collapsed && (
+                  {!mini && (
                     <ListItemText
                       primary={label}
                       slotProps={{
@@ -179,7 +194,7 @@ function WorkPlanNeoLayoutInner() {
               </Tooltip>
             );
           })}
-          {collapsed && (
+          {mini && (
             <ListItemButton sx={{ borderRadius: 2, minHeight: 40, px: 1.25 }} onClick={() => setCollapsed(false)}>
               <ListItemIcon sx={{ minWidth: 0 }}>
                 <ChevronRightIcon fontSize="small" />
@@ -204,7 +219,7 @@ function WorkPlanNeoLayoutInner() {
           }}
         >
           <ArrowBackIcon sx={{ fontSize: 14 }} />
-          {!collapsed && "デモ画面一覧へ戻る"}
+          {!mini && "デモ画面一覧へ戻る"}
         </Box>
       </Drawer>
 
@@ -214,13 +229,18 @@ function WorkPlanNeoLayoutInner() {
             minHeight: 56,
             flex: "0 0 56px",
             gap: 1.5,
-            px: 2.5,
+            px: { xs: 1.5, md: 2.5 },
             bgcolor: "background.paper",
             borderBottom: "1px solid",
             borderColor: "divider",
           }}
         >
-          <Typography noWrap sx={{ fontSize: 13, fontWeight: 600 }}>
+          {mobile && (
+            <IconButton size="small" edge="start" onClick={() => setNavOpen(true)} aria-label="メニューを開く">
+              <MenuIcon />
+            </IconButton>
+          )}
+          <Typography noWrap sx={{ fontSize: 13, fontWeight: 600, minWidth: 0 }}>
             {WPN_PROJECT}
           </Typography>
           <RoleSwitch />
