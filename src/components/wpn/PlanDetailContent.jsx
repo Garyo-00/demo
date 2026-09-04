@@ -24,6 +24,9 @@ import { PLAN_STATUS, machineById } from "../../workPlanNeoPlanData.js";
 import { TEMPLATE_BLOCKS } from "../../workPlanNeoData.js";
 import { useWpn } from "./WpnContext.jsx";
 import { AnswerTable } from "./AnswerField.jsx";
+import BlockAnswerFields from "./BlockAnswerFields.jsx";
+import MachineSpecTable from "./MachineSpecTable.jsx";
+import { BLOCK_ITEM_DEFS } from "../../workPlanNeoBlockItems.js";
 import SignaturePad from "./SignaturePad.jsx";
 import { CardList, RecordCard, useIsNarrow } from "./Responsive.jsx";
 
@@ -208,14 +211,41 @@ export default function PlanDetailContent({
           >
             <Typography sx={{ fontSize: 12.5, fontWeight: 700, mb: 1.25 }}>{b.label}</Typography>
             {b.key === "basic" ? (
-              <KeyValue
-                rows={[
-                  ["作業配置図", <Button key="d" size="small" variant="outlined">図面を表示</Button>],
-                  ["作業期間", `${plan.start} 〜 ${plan.end}`],
-                ]}
-              />
+              <>
+                <KeyValue
+                  rows={[
+                    ["作業配置図", <Button key="d" size="small" variant="outlined">図面を表示</Button>],
+                    ["作業期間", `${plan.start} 〜 ${plan.end}`],
+                  ]}
+                />
+                <Box sx={{ mt: 2 }}>
+                  <BlockAnswerFields
+                    blockKey="basic"
+                    config={tpl?.blockItems?.basic}
+                    values={plan.blockValues?.basic}
+                    onChange={() => {}}
+                    readOnly
+                  />
+                </Box>
+              </>
             ) : b.key === "other" ? (
               <AnswerTable items={tpl?.other} values={plan.other} readOnly />
+            ) : b.key === "machine" ? (
+              <MachineSpecTable
+                config={tpl?.blockItems?.machine}
+                machineIds={plan.machineIds}
+                values={plan.machineSpecs}
+                onChange={() => {}}
+                readOnly
+              />
+            ) : BLOCK_ITEM_DEFS[b.key] ? (
+              <BlockAnswerFields
+                blockKey={b.key}
+                config={tpl?.blockItems?.[b.key]}
+                values={plan.blockValues?.[b.key]}
+                onChange={() => {}}
+                readOnly
+              />
             ) : (
               <Box
                 sx={{

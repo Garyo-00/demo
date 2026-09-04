@@ -1,5 +1,6 @@
 // ===== 作業計画書NEO デモ用データ =====
 // 画面デモのためのサンプル値。バックエンドは不要。
+import { defaultBlockItems } from "./workPlanNeoBlockItems.js";
 
 export const WPN_PROJECT = "テストプロジェクト";
 
@@ -176,6 +177,7 @@ function master(name, patch = {}) {
     updatedBy: "システム",
     blocks: defaultBlocks(["basic", "machine", "staffing", "rules", "other"]),
     craneAuto: defaultCraneAuto(),
+    blockItems: defaultBlockItems(),
     other: [
       makeRow({ label: "使用する持込機械", type: "machine", required: true, note: "ASに登録済みの機械から選択" }),
       makeRow({ label: "作業場所", type: "text", required: true }),
@@ -207,6 +209,10 @@ export const INITIAL_TEMPLATES = [
     updatedBy: "元請 田中",
     blocks: defaultBlocks(TEMPLATE_BLOCKS.map((b) => b.key)),
     craneAuto: defaultCraneAuto(),
+    blockItems: {
+      ...defaultBlockItems(),
+      machine: { common: {}, types: ["crane", "aerial", "excavator"], byType: {} },
+    },
     other: [
       makeRow({ label: "フォークリフトの種類", type: "select", required: true, options: "カウンタ式, リーチ式, サイド式" }),
       makeRow({ label: "型式・能力", type: "text", required: true }),
@@ -243,11 +249,14 @@ export const INITIAL_TEMPLATES = [
   }),
   master("【テンプレート用】移動式クレーン", {
     blocks: defaultBlocks(["basic", "machine", "load", "staffing", "crane", "survey", "rules", "other"]),
+    blockItems: { ...defaultBlockItems(), machine: { common: {}, types: ["crane"], byType: {} } },
   }),
   master("【テンプレート用】車両系建設機械（掘削用機械）"),
   master("【テンプレート用】車両系建設機械（整地・積込用機械・その他）"),
   master("【テンプレート用】車両系荷役運搬機械（不整地運搬車）"),
-  master("【テンプレート用】高所作業車"),
+  master("【テンプレート用】高所作業車", {
+    blockItems: { ...defaultBlockItems(), machine: { common: {}, types: ["aerial"], byType: {} } },
+  }),
   {
     id: "tplPump",
     name: "コンクリートポンプ車作業計画書",
@@ -256,6 +265,7 @@ export const INITIAL_TEMPLATES = [
     updatedBy: "元請 田中",
     blocks: defaultBlocks(["basic", "machine", "staffing", "survey", "rules", "other"]),
     craneAuto: defaultCraneAuto(),
+    blockItems: defaultBlockItems(),
     other: [
       makeRow({ label: "使用する持込機械", type: "machine", required: true }),
       makeRow({ label: "圧送箇所", type: "text", required: true }),
@@ -284,6 +294,7 @@ export const INITIAL_TEMPLATES = [
     updatedBy: "元請 田中",
     blocks: defaultBlocks(["basic", "machine", "load", "staffing", "crane", "survey", "rules", "other"]),
     craneAuto: defaultCraneAuto(),
+    blockItems: { ...defaultBlockItems(), machine: { common: {}, types: ["crane"], byType: {} } },
     other: [
       makeRow({ label: "使用する持込機械", type: "machine", required: true, note: "ASに登録済みの機械から選択" }),
       makeRow({ label: "作業場所", type: "text", required: true }),
@@ -327,6 +338,7 @@ export const INITIAL_TEMPLATES = [
     updatedBy: "元請 佐藤",
     blocks: defaultBlocks(["basic", "machine", "staffing", "survey", "other"]),
     craneAuto: defaultCraneAuto(),
+    blockItems: defaultBlockItems(),
     other: [
       makeRow({ label: "使用する持込機械", type: "machine", required: true }),
       makeRow({ label: "掘削深さ（m）", type: "number", required: true }),
@@ -353,6 +365,7 @@ export const INITIAL_TEMPLATES = [
     updatedBy: "元請 佐藤",
     blocks: defaultBlocks(["basic", "machine", "load", "other"]),
     craneAuto: defaultCraneAuto(),
+    blockItems: defaultBlockItems(),
     other: [
       makeRow({ label: "使用する持込機械", type: "machine", required: true }),
       makeRow({ label: "運搬経路・作業手順", type: "textarea", required: true }),
@@ -374,6 +387,7 @@ export const INITIAL_TEMPLATES = [
     updatedBy: "元請 佐藤",
     blocks: defaultBlocks(["basic", "machine", "staffing", "rules", "other"]),
     craneAuto: defaultCraneAuto(),
+    blockItems: defaultBlockItems(),
     other: [
       makeRow({ label: "使用する持込機械", type: "machine", required: true }),
       makeRow({ label: "作業高さ（m）", type: "number", required: true }),

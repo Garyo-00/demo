@@ -23,6 +23,9 @@ import BlockCard from "../components/wpn/BlockCard.jsx";
 import BasicInfoBlock from "../components/wpn/BasicInfoBlock.jsx";
 import CraneAutoBlock from "../components/wpn/CraneAutoBlock.jsx";
 import ChecklistEditor from "../components/wpn/ChecklistEditor.jsx";
+import BlockItemEditor from "../components/wpn/BlockItemEditor.jsx";
+import MachineBlockEditor from "../components/wpn/MachineBlockEditor.jsx";
+import { BLOCK_ITEM_DEFS, defaultBlockItems } from "../workPlanNeoBlockItems.js";
 import {
   ANSWER_TYPES,
   FIXED_ITEMS,
@@ -67,6 +70,8 @@ export default function WorkPlanNeoTemplateForm() {
   const [blocks, setBlocks] = useState(editing?.blocks || defaultBlocks(["basic", "other"]));
   const [craneAuto, setCraneAuto] = useState(editing?.craneAuto || defaultCraneAuto());
   const [other, setOther] = useState(editing?.other || []);
+  // ブロックごとの項目設定（使用可否と、選択式項目で表示する選択肢）
+  const [blockItems, setBlockItems] = useState(editing?.blockItems || defaultBlockItems());
   const [checklists, setChecklists] = useState(editing?.checklists || [makeChecklist()]);
   const [files, setFiles] = useState(editing?.files || []);
   const fileRef = useRef(null);
@@ -77,12 +82,29 @@ export default function WorkPlanNeoTemplateForm() {
     e.target.value = "";
   }
 
-  // 中身の仕様が決まっているブロックだけ、カード内に設定UIを出す（未定のものは使用可否のみ）
+  const setItems = (key, v) => setBlockItems((s) => ({ ...s, [key]: v }));
+
+  // ブロックの中身。項目定義があるブロックは一覧から選ばせ、
+  // 機械は機種セクション、その他は自由に項目を作れる項目テーブルにする。
   function blockBody(key) {
-    if (key === "basic") return <BasicInfoBlock />;
-    if (key === "crane") return <CraneAutoBlock value={craneAuto} onChange={setCraneAuto} />;
+    if (key === "machine") {
+      return <MachineBlockEditor value={blockItems.machine} onChange={(v) => setItems("machine", v)} />;
+    }
     if (key === "other") return <ItemTable rows={other} onChange={setOther} types={ANSWER_TYPES} />;
-    return null;
+
+    const defs = BLOCK_ITEM_DEFS[key];
+    if (!defs) return null;
+    return (
+      <>
+        {key === "basic" && <BasicInfoBlock />}
+        <BlockItemEditor items={defs} value={blockItems[key]} onChange={(v) => setItems(key, v)} />
+        {key === "crane" && (
+          <Box sx={{ mt: 2 }}>
+            <CraneAutoBlock value={craneAuto} onChange={setCraneAuto} />
+          </Box>
+        )}
+      </>
+    );
   }
 
   function submit() {
@@ -98,6 +120,7 @@ export default function WorkPlanNeoTemplateForm() {
       updatedBy: "元請 田中",
       blocks,
       craneAuto,
+      blockItems,
       other,
       checklists,
       files,

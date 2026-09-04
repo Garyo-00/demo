@@ -29,8 +29,11 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopyOutlined";
 import { useWpn } from "../components/wpn/WpnContext.jsx";
 import { AnswerTable } from "../components/wpn/AnswerField.jsx";
 import { TEMPLATE_BLOCKS, newId } from "../workPlanNeoData.js";
+import { BLOCK_ITEM_DEFS } from "../workPlanNeoBlockItems.js";
 import { APPROVAL_FLOWS, MACHINES, MACHINE_CATEGORIES, flowById } from "../workPlanNeoPlanData.js";
 import { CardList, RecordCard, useIsNarrow } from "../components/wpn/Responsive.jsx";
+import MachineSpecTable from "../components/wpn/MachineSpecTable.jsx";
+import BlockAnswerFields from "../components/wpn/BlockAnswerFields.jsx";
 
 function SectionCard({ title, hint, children }) {
   return (
@@ -66,6 +69,10 @@ export default function WorkPlanNeoPlanNew() {
   const [perPage, setPerPage] = useState(50);
   // テンプレート項目（その他ブロック）への回答
   const [other, setOther] = useState({});
+  // ブロック項目への回答（ブロックキー → 項目キー → 値）
+  const [blockValues, setBlockValues] = useState({});
+  // 機械ブロックの諸元（機械ID → "セクション.項目" → 値）
+  const [machineSpecs, setMachineSpecs] = useState({});
   const [floorPlanMode, setFloorPlanMode] = useState("upload"); // draw | upload
   const narrow = useIsNarrow();
 
@@ -118,6 +125,8 @@ export default function WorkPlanNeoPlanNew() {
           rows: s.approvers.map((a) => ({ approver: a, date: "", status: "applying", comment: "" })),
         })) || [],
       other,
+      blockValues,
+      machineSpecs,
       files: tpl?.files || [],
       memo: "",
       checklistResults: [],
@@ -328,6 +337,12 @@ export default function WorkPlanNeoPlanNew() {
                     onChange={(e) => setEnd(e.target.value)}
                   />
                 </Box>
+                <BlockAnswerFields
+                  blockKey="basic"
+                  config={tpl.blockItems?.basic}
+                  values={blockValues.basic}
+                  onChange={(v) => setBlockValues((s) => ({ ...s, basic: v }))}
+                />
               </Box>
             ) : b.key === "basic" ? (
               <TableContainer>
@@ -387,12 +402,34 @@ export default function WorkPlanNeoPlanNew() {
                     </TableRow>
                   </TableBody>
                 </Table>
+                <Box sx={{ mt: 2 }}>
+                  <BlockAnswerFields
+                    blockKey="basic"
+                    config={tpl.blockItems?.basic}
+                    values={blockValues.basic}
+                    onChange={(v) => setBlockValues((s) => ({ ...s, basic: v }))}
+                  />
+                </Box>
               </TableContainer>
             ) : b.key === "other" ? (
               <AnswerTable
                 items={tpl.other}
                 values={other}
                 onChange={(id, v) => setOther((c) => ({ ...c, [id]: v }))}
+              />
+            ) : b.key === "machine" ? (
+              <MachineSpecTable
+                config={tpl.blockItems?.machine}
+                machineIds={selected}
+                values={machineSpecs}
+                onChange={setMachineSpecs}
+              />
+            ) : BLOCK_ITEM_DEFS[b.key] ? (
+              <BlockAnswerFields
+                blockKey={b.key}
+                config={tpl.blockItems?.[b.key]}
+                values={blockValues[b.key]}
+                onChange={(v) => setBlockValues((s) => ({ ...s, [b.key]: v }))}
               />
             ) : (
               <Box
