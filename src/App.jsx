@@ -19,6 +19,9 @@ import WorkPlanNeoSign from "./pages/WorkPlanNeoSign.jsx";
 import WorkPlanNeoPlans from "./pages/WorkPlanNeoPlans.jsx";
 import WorkPlanNeoPlanNew from "./pages/WorkPlanNeoPlanNew.jsx";
 import WorkPlanNeoPlanDetail from "./pages/WorkPlanNeoPlanDetail.jsx";
+import PatrolLayout from "./components/PatrolLayout.jsx";
+import PatrolRecords from "./pages/PatrolRecords.jsx";
+import PatrolRecordDetail from "./pages/PatrolRecordDetail.jsx";
 import WorkAdjustLayout from "./components/WorkAdjustLayout.jsx";
 import WorkAdjustSchedule from "./pages/WorkAdjustSchedule.jsx";
 import WorkAdjustReservation from "./pages/WorkAdjustReservation.jsx";
@@ -83,6 +86,12 @@ export default function App() {
         <Route path="settings" element={<WorkPlanNeoSettings />} />
         <Route path="qr" element={<WorkPlanNeoQr />} />
         <Route path="manual" element={<WorkPlanNeoBlank />} />
+      </Route>
+      {/* 巡回/パトロール。記録はQR読み取り時に作成されるため、一覧からの新規作成は無い。 */}
+      <Route path="/patrol" element={<PatrolLayout />}>
+        <Route index element={<Navigate to="/patrol/records" replace />} />
+        <Route path="records" element={<PatrolRecords />} />
+        <Route path="records/:id" element={<PatrolRecordDetail />} />
       </Route>
       <Route path="/workadjust" element={<WorkAdjustLayout />}>
         <Route index element={<WorkAdjustSchedule />} />

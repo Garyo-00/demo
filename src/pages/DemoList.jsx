@@ -19,6 +19,10 @@ const GROUPS = [
     ],
   },
   {
+    category: "巡回/パトロール",
+    items: [{ to: "/patrol/records", title: "巡回パトロール一覧" }],
+  },
+  {
     category: "作業間調整pro",
     items: [{ to: "/workadjust", title: "作業予定一覧" }],
   },
