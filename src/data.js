@@ -459,6 +459,20 @@ export const WA_PRIME_USERS = [
 export function primeUserName(id) {
   return WA_PRIME_USERS.find((u) => u.id === id)?.name || id;
 }
+// 実績入力の「作成ユーザー／最終更新ユーザー」に記録するログイン中ユーザー名。
+// デモはロールから決め打ちする（本番は認証セッションのユーザー）。
+export function currentUserName(role) {
+  return role === "foreman" ? (WA_FOREMEN[WA_MY_COMPANY] || [])[0] || "職長" : WA_PRIME_USERS[0].name;
+}
+
+// 作業予定レコードの実績入力者。作成ユーザーと最終更新ユーザーを並べ、
+// 同一人物なら1名、実績未入力なら0名（空配列）になる。
+export function actualUsers(r) {
+  return [r.actualCreatedBy, r.actualUpdatedBy]
+    .filter(Boolean)
+    .filter((n, i, a) => a.indexOf(n) === i);
+}
+
 // 協力会社→職長ユーザー（複数可。協力会社設定＝DNNの設定から自動反映される想定）。
 // 配列は表示順（昇順）で、作業予定フォームでは既定で先頭のユーザーを適用する。
 export const WA_FOREMEN = {
@@ -513,6 +527,9 @@ export const WA_WORK_SCHEDULES = [
       { kind: "gate", name: "東ゲート", rsvId: "RSV-001" },
     ],
     safetyNote: "上下作業禁止。開口部養生を確認のこと。",
+    // 職長が入力し、元請が修正した例（帳票の実績入力者は2名）
+    actualNormalWorkers: 6, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    actualCreatedBy: "佐藤 健", actualUpdatedBy: "田中 太郎",
   },
   {
     id: "W-002", date: "2026-07-09", status: "approved",
@@ -521,6 +538,9 @@ export const WA_WORK_SCHEDULES = [
     content: "型枠建込み",
     normalWorkers: 4, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
     safetyNote: "",
+    // 職長が入力しただけの例（帳票の実績入力者は1名）
+    actualNormalWorkers: 4, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    actualCreatedBy: "鈴木 一郎", actualUpdatedBy: null,
   },
   {
     id: "W-003", date: "2026-07-09", status: "approved",
@@ -569,28 +589,28 @@ export const WA_WORK_SCHEDULES = [
       { kind: "gate", name: "東ゲート", rsvId: null },
     ],
     safetyNote: "上下作業禁止。開口部養生を確認のこと。",
-    actualNormalWorkers: 6, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    actualNormalWorkers: 6, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0, actualCreatedBy: "佐藤 健", actualUpdatedBy: null,
   },
   {
     id: "W-107", date: "2026-07-08", status: "approved",
     company: "青木工業", industry: "型枠大工", jobType: "型枠大工", foreman: "鈴木 一郎",
     building: "A棟", floor: "2F", area: "南エリア", zone: "1工区", content: "型枠建込み",
     normalWorkers: 4, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
-    safetyNote: "", actualNormalWorkers: 4, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    safetyNote: "", actualNormalWorkers: 4, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0, actualCreatedBy: "鈴木 一郎", actualUpdatedBy: null,
   },
   {
     id: "W-106", date: "2026-07-08", status: "approved",
     company: "みらい電気", industry: "電気", jobType: "電気工事士", foreman: "高橋 誠",
     building: "B棟", floor: "3F", area: "東エリア", zone: "2工区", content: "電気配線",
     normalWorkers: 3, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
-    safetyNote: "", actualNormalWorkers: 3, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    safetyNote: "", actualNormalWorkers: 3, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0, actualCreatedBy: "高橋 誠", actualUpdatedBy: null,
   },
   {
     id: "W-105", date: "2026-07-08", status: "approved",
     company: "東洋設備", industry: "給排水・衛生・ガス", jobType: "配管工（給排水・衛生・ガス）", foreman: "伊藤 大輔",
     building: "B棟", floor: "B1F", area: "北エリア", zone: "2工区", content: "設備配管",
     normalWorkers: 4, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
-    safetyNote: "", actualNormalWorkers: 4, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    safetyNote: "", actualNormalWorkers: 4, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0, actualCreatedBy: "伊藤 大輔", actualUpdatedBy: null,
   },
   // 2026-07-07
   {
@@ -598,7 +618,7 @@ export const WA_WORK_SCHEDULES = [
     company: "大和建設", industry: "鉄筋", jobType: "鉄筋工", foreman: "佐藤 健",
     building: "A棟", floor: "1F", area: "北エリア", zone: "1工区", content: "配筋作業",
     normalWorkers: 5, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
-    safetyNote: "", actualNormalWorkers: 5, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    safetyNote: "", actualNormalWorkers: 5, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0, actualCreatedBy: "佐藤 健", actualUpdatedBy: null,
   },
   {
     id: "W-103", date: "2026-07-07", status: "approved",
@@ -606,14 +626,14 @@ export const WA_WORK_SCHEDULES = [
     building: "C棟", floor: "1F", area: "中央", zone: "3工区", content: "足場組立",
     normalWorkers: 5, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
     resources: [{ kind: "lift", name: "ラフター25t", rsvId: null }],
-    safetyNote: "", actualNormalWorkers: 5, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    safetyNote: "", actualNormalWorkers: 5, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0, actualCreatedBy: "渡辺 浩", actualUpdatedBy: null,
   },
   {
     id: "W-102", date: "2026-07-07", status: "approved",
     company: "山本電気", industry: "電気", jobType: "電気工事士", foreman: "山本 健太",
     building: "B棟", floor: "2F", area: "東エリア", zone: "2工区", content: "電気配線",
     normalWorkers: 2, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
-    safetyNote: "", actualNormalWorkers: 2, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    safetyNote: "", actualNormalWorkers: 2, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0, actualCreatedBy: "山本 健太", actualUpdatedBy: null,
   },
   // 2026-07-06
   {
@@ -621,21 +641,21 @@ export const WA_WORK_SCHEDULES = [
     company: "大和建設", industry: "鉄筋", jobType: "鉄筋工", foreman: "佐藤 健",
     building: "A棟", floor: "1F", area: "南エリア", zone: "1工区", content: "配筋作業",
     normalWorkers: 6, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
-    safetyNote: "", actualNormalWorkers: 6, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    safetyNote: "", actualNormalWorkers: 6, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0, actualCreatedBy: "佐藤 健", actualUpdatedBy: null,
   },
   {
     id: "W-100", date: "2026-07-06", status: "approved",
     company: "青木工業", industry: "型枠大工", jobType: "型枠大工", foreman: "鈴木 一郎",
     building: "A棟", floor: "1F", area: "南エリア", zone: "1工区", content: "型枠解体",
     normalWorkers: 3, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
-    safetyNote: "", actualNormalWorkers: 3, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    safetyNote: "", actualNormalWorkers: 3, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0, actualCreatedBy: "鈴木 一郎", actualUpdatedBy: null,
   },
   {
     id: "W-099", date: "2026-07-06", status: "approved",
     company: "林基礎", industry: "土木・舗装", jobType: "土工", foreman: "林 大樹",
     building: "C棟", floor: "1F", area: "中央", zone: "3工区", content: "外構土工",
     normalWorkers: 3, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
-    safetyNote: "", actualNormalWorkers: 3, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0,
+    safetyNote: "", actualNormalWorkers: 3, actualNormalHours: 8, actualOvertimeWorkers: 0, actualOvertimeHours: 0, actualCreatedBy: "林 大樹", actualUpdatedBy: null,
   },
 ];
 

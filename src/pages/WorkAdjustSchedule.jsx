@@ -36,6 +36,7 @@ import {
   WA_STATUS_LABEL,
   WA_STATUS_PILL,
   WA_PRIME_USERS,
+  currentUserName,
   WA_MY_COMPANY,
   WA_DNN_ATTENDANCE,
   hasDnnAttendance,
@@ -106,6 +107,7 @@ function emptyBlock() {
   return {
     building: "", floor: "", area: "", zone: "", content: "",
     normalWorkers: 1, normalHours: 8, overtimeWorkers: 0, overtimeHours: 0,
+    safetyNote: "",
     // 使用する資機材・ゲート [{kind, name, rsvId}]
     resources: [],
   };
@@ -136,6 +138,7 @@ function toForm(r) {
         building: r.building, floor: r.floor, area: r.area, zone: r.zone, content: r.content,
         normalWorkers: r.normalWorkers, normalHours: r.normalHours,
         overtimeWorkers: r.overtimeWorkers, overtimeHours: r.overtimeHours,
+        safetyNote: r.safetyNote || "",
         resources: r.resources || [],
       },
     ],
@@ -495,7 +498,7 @@ const COLUMNS = [
   ["content", "作業内容", "auto"],
   ["planned", "作業人数（予定）", 72],
   ["actual", "作業人数（実績）", 72],
-  ["safety", "元請安全指示事項", 132],
+  ["safety", "安全指示事項", 132],
 ];
 
 export default function WorkAdjustSchedule() {
@@ -504,6 +507,7 @@ export default function WorkAdjustSchedule() {
     date, role, gates, lifts, equipment,
     reservations, setReservations, interval, time,
     schedules: rows, setSchedules: setRows,
+    primeNotes, setPrimeNote,
   } = useWaSettings();
   const [editing, setEditing] = useState(null); // 作成/編集中の行
   const [confirmDraft, setConfirmDraft] = useState(null); // 確定ダイアログ（全未確定の下書き）
@@ -624,6 +628,7 @@ export default function WorkAdjustSchedule() {
                 building: b.building, floor: b.floor, area: b.area, zone: b.zone, content: b.content,
                 normalWorkers: b.normalWorkers, normalHours: b.normalHours,
                 overtimeWorkers: b.overtimeWorkers, overtimeHours: b.overtimeHours,
+                safetyNote: b.safetyNote || "",
                 resources: fixLinks(b.resources, {
                   date: f.date, company: f.company, selfId: f.id,
                 }),
@@ -646,7 +651,7 @@ export default function WorkAdjustSchedule() {
           resources: fixLinks(b.resources, {
             date: f.date, company: f.company, selfId: "W-" + String(n).padStart(3, "0"),
           }),
-          safetyNote: "",
+          safetyNote: b.safetyNote || "",
           actualNormalWorkers: null, actualNormalHours: null,
           actualOvertimeWorkers: null, actualOvertimeHours: null,
         };
@@ -907,28 +912,20 @@ export default function WorkAdjustSchedule() {
     setCopyPlan([]);
   }
 
-  // 確定（全未確定を対象に、元請安全指示事項を入力するダイアログを開く）
+  // 確定（全未確定を対象。元請安全指示事項は作業日ごとに1つ入力する）
+  // 確定後に予定が追加され再確定する場合も、既存の指示事項を初期値に出して更新できる。
   function openConfirm() {
     if (!hasPending) return;
-    setConfirmDraft(
-      pendingRows.map((r) => ({
-        id: r.id, company: r.company, jobType: r.jobType, content: r.content,
-        building: r.building, floor: r.floor, safetyNote: r.safetyNote || "",
-      }))
-    );
+    setConfirmDraft({ count: pendingRows.length, note: primeNotes[date] || "" });
   }
   function commitConfirm() {
-    // 元請安全指示事項は必須（全件入力されていること）
-    if (confirmDraft.some((d) => !d.safetyNote || !d.safetyNote.trim())) {
-      window.alert("すべての作業の元請安全指示事項を入力してください（必須）。");
+    if (!confirmDraft.note.trim()) {
+      window.alert("元請安全指示事項を入力してください（必須）。");
       return;
     }
-    const map = new Map(confirmDraft.map((d) => [d.id, d.safetyNote]));
-    setRows((rs) =>
-      rs.map((r) =>
-        map.has(r.id) ? { ...r, status: "approved", safetyNote: map.get(r.id) } : r
-      )
-    );
+    const ids = new Set(pendingRows.map((r) => r.id));
+    setRows((rs) => rs.map((r) => (ids.has(r.id) ? { ...r, status: "approved" } : r)));
+    setPrimeNote(date, confirmDraft.note.trim());
     setConfirmDraft(null);
   }
   // 確定解除（全確定済みを未確定に戻す）
@@ -936,7 +933,7 @@ export default function WorkAdjustSchedule() {
     const ids = new Set(approvedRows.map((r) => r.id));
     setRows((rs) => rs.map((r) => (ids.has(r.id) ? { ...r, status: "pending" } : r)));
   }
-  // 協力会社単位の元請安全指示事項の履歴（重複排除・最新5件・新しい作成データ優先）
+  // 協力会社単位の安全指示事項の履歴（重複排除・最新5件・新しい作成データ優先）
   function safetyHistoryFor(company) {
     const seen = new Set();
     const out = [];
@@ -949,6 +946,12 @@ export default function WorkAdjustSchedule() {
       }
     }
     return out;
+  }
+  // 元請安全指示事項（日単位）の履歴。他の日に入力した指示を候補に出す。
+  function primeNoteHistory() {
+    return [...new Set(Object.entries(primeNotes)
+      .filter(([d, v]) => d !== date && (v || "").trim())
+      .map(([, v]) => v.trim()))].slice(-5).reverse();
   }
   // 1レコードだけを対象に実績入力ダイアログを開く（職長画面の各レコードのボタン用）
   function openActualOne(r) {
@@ -982,18 +985,31 @@ export default function WorkAdjustSchedule() {
   }
   function commitActual() {
     const map = new Map(actualDraft.map((d) => [d.id, d]));
+    const user = currentUserName(role); // 実績を入力・更新したユーザー
     setRows((rs) =>
       rs.map((r) => {
         const a = map.get(r.id);
-        return a
-          ? {
-              ...r,
-              actualNormalWorkers: a.actualNormalWorkers,
-              actualNormalHours: a.actualNormalHours,
-              actualOvertimeWorkers: a.actualOvertimeWorkers,
-              actualOvertimeHours: a.actualOvertimeHours,
-            }
-          : r;
+        if (!a) return r;
+        // 値が変わった行だけ入力者を記録する（一括保存で無関係な行まで更新者にしない）
+        const changed =
+          a.actualNormalWorkers !== r.actualNormalWorkers ||
+          a.actualNormalHours !== r.actualNormalHours ||
+          a.actualOvertimeWorkers !== r.actualOvertimeWorkers ||
+          a.actualOvertimeHours !== r.actualOvertimeHours;
+        return {
+          ...r,
+          actualNormalWorkers: a.actualNormalWorkers,
+          actualNormalHours: a.actualNormalHours,
+          actualOvertimeWorkers: a.actualOvertimeWorkers,
+          actualOvertimeHours: a.actualOvertimeHours,
+          // 初回入力なら作成ユーザー、2回目以降は最終更新ユーザーとして残す
+          actualCreatedBy: changed ? r.actualCreatedBy || user : r.actualCreatedBy ?? null,
+          actualUpdatedBy: changed
+            ? r.actualCreatedBy
+              ? user
+              : null
+            : r.actualUpdatedBy ?? null,
+        };
       })
     );
     setActualDraft(null);
@@ -1101,6 +1117,29 @@ export default function WorkAdjustSchedule() {
         ※ 確定後のレコードは「編集」で確定を解除するまで編集・削除できません。
       </Typography>
 
+      {/* 元請安全指示事項（その日の全作業に共通）。確定時に入力されたら一覧の上に出す */}
+      {primeNotes[date] && (
+        <Box
+          sx={{
+            display: "flex",
+            gap: 1.5,
+            alignItems: "flex-start",
+            border: "1px solid",
+            borderColor: "primary.main",
+            bgcolor: "primary.light",
+            borderRadius: 2,
+            px: 2,
+            py: 1.5,
+            mb: 2,
+          }}
+        >
+          <Chip size="small" color="primary" label="元請安全指示事項" sx={{ flex: "none" }} />
+          <Typography sx={{ fontSize: 13, whiteSpace: "pre-wrap", minWidth: 0 }}>
+            {primeNotes[date]}
+          </Typography>
+        </Box>
+      )}
+
       {dayRows.length === 0 ? (
         <Typography sx={{ py: 4, textAlign: "center", fontSize: 13 }} color="text.secondary">
           この日の作業予定はありません。
@@ -1140,7 +1179,7 @@ export default function WorkAdjustSchedule() {
                         "作業人数（予定／実績）",
                         `${totalWorkers(r)} 名 ／ ${actualTotal(r) != null ? actualTotal(r) + " 名" : "—"}`,
                       ],
-                      ["元請安全指示事項", r.safetyNote || "—"],
+                      ["安全指示事項", r.safetyNote || "—"],
                     ].map(([label, value]) => (
                       <Box
                         key={label}
@@ -1417,6 +1456,16 @@ export default function WorkAdjustSchedule() {
                     <PatternRow obj={bk} setObj={setBlockObj(i)} label="早出・残業作業" wKey="overtimeWorkers" hKey="overtimeHours" />
                   </Box>
                 </Box>
+                {/* 安全指示事項。職長が記入する想定だが、入力漏れに備えて元請も作成時に入力できる */}
+                <TextAreaField
+                  full
+                  maxLength={255}
+                  label="安全指示事項"
+                  value={bk.safetyNote}
+                  onChange={(v) => setBlock(i, { safetyNote: v })}
+                  placeholder="この作業の安全指示を記入（任意・255文字まで）"
+                  history={safetyHistoryFor(editing.company)}
+                />
                 {/* 使用する資機材・ゲート。選ぶとその日の予約と紐づき、無ければここから作成できる */}
                 <ResourcePicker
                   options={resOptions}
@@ -1634,36 +1683,26 @@ export default function WorkAdjustSchedule() {
                 キャンセル
               </Button>
               <Button variant="contained" onClick={commitConfirm}>
-                確定する（{confirmDraft.length} 件）
+                確定する（{confirmDraft.count} 件）
               </Button>
             </>
           }
         >
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            未確定の作業予定をまとめて確定します。各作業の元請安全指示事項を入力してください。
+            未確定の作業予定 <b>{confirmDraft.count} 件</b>をまとめて確定します。
+            元請安全指示事項は<b>その日の全作業に共通の1つ</b>です
+            {primeNotes[date] ? "（すでに入力済みの内容を編集できます）" : ""}。
           </Typography>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
-            {confirmDraft.map((d, i) => (
-              <Box
-                key={d.id}
-                sx={{ border: "1px solid", borderColor: "divider", borderRadius: 2, p: 2 }}
-              >
-                <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 1.25 }}>
-                  {d.company}／{d.jobType}／{d.content}（{d.building} {d.floor}）
-                </Typography>
-                <TextAreaField
-                  full
-                  required
-                  maxLength={255}
-                  label="元請安全指示事項"
-                  value={d.safetyNote}
-                  onChange={(v) => setConfirmItem(i)((x) => ({ ...x, safetyNote: v }))}
-                  placeholder="確定にあたっての安全指示を記入（必須・255文字まで）"
-                  history={safetyHistoryFor(d.company)}
-                />
-              </Box>
-            ))}
-          </Box>
+          <TextAreaField
+            full
+            required
+            maxLength={255}
+            label={`元請安全指示事項（${formatDateStr(date)}）`}
+            value={confirmDraft.note}
+            onChange={(v) => setConfirmDraft((d) => ({ ...d, note: v }))}
+            placeholder="その日の全作業に対する安全指示を記入（必須・255文字まで）"
+            history={primeNoteHistory()}
+          />
         </Modal>
       )}
 
@@ -1771,6 +1810,7 @@ export default function WorkAdjustSchedule() {
             date={date}
             rows={approvedRows}
             manager={WA_PRIME_USERS[0].name}
+            primeNote={primeNotes[date]}
           />
         </PrintPreview>
       )}

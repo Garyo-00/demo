@@ -1,4 +1,4 @@
-import { WA_PROJECT, formatDateStr, primeUserName } from "../../data.js";
+import { WA_PROJECT, formatDateStr, primeUserName, actualUsers } from "../../data.js";
 
 const ROWS_PER_PAGE = 12; // 1ページの行数（増えたら自動でページ追加）
 
@@ -22,7 +22,7 @@ function paginate(rows) {
   return pages;
 }
 
-export default function SchedulePrint({ date, rows, manager, seals = [] }) {
+export default function SchedulePrint({ date, rows, manager, seals = [], primeNote }) {
   const pages = paginate(rows);
   return (
     <>
@@ -57,14 +57,15 @@ export default function SchedulePrint({ date, rows, manager, seals = [] }) {
 
           <table className="pf-table">
             <colgroup>
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "10%" }} />
               <col style={{ width: "13%" }} />
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "11%" }} />
-              <col style={{ width: "15%" }} />
-              <col style={{ width: "14%" }} />
-              <col style={{ width: "8%" }} />
-              <col style={{ width: "8%" }} />
-              <col style={{ width: "22%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "7%" }} />
+              <col style={{ width: "7%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "19%" }} />
             </colgroup>
             <thead>
               <tr>
@@ -75,7 +76,8 @@ export default function SchedulePrint({ date, rows, manager, seals = [] }) {
                 <th>作業内容</th>
                 <th>作業員数<br />（予定）</th>
                 <th>作業員数<br />（実績）</th>
-                <th>元請安全指示事項</th>
+                <th>実績入力者</th>
+                <th>安全指示事項</th>
               </tr>
             </thead>
             <tbody>
@@ -88,6 +90,12 @@ export default function SchedulePrint({ date, rows, manager, seals = [] }) {
                   <td>{r.content}</td>
                   <td className="c">{planned(r)} 名</td>
                   <td className="c">{actual(r) != null ? actual(r) + " 名" : ""}</td>
+                  {/* 実績の作成ユーザーと最終更新ユーザー（同一人物なら1名／未入力なら空欄） */}
+                  <td>
+                    {actualUsers(r).map((u) => (
+                      <div key={u}>{u}</div>
+                    ))}
+                  </td>
                   <td>{r.safetyNote}</td>
                 </tr>
               ))}
@@ -95,12 +103,19 @@ export default function SchedulePrint({ date, rows, manager, seals = [] }) {
               {pageRows.length < ROWS_PER_PAGE &&
                 Array.from({ length: ROWS_PER_PAGE - pageRows.length }).map((_, i) => (
                   <tr key={"blank" + i} className="pf-blank">
-                    <td /><td /><td /><td /><td /><td /><td /><td />
+                    <td /><td /><td /><td /><td /><td /><td /><td /><td />
                   </tr>
                 ))}
             </tbody>
           </table>
 
+          {/* 元請安全指示事項は作業日ごとに1つ。ページが複数でも各ページの最下部に出す */}
+          {primeNote && (
+            <div className="pf-primenote">
+              <span className="pf-primenote-label">元請安全指示事項</span>
+              <span className="pf-primenote-body">{primeNote}</span>
+            </div>
+          )}
           <div className="pf-foot">
             {pi + 1} / {pages.length}
           </div>

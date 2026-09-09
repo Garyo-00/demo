@@ -60,6 +60,11 @@ export function WaSettingsProvider({ children }) {
   const [reservations, setReservations] = useState(WA_RESERVATIONS);
   // 作業予定（予約との紐づけを予約側からも参照するため共有）
   const [schedules, setSchedules] = useState(WA_WORK_SCHEDULES);
+  // 元請安全指示事項は「作業日ごとに1つ」。確定時に入力し、再確定でも引き継いで更新する。
+  const [primeNotes, setPrimeNotes] = useState({}); // { "YYYY-MM-DD": "指示文" }
+  function setPrimeNote(day, text) {
+    setPrimeNotes((n) => ({ ...n, [day]: text }));
+  }
   // 画面遷移ガード（未保存の編集がある画面が dirty を立て、遷移前に確認する）
   const navDirtyRef = useRef(false);
   function setNavDirty(v) {
@@ -83,6 +88,7 @@ export function WaSettingsProvider({ children }) {
         companies, setCompanies,
         reservations, setReservations,
         schedules, setSchedules,
+        primeNotes, setPrimeNote,
         setNavDirty, confirmLeave,
       }}
     >

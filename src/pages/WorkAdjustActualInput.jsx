@@ -19,6 +19,7 @@ import {
   WA_WORK_SCHEDULES,
   WA_DEFAULT_DATE,
   WA_DNN_ATTENDANCE,
+  WA_FOREMEN,
   formatDateStr,
 } from "../data.js";
 
@@ -33,6 +34,8 @@ const TODAY = WA_DEFAULT_DATE; // 7/9
 const WORKER_OPTS = Array.from({ length: 31 }, (_, i) => i); // 0〜30名
 // アカウントありビューでログイン中と仮定する会社
 const ACCOUNT_COMPANY = "青木工業";
+// アカウントありの場合のログインユーザー（デモは会社の職長ユーザー先頭）
+const ACCOUNT_USER = (WA_FOREMEN[ACCOUNT_COMPANY] || [])[0] || "職長";
 
 // 指定日に作業登録のある会社（重複なし）
 function companiesForDate(date) {
@@ -88,7 +91,9 @@ function PatternRow({ label, planned, item, patch, wKey, hKey }) {
 }
 
 // 1社ぶんの実績入力フォーム（元請の実績入力画面と同じ構成を単一会社に絞ったもの）
-function CompanyActualForm({ company, date, onSubmit, onBack }) {
+function CompanyActualForm({ company, date, worker, lockWorker, onSubmit, onBack, backLabel }) {
+  // 入力者名。アカウントありはログインユーザーで固定、アカウントなしはこの画面で記入する。
+  const [name, setName] = useState(worker || "");
   const [rows, setRows] = useState(() =>
     worksForCompany(company, date).map((w) => ({
       id: w.id,
@@ -118,7 +123,7 @@ function CompanyActualForm({ company, date, onSubmit, onBack }) {
         </Typography>
         {onBack && (
           <Button variant="outlined" onClick={onBack}>
-            ← 会社を選び直す
+            {backLabel || "← 会社を選び直す"}
           </Button>
         )}
       </Box>
@@ -193,13 +198,37 @@ function CompanyActualForm({ company, date, onSubmit, onBack }) {
         ))}
       </Box>
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap", mt: 2.25 }}>
+      {/* 入力者。誰が実績を入力したかを記録するため、送信前にこの画面で確定させる */}
+      <TextField
+        fullWidth
+        required
+        label="入力者（お名前）"
+        placeholder="例：佐藤 健"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        disabled={lockWorker}
+        helperText={
+          lockWorker
+            ? "ログイン中のユーザーが入力者として記録されます"
+            : "実績の入力者として記録されます"
+        }
+        slotProps={{ htmlInput: { maxLength: 20 } }}
+        sx={{ mt: 2.25 }}
+      />
+
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap", mt: 1.75 }}>
         {onBack && (
           <Button variant="outlined" onClick={onBack}>
-            ← 会社を選び直す
+            {backLabel || "← 会社を選び直す"}
           </Button>
         )}
-        <Button variant="contained" size="large" sx={{ ml: "auto" }} onClick={onSubmit}>
+        <Button
+          variant="contained"
+          size="large"
+          sx={{ ml: "auto" }}
+          disabled={!name.trim()}
+          onClick={() => onSubmit(name.trim())}
+        >
           送信
         </Button>
       </Box>
@@ -207,7 +236,7 @@ function CompanyActualForm({ company, date, onSubmit, onBack }) {
   );
 }
 
-// アカウントなし：会社選択 → 実績入力
+// アカウントなし：会社選択 → 実績入力（入力者名は送信フォーム内で記入）
 function NoAccountView({ date, onSubmit }) {
   const [company, setCompany] = useState(null);
   // 対象日を変えたら会社選択に戻す（その日の会社一覧から選び直し）
@@ -258,7 +287,16 @@ function NoAccountView({ date, onSubmit }) {
 
 // アカウントあり：会社選択を省略し、ログインユーザーの会社の実績入力のみ
 function WithAccountView({ date, onSubmit }) {
-  return <CompanyActualForm key={ACCOUNT_COMPANY + date} company={ACCOUNT_COMPANY} date={date} onSubmit={onSubmit} />;
+  return (
+    <CompanyActualForm
+      key={ACCOUNT_COMPANY + date}
+      company={ACCOUNT_COMPANY}
+      date={date}
+      worker={ACCOUNT_USER}
+      lockWorker
+      onSubmit={onSubmit}
+    />
+  );
 }
 
 // 画面全体のシェル（独立ページなので各自 ScopedCssBaseline で包む）
@@ -282,12 +320,17 @@ function Screen({ children }) {
 }
 
 // 送信後の完了画面
-function DoneScreen() {
+function DoneScreen({ worker }) {
   return (
     <Screen>
       <Box sx={{ textAlign: "center", py: 5 }}>
         <CheckCircleOutlineIcon sx={{ fontSize: 64, color: "primary.main" }} />
         <Typography sx={{ fontSize: 20, fontWeight: 700, mt: 2 }}>送信が完了しました</Typography>
+        {worker && (
+          <Typography sx={{ fontSize: 14, mt: 1 }}>
+            入力者：<strong>{worker}</strong>
+          </Typography>
+        )}
         <Typography sx={{ fontSize: 14, mt: 1.5 }} color="text.secondary">
           ブラウザ画面を閉じてください。
         </Typography>
@@ -298,12 +341,13 @@ function DoneScreen() {
 
 export default function WorkAdjustActualInput() {
   const [view, setView] = useState("none"); // "none" | "with"
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(null); // 送信済みなら入力者名を保持
   const [selectedDate, setSelectedDate] = useState(TODAY); // 対象作業日（既定＝当日）
 
-  if (submitted) return <DoneScreen />;
+  if (submitted) return <DoneScreen worker={submitted} />;
 
-  const submit = () => setSubmitted(true);
+  // 実績には入力者（アカウントなしは記入した氏名／ありはログインユーザー）を添えて送る
+  const submit = (worker) => setSubmitted(worker || "—");
 
   return (
     <Screen>
@@ -346,7 +390,7 @@ export default function WorkAdjustActualInput() {
           />
           {view === "with" && (
             <Typography sx={{ fontSize: 13 }} color="text.secondary">
-              ／{ACCOUNT_COMPANY}
+              ／{ACCOUNT_COMPANY}　{ACCOUNT_USER}
             </Typography>
           )}
         </Box>
