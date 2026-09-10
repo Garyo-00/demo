@@ -34,6 +34,8 @@ import WorkAdjustRegistry from "./pages/WorkAdjustRegistry.jsx";
 import WorkAdjustFloorPlanSetting from "./pages/WorkAdjustFloorPlanSetting.jsx";
 import WorkAdjustCompanies from "./pages/WorkAdjustCompanies.jsx";
 import WorkAdjustSettings from "./pages/WorkAdjustSettings.jsx";
+import NoAccountPage from "./pages/NoAccountPage.jsx";
+import NoAccountQr from "./pages/NoAccountQr.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
 import MachineList from "./pages/MachineList.jsx";
 import MachineDetail from "./pages/MachineDetail.jsx";
@@ -54,6 +56,12 @@ export default function App() {
       <Route path="/workadjust/reserve" element={<WorkAdjustReservePortal />} />
       {/* 打合せサイン用QR読み取り後のサイン画面（サイドバー無しの独立ページ） */}
       <Route path="/workplan-neo/sign" element={<WorkPlanNeoSign />} />
+      {/* アカウントなし。QRコード発行画面と、QRを読み取った先の画面（ログイン必須／不要）。 */}
+      <Route path="/no-account/owner-patrol" element={<NoAccountQr />} />
+      <Route path="/no-account/owner-patrol/:kind" element={<NoAccountPage />} />
+      <Route path="/no-account/fire-permit" element={<NoAccountQr />} />
+      <Route path="/no-account/fire-permit/:kind" element={<NoAccountPage />} />
+      <Route path="/no-account/work-plan" element={<NoAccountPage />} />
       <Route path="/app" element={<AppLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="inspection" element={<InspectionRecords />} />

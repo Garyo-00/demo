@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Box, Card, CardActionArea, CardContent, ScopedCssBaseline, Typography } from "@mui/material";
+import { NO_ACCOUNT_PAGES } from "../noAccountData.js";
 
 // サービスのカテゴリごとに画面をまとめる
 const GROUPS = [
@@ -21,6 +22,11 @@ const GROUPS = [
   {
     category: "巡回/パトロール",
     items: [{ to: "/patrol/records", title: "巡回パトロール一覧" }],
+  },
+  {
+    // ログイン不要でQRコードから開く画面群
+    category: "アカウントなし",
+    items: NO_ACCOUNT_PAGES.map(({ to, title }) => ({ to, title })),
   },
   {
     category: "作業間調整pro",
