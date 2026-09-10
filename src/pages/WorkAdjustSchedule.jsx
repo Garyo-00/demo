@@ -570,7 +570,7 @@ export default function WorkAdjustSchedule() {
   const pendingRows = dateRows.filter((r) => r.status !== "approved");
   const approvedRows = dateRows.filter((r) => r.status === "approved");
   const hasPending = pendingRows.length > 0;
-  const allConfirmed = dateRows.length > 0 && !hasPending;
+  const hasApproved = approvedRows.length > 0;
 
   function openCreate() {
     setEditing(emptyForm(date));
@@ -1290,18 +1290,35 @@ export default function WorkAdjustSchedule() {
           {/* テーブル下：全作業共通の確定／確定解除／実績入力（元請ビューのみ） */}
           {role === "prime" && (
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1.75, mt: 2, flexWrap: "wrap" }}>
-              {allConfirmed ? (
-                <>
-                  <Button variant="outlined" onClick={releaseAll}>
-                    確定解除
-                  </Button>
-                  <Button variant="contained" size="large" onClick={openActual}>
-                    実績入力
-                  </Button>
-                </>
-              ) : (
-                <Button variant="contained" size="large" onClick={openConfirm} disabled={!hasPending}>
-                  確定
+              {/* 確定済と未確定が混在する日もあるため、ボタンは対象の有無で個別に出す。
+                  確定＝未確定がある／確定解除・実績入力＝確定済がある。 */}
+              {hasApproved && (
+                <Button
+                  variant="outlined"
+                  onClick={releaseAll}
+                  title={`確定済みの ${approvedRows.length} 件を未確定に戻します`}
+                >
+                  確定解除（{approvedRows.length} 件）
+                </Button>
+              )}
+              {hasPending && (
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={openConfirm}
+                  title={`未確定の ${pendingRows.length} 件を確定します`}
+                >
+                  確定（{pendingRows.length} 件）
+                </Button>
+              )}
+              {hasApproved && (
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={openActual}
+                  title={`確定済みの ${approvedRows.length} 件に実績を入力します`}
+                >
+                  実績入力（{approvedRows.length} 件）
                 </Button>
               )}
             </Box>
