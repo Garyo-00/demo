@@ -6,17 +6,17 @@
 
 ```bash
 cd ~/Documents/demo
-npm install        # 依存パッケージのインストール（初回のみ）
-npm run dev        # 開発サーバー起動 → http://localhost:3000/
+pnpm install       # 依存パッケージのインストール（初回のみ）
+pnpm dev           # 開発サーバー起動 → http://localhost:3000/
 ```
 
-`npm run dev` を実行するとブラウザが自動で開きます。ルート（`/`）がデモ画面一覧、`/app` がダッシュボードです。
+`pnpm dev` を実行するとブラウザが自動で開きます。ルート（`/`）がデモ画面一覧、`/app` がダッシュボードです。
 
 ## その他コマンド
 
 ```bash
-npm run build      # 本番ビルド（dist/ を生成）
-npm run preview    # ビルド結果をローカルで確認
+pnpm build         # 本番ビルド（dist/ を生成）
+pnpm preview       # ビルド結果をローカルで確認
 ```
 
 ## 構成
