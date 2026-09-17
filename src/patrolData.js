@@ -4,6 +4,25 @@
 
 export const PATROL_PROJECT = "テストプロジェクト_星野";
 
+// 当月（YYYY-MM）。一覧の巡回月の初期値に使う。
+export function currentMonth() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+// サンプルデータの日付は当月・前月を基準に組み立てる（いつ開いても一覧に記録が出るように）
+const ym = (offset) => {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + offset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+};
+const THIS_M = ym(0);
+const PREV_M = ym(-1);
+
+// 巡回実施入力で添付できる写真の上限
+export const PATROL_PHOTO_MAX = 30;
+
 // サンプル現場写真（実データの代わりに色違いのSVGダミーを data URI で持つ）
 const photo = (label, sky, ground) =>
   "data:image/svg+xml;charset=utf-8," +
@@ -26,21 +45,18 @@ export const PHOTO_C = photo("現場写真 C", "#e2ddf3", "#bfb49f");
 // サンプル添付ファイル（ダウンロードできるテキストを data URI で持つ）
 const SAMPLE_FILE =
   "data:text/plain;charset=utf-8," +
-  encodeURIComponent("是正報告書\n開口部の手摺りを増設し、是正を完了しました。\n報告者：テスト 協力会社\n");
+  encodeURIComponent("是正報告書\n開口部の手摺りを増設し、是正を完了しました。\n報告者：建設 太郎\n");
 
 // 巡回結果の評価
 export const RATINGS = ["良好", "普通", "要改善"];
 export const RATING_COLOR = { 良好: "success", 普通: "default", 要改善: "error" };
 
 // 追記を行うユーザー（デモではロールごとに1人ずつ固定）
+// company … 所属会社。巡回実施入力の「一次会社」に自動で入る。
 export const USERS = {
-  prime: { id: "u-prime", name: "星野 遼河", label: "元請" },
-  partner: { id: "u-partner", name: "テスト 協力会社", label: "協力会社" },
+  prime: { id: "u-prime", name: "星野 遼河", label: "元請", company: "株式会社Arch" },
+  partner: { id: "u-partner", name: "建設 太郎", label: "協力会社", company: "株式会社テスト" },
 };
-
-// 実施会社・一次会社（検索プルダウン用）
-export const COMPANIES = ["株式会社Arch", "company"];
-export const PRIMARY_COMPANIES = ["〇〇建設", "company"];
 
 // 巡回チェック項目（テンプレート）。QR読み取り時にこの並びで回答する。
 const CHECK_ITEMS = [
@@ -80,14 +96,14 @@ export const INITIAL_RECORDS = [
     id: "p11625",
     no: "11625",
     plannedDate: "",
-    date: "2026-03-05",
-    nextDate: "2026-03-12",
+    date: `${THIS_M}-05`,
+    nextDate: `${THIS_M}-12`,
     company: "株式会社Arch",
     primaryCompany: "〇〇建設",
     inspector: "Arch管理者",
     accompany: "解体次郎",
     hearing: "テスト",
-    confirmedDate: "2026-03-05",
+    confirmedDate: `${THIS_M}-05`,
     confirmedBy: "星野 遼河",
     siteComment: "テストテスト",
     items: items({
@@ -106,7 +122,7 @@ export const INITIAL_RECORDS = [
         authorId: USERS.prime.id,
         authorName: USERS.prime.name,
         authorLabel: USERS.prime.label,
-        createdAt: "2026-03-06T09:12",
+        createdAt: `${THIS_M}-06T09:12`,
         updatedAt: "",
         text: "巡回時に指摘した開口部について、翌朝の朝礼でも周知しました。",
         files: [],
@@ -116,11 +132,11 @@ export const INITIAL_RECORDS = [
         authorId: USERS.partner.id,
         authorName: USERS.partner.name,
         authorLabel: USERS.partner.label,
-        createdAt: "2026-03-06T17:40",
-        updatedAt: "2026-03-07T08:05",
+        createdAt: `${THIS_M}-06T17:40`,
+        updatedAt: `${THIS_M}-07T08:05`,
         text: "手摺りの増設が完了しました。是正報告書を添付します。",
         files: [
-          { id: "f1", name: "是正報告書_20260306.txt", size: 1240, type: "text/plain", url: SAMPLE_FILE },
+          { id: "f1", name: "是正報告書.txt", size: 1240, type: "text/plain", url: SAMPLE_FILE },
           { id: "f2", name: "是正後_手摺り.svg", size: 21500, type: "image/svg+xml", url: PHOTO_B },
           { id: "f3", name: "是正後_通路.svg", size: 20800, type: "image/svg+xml", url: PHOTO_C },
         ],
@@ -130,8 +146,8 @@ export const INITIAL_RECORDS = [
   {
     id: "p11640",
     no: "11640",
-    plannedDate: "2026-03-12",
-    date: "2026-03-05",
+    plannedDate: `${THIS_M}-12`,
+    date: `${THIS_M}-05`,
     nextDate: "",
     company: "株式会社Arch",
     primaryCompany: "〇〇建設",
@@ -149,8 +165,9 @@ export const INITIAL_RECORDS = [
     id: "p11656",
     no: "11656",
     plannedDate: "",
-    date: "2026-03-05",
-    nextDate: "",
+    date: `${THIS_M}-05`,
+    // この次回予定日から、予定だけの記録（p11702）が作られる
+    nextDate: `${THIS_M}-20`,
     company: "株式会社Arch",
     primaryCompany: "〇〇建設",
     inspector: "星野 遼河",
@@ -172,7 +189,7 @@ export const INITIAL_RECORDS = [
     id: "p11661",
     no: "11661",
     plannedDate: "",
-    date: "2026-03-06",
+    date: `${THIS_M}-06`,
     nextDate: "",
     company: "株式会社Arch",
     primaryCompany: "company",
@@ -187,17 +204,37 @@ export const INITIAL_RECORDS = [
     notes: [],
   },
   {
+    // 巡回記録 p11656 の「次回予定日」から作られた、予定だけの記録（ステータス「未」）。
+    // 実施会社・実施者は引き継ぐが、一次会社は引き継がない。
+    id: "p11702",
+    no: "11702",
+    plannedDate: `${THIS_M}-20`,
+    date: "",
+    nextDate: "",
+    company: "株式会社Arch",
+    primaryCompany: "",
+    inspector: "星野 遼河",
+    accompany: "",
+    hearing: "",
+    confirmedDate: "",
+    confirmedBy: "",
+    siteComment: "",
+    items: [],
+    photos: [],
+    notes: [],
+  },
+  {
     id: "p11580",
     no: "11580",
     plannedDate: "",
-    date: "2026-02-18",
-    nextDate: "2026-03-05",
+    date: `${PREV_M}-18`,
+    nextDate: `${THIS_M}-05`,
     company: "株式会社Arch",
     primaryCompany: "〇〇建設",
     inspector: "Arch管理者",
     accompany: "鳶太郎",
     hearing: "先月分の巡回。指摘事項は当日中に是正済み。",
-    confirmedDate: "2026-02-19",
+    confirmedDate: `${PREV_M}-19`,
     confirmedBy: "星野 遼河",
     siteComment: "指摘箇所の是正を確認しました。",
     items: items({
@@ -209,8 +246,8 @@ export const INITIAL_RECORDS = [
   {
     id: "p11571",
     no: "11571",
-    plannedDate: "2026-02-12",
-    date: "2026-02-12",
+    plannedDate: `${PREV_M}-12`,
+    date: `${PREV_M}-12`,
     nextDate: "",
     company: "company",
     primaryCompany: "company",
@@ -225,6 +262,54 @@ export const INITIAL_RECORDS = [
     notes: [],
   },
 ];
+
+// 巡回項目のマスタ（巡回/パトロール項目編集で設定する）
+export const PATROL_ITEM_GROUP = "現場管理項目";
+export const INITIAL_PATROL_ITEMS = [
+  { id: "i1", text: "現場へ入場させる前に「送り出し教育」を確実に実施しているか" },
+  { id: "i2", text: "現場で行われている作業内容・手順等は「送り出し教育」内容通りに行われているか" },
+  { id: "i3", text: "タイヤの損傷、摩耗、空気圧" },
+];
+
+// 回答（評価）の選択肢マスタ（巡回/パトロール回答編集で設定する）
+// extra … その回答を選んだときに追加入力欄を出す / required … 追加入力を必須にする
+export const INITIAL_ANSWER_OPTIONS = [
+  { id: "a1", label: "危険", extra: true, required: true },
+  { id: "a2", label: "要是正", extra: true, required: true },
+  { id: "a3", label: "普通", extra: true, required: false },
+  { id: "a4", label: "良好", extra: true, required: false },
+  { id: "a5", label: "模範", extra: true, required: false },
+  { id: "a6", label: "該当なし", extra: true, required: false },
+  { id: "a7", label: "該当あり", extra: true, required: false },
+];
+
+// 予定だけの記録（ステータス「未」）のひな形
+export const EMPTY_RECORD = {
+  plannedDate: "",
+  date: "",
+  nextDate: "",
+  company: "",
+  primaryCompany: "",
+  inspector: "",
+  accompany: "",
+  hearing: "",
+  confirmedDate: "",
+  confirmedBy: "",
+  siteComment: "",
+  items: [],
+  photos: [],
+  notes: [],
+};
+
+// 回答に関する設定（巡回/パトロール回答編集で設定する）
+// hearingRequired … 巡回実施時の「ヒアリング・所見」を必須回答にするか
+export const INITIAL_ANSWER_SETTINGS = { hearingRequired: false };
+
+// 一覧の検索条件の初期値
+export const EMPTY_SEARCH = { keyword: "", company: "", primaryCompany: "" };
+
+// 巡回が実施済みか（予定だけ登録され未実施の記録は実施日を持たない）
+export const isDone = (r) => !!r.date;
 
 // 元請確認が済んでいるか
 export const isConfirmed = (r) => !!r.confirmedDate;

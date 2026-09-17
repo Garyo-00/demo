@@ -18,6 +18,7 @@ import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import { usePatrol } from "../components/patrol/PatrolContext.jsx";
 import PatrolStatusChip from "../components/patrol/PatrolStatus.jsx";
 import PatrolNotes from "../components/patrol/PatrolNotes.jsx";
+import PatrolPrintSheet from "../components/patrol/PatrolPrintSheet.jsx";
 import { RATING_COLOR, fmtDate, isConfirmed } from "../patrolData.js";
 
 // ヘッダーの見出し付きセル
@@ -57,10 +58,11 @@ function SectionTitle({ children }) {
 export default function PatrolRecordDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getRecord, role, saveFixes, confirmRecord } = usePatrol();
+  const { getRecord, role, saveFixes, confirmRecord, resetListCond } = usePatrol();
   const record = getRecord(id);
 
   const confirmed = record ? isConfirmed(record) : false;
+  // 是正を行えるのは元請のみ（協力会社は閲覧と追記のみ）。
   // 元請確認前は元請ユーザーの確認画面として編集可。確認後は「是正入力」を押した間だけ編集可。
   const [fixMode, setFixMode] = useState(false);
   const [draft, setDraft] = useState(() => (record ? { items: record.items, photos: record.photos } : null));
@@ -89,7 +91,8 @@ export default function PatrolRecordDetail() {
     );
   }
 
-  const primeConfirming = !confirmed && role === "prime";
+  const canFix = role === "prime";
+  const primeConfirming = !confirmed && canFix;
   const editing = primeConfirming || fixMode;
 
   const setItemFix = (no, fix) =>
@@ -121,7 +124,14 @@ export default function PatrolRecordDetail() {
   return (
     <>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-        <Button size="small" startIcon={<ArrowBackIcon />} onClick={() => navigate("/patrol/records")}>
+        <Button
+          size="small"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => {
+            resetListCond();
+            navigate("/patrol/records");
+          }}
+        >
           一覧へ戻る
         </Button>
         <PatrolStatusChip record={record} />
@@ -155,19 +165,22 @@ export default function PatrolRecordDetail() {
 
           {!confirmed && role === "partner" && (
             <Alert severity="info" sx={{ mt: 2, fontSize: 12.5, py: 0.5 }}>
-              元請確認待ちです。元請ユーザーが元請確認を行うと、是正入力ができるようになります。
+              元請確認待ちです。元請確認と是正入力は元請ユーザーが行います。
             </Alert>
           )}
           {confirmed && !fixMode && (
             <Alert severity="success" sx={{ mt: 2, fontSize: 12.5, py: 0.5 }}>
-              元請確認済みです。作業所コメントは編集できません。是正内容は「是正入力」からいつでも何度でも更新できます。
+              元請確認済みです。作業所コメントは編集できません。
+              {canFix
+                ? "是正内容は「是正入力」からいつでも何度でも更新できます。"
+                : "是正入力は元請ユーザーのみ行えます。"}
             </Alert>
           )}
 
           {/* チェック項目 */}
           <SectionTitle>巡回項目</SectionTitle>
           <Typography color="text.secondary" sx={{ fontSize: 11.5, mb: 1 }}>
-            「要改善」の項目に是正内容を入力できます（任意）。
+            各項目に是正内容を入力できます（任意・元請のみ）。
           </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
             {draft.items.map((it) => (
@@ -192,8 +205,8 @@ export default function PatrolRecordDetail() {
                   </Box>
                 )}
 
-                {/* 是正内容は「要改善」の項目にだけ出す。元請確認時は任意入力、確認後は「是正入力」中のみ編集できる。 */}
-                {((editing && it.rating === "要改善") || it.fix) && (
+                {/* 是正内容はすべての項目に用意する。元請確認時は任意入力、確認後は「是正入力」中のみ編集できる。 */}
+                {(editing || it.fix) && (
                   <Box sx={{ display: "flex", gap: 1.5, mt: 1, pl: { xs: 0, sm: 5 }, alignItems: "flex-start" }}>
                     <Typography sx={{ fontSize: 12, color: "text.secondary", width: 56, flex: "none", pt: 1 }}>是正内容</Typography>
                     {editing ? (
@@ -353,7 +366,7 @@ export default function PatrolRecordDetail() {
                   元請確認済みにする
                 </Button>
               )}
-              {confirmed && !fixMode && (
+              {confirmed && !fixMode && canFix && (
                 <Button size="small" variant="contained" onClick={() => setFixMode(true)}>
                   是正入力
                 </Button>
@@ -379,6 +392,9 @@ export default function PatrolRecordDetail() {
           </Box>
         </CardContent>
       </Card>
+
+      {/* 印刷用の帳票（画面には出さず、印刷時のみ用紙に出力する） */}
+      <PatrolPrintSheet record={record} />
 
       <Snackbar
         open={!!toast}

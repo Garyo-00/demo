@@ -42,9 +42,11 @@ export default function NoAccountQr() {
           この画面の要素は表示を戻したうえで用紙の先頭に寄せる。 */}
       <GlobalStyles
         styles={{
+          // 掲示はA4横。名前付きページにして他の帳票に影響させない。
+          "@page naQrLandscape": { size: "A4 landscape", margin: "12mm" },
           "@media print": {
             ".na-qr-root, .na-qr-root *": { visibility: "visible" },
-            ".na-qr-root": { position: "absolute", left: 0, top: 0, width: "100%", minHeight: 0 },
+            ".na-qr-root": { position: "absolute", left: 0, top: 0, width: "100%", minHeight: 0, page: "naQrLandscape" },
             ".na-qr-hide": { display: "none !important" },
           },
         }}

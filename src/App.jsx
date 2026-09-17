@@ -22,6 +22,11 @@ import WorkPlanNeoPlanDetail from "./pages/WorkPlanNeoPlanDetail.jsx";
 import PatrolLayout from "./components/PatrolLayout.jsx";
 import PatrolRecords from "./pages/PatrolRecords.jsx";
 import PatrolRecordDetail from "./pages/PatrolRecordDetail.jsx";
+import PatrolProviderRoute from "./components/patrol/PatrolProviderRoute.jsx";
+import PatrolRun from "./pages/PatrolRun.jsx";
+import PatrolQrSheet from "./pages/PatrolQrSheet.jsx";
+import PatrolItemSettings from "./pages/PatrolItemSettings.jsx";
+import PatrolAnswerSettings from "./pages/PatrolAnswerSettings.jsx";
 import WorkAdjustLayout from "./components/WorkAdjustLayout.jsx";
 import WorkAdjustSchedule from "./pages/WorkAdjustSchedule.jsx";
 import WorkAdjustReservation from "./pages/WorkAdjustReservation.jsx";
@@ -57,8 +62,6 @@ export default function App() {
       {/* 打合せサイン用QR読み取り後のサイン画面（サイドバー無しの独立ページ） */}
       <Route path="/workplan-neo/sign" element={<WorkPlanNeoSign />} />
       {/* アカウントなし。QRコード発行画面と、QRを読み取った先の画面（ログイン必須／不要）。 */}
-      <Route path="/no-account/owner-patrol" element={<NoAccountQr />} />
-      <Route path="/no-account/owner-patrol/:kind" element={<NoAccountPage />} />
       <Route path="/no-account/fire-permit" element={<NoAccountQr />} />
       <Route path="/no-account/fire-permit/:kind" element={<NoAccountPage />} />
       <Route path="/no-account/work-plan" element={<NoAccountPage />} />
@@ -95,11 +98,21 @@ export default function App() {
         <Route path="qr" element={<WorkPlanNeoQr />} />
         <Route path="manual" element={<WorkPlanNeoBlank />} />
       </Route>
-      {/* 巡回/パトロール。記録はQR読み取り時に作成されるため、一覧からの新規作成は無い。 */}
+      {/* 巡回/パトロール。記録はQR読み取り時に作成されるため、一覧からの新規作成は無い。
+          実施入力はサイドバー無しの独立ページだが、一覧と状態を共有する。 */}
+      <Route element={<PatrolProviderRoute />}>
+      {/* 巡回のQR発行と、その読み取り先の実施入力。kind は login（ログイン必須）／guest（ログイン不要）。
+          一覧・詳細と状態を共有するため、いずれも Provider の内側に置く。 */}
+      <Route path="/no-account/owner-patrol" element={<PatrolQrSheet />} />
+      <Route path="/no-account/owner-patrol/:kind" element={<PatrolRun />} />
       <Route path="/patrol" element={<PatrolLayout />}>
         <Route index element={<Navigate to="/patrol/records" replace />} />
         <Route path="records" element={<PatrolRecords />} />
         <Route path="records/:id" element={<PatrolRecordDetail />} />
+        {/* 設定系メニュー（元請のみ閲覧可） */}
+        <Route path="items" element={<PatrolItemSettings />} />
+        <Route path="answers" element={<PatrolAnswerSettings />} />
+      </Route>
       </Route>
       <Route path="/workadjust" element={<WorkAdjustLayout />}>
         <Route index element={<WorkAdjustSchedule />} />

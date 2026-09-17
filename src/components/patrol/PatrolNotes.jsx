@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
@@ -13,6 +13,8 @@ import {
   Typography,
 } from "@mui/material";
 import AttachFileIcon from "@mui/icons-material/AttachFile";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
@@ -34,7 +36,7 @@ function Thumb({ file, onPreview, onRemove }) {
       <Box
         component="button"
         type="button"
-        onClick={() => onPreview(file)}
+        onClick={onPreview}
         title={`${file.name} を拡大表示`}
         sx={{
           width: THUMB,
@@ -87,8 +89,14 @@ function Attachments({ files, onPreview, onRemove }) {
     <>
       {images.length > 0 && (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
-          {images.map((f) => (
-            <Thumb key={f.id} file={f} onPreview={onPreview} onRemove={onRemove && (() => onRemove(f))} />
+          {images.map((f, i) => (
+            <Thumb
+              key={f.id}
+              file={f}
+              // 同じ追記の画像をまとめて渡し、ダイアログ内で送り送りできるようにする
+              onPreview={() => onPreview(images, i)}
+              onRemove={onRemove && (() => onRemove(f))}
+            />
           ))}
         </Box>
       )}
@@ -157,24 +165,59 @@ function FilePicker({ files, onChange, onPreview }) {
   );
 }
 
-// 画像の拡大ダイアログ
-function ImagePreview({ file, onClose }) {
+/**
+ * 画像の拡大ダイアログ。
+ * 同じ追記に複数の画像が添付されている場合は、前後に送って閲覧できる（左右キーでも移動）。
+ */
+function ImagePreview({ gallery, onMove, onClose }) {
+  const files = gallery?.files || [];
+  const index = gallery?.index ?? 0;
+  const file = files[index];
+  const many = files.length > 1;
+
+  useEffect(() => {
+    if (!gallery) return undefined;
+    const onKey = (e) => {
+      if (e.key === "ArrowLeft") onMove(-1);
+      if (e.key === "ArrowRight") onMove(1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [gallery, onMove]);
+
   return (
-    <Dialog open={!!file} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={!!gallery} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ fontSize: 14, pr: 6 }}>
         {file?.name}
+        {many && (
+          <Box component="span" sx={{ ml: 1, fontSize: 12, color: "text.secondary" }}>
+            {index + 1} / {files.length}
+          </Box>
+        )}
         <IconButton size="small" onClick={onClose} aria-label="閉じる" sx={{ position: "absolute", top: 12, right: 12 }}>
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
-      <DialogContent sx={{ display: "flex", justifyContent: "center", bgcolor: "#f7f8fb" }}>
-        {file && (
-          <Box
-            component="img"
-            src={file.url}
-            alt={file.name}
-            sx={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain" }}
-          />
+      <DialogContent sx={{ display: "flex", alignItems: "center", gap: 1, bgcolor: "#f7f8fb" }}>
+        {many && (
+          <IconButton onClick={() => onMove(-1)} disabled={index === 0} aria-label="前の画像">
+            <ChevronLeftIcon />
+          </IconButton>
+        )}
+        <Box sx={{ flex: 1, display: "flex", justifyContent: "center", minWidth: 0 }}>
+          {file && (
+            <Box
+              component="img"
+              src={file.url}
+              alt={file.name}
+              sx={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain" }}
+            />
+          )}
+        </Box>
+        {many && (
+          <IconButton onClick={() => onMove(1)} disabled={index === files.length - 1} aria-label="次の画像">
+            <ChevronRightIcon />
+          </IconButton>
         )}
       </DialogContent>
       <DialogActions>
@@ -202,7 +245,15 @@ export default function PatrolNotes({ record, onSaved }) {
   const [editText, setEditText] = useState("");
   const [editFiles, setEditFiles] = useState([]);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  // 拡大表示中の画像。{ files, index } の形で保持し、ダイアログ内で前後に送る。
   const [preview, setPreview] = useState(null);
+  const openPreview = (files, index) => setPreview({ files, index });
+  const movePreview = (d) =>
+    setPreview((p) => {
+      if (!p) return p;
+      const next = p.index + d;
+      return next < 0 || next >= p.files.length ? p : { ...p, index: next };
+    });
 
   const notes = record.notes || [];
   const canSubmit = (t, f) => !!t.trim() || f.length > 0;
@@ -279,7 +330,7 @@ export default function PatrolNotes({ record, onSaved }) {
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                   />
-                  <FilePicker files={editFiles} onChange={setEditFiles} onPreview={setPreview} />
+                  <FilePicker files={editFiles} onChange={setEditFiles} onPreview={openPreview} />
                   <Box sx={{ display: "flex", gap: 1, mt: 1.5 }}>
                     <Button size="small" variant="contained" onClick={saveEdit} disabled={!canSubmit(editText, editFiles)}>
                       更新
@@ -296,7 +347,7 @@ export default function PatrolNotes({ record, onSaved }) {
                       {n.text}
                     </Typography>
                   )}
-                  <Attachments files={n.files} onPreview={setPreview} />
+                  <Attachments files={n.files} onPreview={openPreview} />
                 </>
               )}
             </Box>
@@ -316,14 +367,14 @@ export default function PatrolNotes({ record, onSaved }) {
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
-          <FilePicker files={files} onChange={setFiles} onPreview={setPreview} />
+          <FilePicker files={files} onChange={setFiles} onPreview={openPreview} />
           <Button size="small" variant="contained" sx={{ mt: 1.5 }} onClick={submit} disabled={!canSubmit(text, files)}>
             追記を登録
           </Button>
         </Box>
       </Box>
 
-      <ImagePreview file={preview} onClose={() => setPreview(null)} />
+      <ImagePreview gallery={preview} onMove={movePreview} onClose={() => setPreview(null)} />
 
       <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
         <DialogTitle sx={{ fontSize: 15 }}>追記を削除しますか？</DialogTitle>

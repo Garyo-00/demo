@@ -19,17 +19,27 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import FactCheckOutlinedIcon from "@mui/icons-material/FactCheckOutlined";
+import ChecklistOutlinedIcon from "@mui/icons-material/ChecklistOutlined";
+import RateReviewOutlinedIcon from "@mui/icons-material/RateReviewOutlined";
+import QrCode2OutlinedIcon from "@mui/icons-material/QrCode2Outlined";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import MenuIcon from "@mui/icons-material/Menu";
-import { PatrolProvider, usePatrol } from "./patrol/PatrolContext.jsx";
+import { usePatrol } from "./patrol/PatrolContext.jsx";
 import { PATROL_PROJECT } from "../patrolData.js";
 
 const WIDTH = 232;
 const MINI = 64;
 
-const NAV = [{ key: "records", label: "巡回パトロール一覧", to: "/patrol/records", Icon: FactCheckOutlinedIcon }];
+// prime: true のメニューは元請ユーザーのみ。協力会社（職長）には表示しない。
+const NAV = [
+  { key: "records", label: "巡回パトロール一覧", to: "/patrol/records", Icon: FactCheckOutlinedIcon },
+  { key: "items", label: "巡回/パトロール項目編集", to: "/patrol/items", Icon: ChecklistOutlinedIcon, prime: true },
+  { key: "answers", label: "巡回/パトロール回答編集", to: "/patrol/answers", Icon: RateReviewOutlinedIcon, prime: true },
+  // QR発行は「アカウントなし」カテゴリの画面（/no-account/owner-patrol）が正。ここはその動線。
+  { key: "qr", label: "QRコード", to: "/no-account/owner-patrol", Icon: QrCode2OutlinedIcon, prime: true },
+];
 
 function RoleSwitch() {
   const { role, setRole } = usePatrol();
@@ -71,6 +81,7 @@ function RoleSwitch() {
 function PatrolLayoutInner() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { role } = usePatrol();
   // 768px 以下はサイドメニューをドロワー（一時表示）に切り替える
   const mobile = useMediaQuery("(max-width:768px)");
   const [collapsed, setCollapsed] = useState(false);
@@ -134,7 +145,7 @@ function PatrolLayoutInner() {
         <Divider />
 
         <List sx={{ p: 1, flex: 1, minHeight: 0, overflowY: "auto" }}>
-          {NAV.map(({ key, label, to, Icon }) => {
+          {NAV.filter((n) => !n.prime || role === "prime").map(({ key, label, to, Icon }) => {
             const active = pathname.startsWith(to);
             return (
               <Tooltip key={key} title={mini ? label : ""} placement="right">
@@ -234,9 +245,5 @@ function PatrolLayoutInner() {
 }
 
 export default function PatrolLayout() {
-  return (
-    <PatrolProvider>
-      <PatrolLayoutInner />
-    </PatrolProvider>
-  );
+  return <PatrolLayoutInner />;
 }
