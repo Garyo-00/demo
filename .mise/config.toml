@@ -1,3 +1,10 @@
 [tools]
 node = "24.21.0"
 pnpm = "12.4.2"
+
+[env]
+_.file = ".env"
+
+[tasks.up]
+description = "開発サーバー起動 (pnpm dev)"
+run = "pnpm dev"

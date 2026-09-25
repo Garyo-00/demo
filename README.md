@@ -7,10 +7,10 @@
 ```bash
 cd ~/Documents/demo
 pnpm install       # 依存パッケージのインストール（初回のみ）
-pnpm dev           # 開発サーバー起動 → http://localhost:3000/
+mise run up        # 開発サーバー起動 (pnpm dev) → http://localhost:3999/
 ```
 
-`pnpm dev` を実行するとブラウザが自動で開きます。ルート（`/`）がデモ画面一覧、`/app` がダッシュボードです。
+`mise run up`（または `pnpm dev`）を実行するとブラウザが自動で開きます。ポートは `.env` の `DEV_PORT`（既定 3999）で変更できます。ルート（`/`）がデモ画面一覧、`/app` がダッシュボードです。
 
 ## その他コマンド
 
@@ -24,7 +24,7 @@ pnpm preview       # ビルド結果をローカルで確認
 ```
 demo/
 ├─ index.html            … Vite エントリ
-├─ vite.config.js        … dev サーバー（port 3000 / 自動起動）
+├─ vite.config.js        … dev サーバー（port は DEV_PORT / 自動起動）
 ├─ package.json
 └─ src/
    ├─ main.jsx           … エントリ（BrowserRouter）
