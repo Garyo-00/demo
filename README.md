@@ -52,6 +52,6 @@ demo/
   - テンプレート設定（`/workplan-neo/templates`・`/new`・`/:id`）。
   - 作業配置図設定・承認フロー設定・マニュアルは空ページ（`WorkPlanNeoBlank.jsx`）。
   - データ定義は `src/workPlanNeoData.js`（テンプレート）と `src/workPlanNeoPlanData.js`（機械・承認フロー・作業計画書）、スタイルは `src/components/wpn/wpn.css`（`.wpn-` 接頭辞で既存デモと分離）。仕様メモは `docs/workplan/`。
-- **KY-NEXT（/kynext）** … 本番アプリ `kynext/` の画面構成を静的データで再現したデモ。KYシート一覧・作成／修正・詳細（元請確認・作業員チェック・職長チェックリスト）・KY出力・QRコード発行・ダイレクト連携・設定（テンプレート編集）・ログイン／現場選択。データは `src/kynextData.js`、状態は `src/components/kynext/KynextContext.jsx`、対応表は `docs/kynext/README.md`。
+- **KY-NEXT（/kynext）** … 本番アプリ KY-NEXT の画面構成を静的データで再現したデモ（本番ソースはこのリポジトリに含めない）。KYシート一覧・作成／修正・詳細（元請確認・作業員チェック・職長チェックリスト）・KY出力・QRコード発行・ダイレクト連携・設定（テンプレート編集）・ログイン／現場選択。データは `src/kynextData.js`、状態は `src/components/kynext/KynextContext.jsx`、対応表は `docs/kynext/README.md`。
 - **ダッシュボード（/app）** … 機械の当日サマリ4カード、仮設・その他4カード、月例/組立後等点検3カード。各サマリカードの「点検記録確認」リンクで、種別・状態で絞り込んだ一覧（`/app/inspection`）へ遷移。
 - データはすべて `src/data.js` 内のサンプル値（バックエンド不要）。

@@ -1,7 +1,7 @@
 # KY-NEXT（デジタルKY）画面デモ — 本番との対応
 
-> 位置づけ：本番アプリ `kynext/`（TypeScript / refine / urql・GraphQL / 社内パッケージ `@repo/*`）の画面構成・見た目・操作フローを、**静的データと React state だけで** `/kynext` 配下に再現した要件確認用モック。
-> 本番のソースはこのリポジトリの `kynext/` に置いてあるが、社内パッケージ（`@repo/ui`, `@repo/features`, `@repo/graphql` など）が無いため単体では動かない。デモはそれらを MUI 標準部品で置き換えている。
+> 位置づけ：本番アプリ KY-NEXT（TypeScript / refine / urql・GraphQL / 社内パッケージ `@repo/*`）の画面構成・見た目・操作フローを、**静的データと React state だけで** `/kynext` 配下に再現した要件確認用モック。
+> 本番のソースはこのリポジトリには含めていない（作成時に参照した本番リポジトリの `apps/kynext/src/` を下表の「本番のソース」列で示す）。本番は社内パッケージ（`@repo/ui`, `@repo/features`, `@repo/graphql` など）に依存しており、デモはそれらを MUI 標準部品で置き換えている。
 
 ---
 
@@ -25,7 +25,7 @@ src/
 
 ## 2. 画面と本番ソースの対応
 
-| 画面 | デモのパス | デモのファイル | 本番のソース（`kynext/src/`） |
+| 画面 | デモのパス | デモのファイル | 本番のソース（本番リポジトリ `kynext/src/` 配下） |
 |---|---|---|---|
 | ログイン | `/kynext/login` | `pages/kynext/KynextLogin.jsx` | `pages/auth/login.tsx`, `components/Auth/Login` |
 | 現場選択 | `/kynext/projects/select` | `pages/kynext/KynextProjectSelect.jsx` | `pages/projects/select.tsx`, `features/project/ProjectSelectPaper.tsx` |
