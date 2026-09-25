@@ -47,6 +47,25 @@ import MachineDetail from "./pages/MachineDetail.jsx";
 import MachineForm from "./pages/MachineForm.jsx";
 import InspectionRun from "./pages/InspectionRun.jsx";
 import WorkPlanOutputPreview from "./pages/WorkPlanOutputPreview.jsx";
+import KynextProviderRoute from "./components/kynext/KynextProviderRoute.jsx";
+import KynextLayout from "./components/KynextLayout.jsx";
+import KynextSheets from "./pages/kynext/KynextSheets.jsx";
+import KynextExport from "./pages/kynext/KynextExport.jsx";
+import KynextQrCodes from "./pages/kynext/KynextQrCodes.jsx";
+import KynextDirect from "./pages/kynext/KynextDirect.jsx";
+import KynextTemplates from "./pages/kynext/KynextTemplates.jsx";
+import KynextTemplateDetail from "./pages/kynext/KynextTemplateDetail.jsx";
+import KynextSheetReference from "./pages/kynext/KynextSheetReference.jsx";
+import KynextSheetForm from "./pages/kynext/KynextSheetForm.jsx";
+import KynextSheetDetail from "./pages/kynext/KynextSheetDetail.jsx";
+import KynextSafetyInstructions from "./pages/kynext/KynextSafetyInstructions.jsx";
+import KynextChecklist from "./pages/kynext/KynextChecklist.jsx";
+import KynextConfirmSign from "./pages/kynext/KynextConfirmSign.jsx";
+import KynextWorkerCheck from "./pages/kynext/KynextWorkerCheck.jsx";
+import KynextSheetQr from "./pages/kynext/KynextSheetQr.jsx";
+import KynextProjectDetail from "./pages/kynext/KynextProjectDetail.jsx";
+import KynextProjectSelect from "./pages/kynext/KynextProjectSelect.jsx";
+import KynextLogin from "./pages/kynext/KynextLogin.jsx";
 
 export default function App() {
   return (
@@ -113,6 +132,35 @@ export default function App() {
         <Route path="items" element={<PatrolItemSettings />} />
         <Route path="answers" element={<PatrolAnswerSettings />} />
       </Route>
+      </Route>
+      {/* KY-NEXT（デジタルKY）。本番 kynext/ の router.tsx と同じ URL 構成を /kynext 配下に置く。
+          ログイン・現場選択・シート単体のQRはサイドバー無しの独立ページだが、シート等の状態は共有する。 */}
+      <Route element={<KynextProviderRoute />}>
+        <Route path="/kynext/login" element={<KynextLogin />} />
+        <Route path="/kynext/projects/select" element={<KynextProjectSelect />} />
+        <Route path="/kynext/ky-sheets/:id/qr-code" element={<KynextSheetQr />} />
+        <Route path="/kynext" element={<KynextLayout />}>
+          <Route index element={<KynextSheets />} />
+          <Route path="export" element={<KynextExport />} />
+          <Route path="ky-sheets/qr-codes" element={<KynextQrCodes />} />
+          <Route path="integration/direct" element={<KynextDirect />} />
+          <Route path="templates" element={<KynextTemplates />} />
+          <Route path="templates/:template" element={<KynextTemplateDetail readOnly />} />
+          <Route path="templates/:template/edit" element={<KynextTemplateDetail />} />
+          <Route path="ky-sheets/create/reference" element={<KynextSheetReference />} />
+          <Route path="ky-sheets/create" element={<KynextSheetForm mode="create" />} />
+          <Route path="ky-sheets/:id" element={<KynextSheetDetail />} />
+          <Route path="ky-sheets/:id/edit" element={<KynextSheetForm mode="edit" />} />
+          <Route path="ky-sheets/:id/safety-instructions" element={<KynextSafetyInstructions />} />
+          <Route path="ky-sheets/:id/checklists/:checklist" element={<KynextChecklist />} />
+          <Route path="ky-sheets/:id/create-confirm/sign" element={<KynextConfirmSign kind="create" />} />
+          <Route path="ky-sheets/:id/complete-confirm/sign" element={<KynextConfirmSign kind="complete" />} />
+          <Route path="ky-sheets/:id/worker-check/procedures" element={<KynextWorkerCheck step="procedures" />} />
+          <Route path="ky-sheets/:id/worker-check/risks" element={<KynextWorkerCheck step="risks" />} />
+          <Route path="ky-sheets/:id/worker-check/checklist" element={<KynextWorkerCheck step="checklist" />} />
+          <Route path="ky-sheets/:id/worker-check/sign" element={<KynextWorkerCheck step="sign" />} />
+          <Route path="projects/detail" element={<KynextProjectDetail />} />
+        </Route>
       </Route>
       <Route path="/workadjust" element={<WorkAdjustLayout />}>
         <Route index element={<WorkAdjustSchedule />} />

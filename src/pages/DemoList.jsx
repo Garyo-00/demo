@@ -24,6 +24,16 @@ const GROUPS = [
     items: [{ to: "/patrol/records", title: "巡回パトロール一覧" }],
   },
   {
+    // 本番 kynext/（デジタルKY）を静的データで再現したデモ
+    category: "KY-NEXT（デジタルKY）",
+    items: [
+      { to: "/kynext", title: "KYシート一覧" },
+      { to: "/kynext/ky-sheets/create/reference", title: "KYシート作成" },
+      { to: "/kynext/templates", title: "設定（テンプレート）" },
+      { to: "/kynext/login", title: "ログイン・現場選択" },
+    ],
+  },
+  {
     // ログイン不要でQRコードから開く画面群
     category: "アカウントなし",
     items: NO_ACCOUNT_PAGES.map(({ to, title }) => ({ to, title })),
