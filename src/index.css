@@ -69,6 +69,10 @@ tr:last-child td{border-bottom:none;}
   .side,.topbar,.qr-toolbar,.qr-hint{display:none !important;}
   .qr-page{page:qrLandscape;}
   .qr-sheet{border:0;}
+  /* 配置図・帳票プレビューの印刷ルール（body * を visibility:hidden）に巻き込まれて
+     QRシートが白紙で出ていたため、QRシートだけ表示し、用紙の先頭に寄せる */
+  .qr-page,.qr-page *{visibility:visible;}
+  .qr-page{position:absolute;left:0;top:0;width:100%;background:#fff;}
 }
 
 /* ===== toolbar / actions ===== */
