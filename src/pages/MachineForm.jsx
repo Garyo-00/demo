@@ -161,7 +161,12 @@ export default function MachineForm() {
               </TextField>
             </Row>
             <Row label="機械名">
-              <TextField fullWidth value={m.name} onChange={(e) => set({ name: e.target.value })} />
+              <TextField
+                fullWidth
+                placeholder="例：油圧ショベル 0.7m³"
+                value={m.name}
+                onChange={(e) => set({ name: e.target.value })}
+              />
             </Row>
           </Section>
         )}
@@ -169,17 +174,39 @@ export default function MachineForm() {
         <Section title={editing ? "受理証の内容" : "持込機械受理証の内容"}>
           {editing && (
             <Row label="機種">
-              <TextField fullWidth value={m.name} onChange={(e) => set({ name: e.target.value })} />
+              <TextField
+                fullWidth
+                placeholder="例：ラフテレーンクレーン 25t"
+                value={m.name}
+                onChange={(e) => set({ name: e.target.value })}
+              />
             </Row>
           )}
           <Row label="現場内呼称">
-            <TextField fullWidth value={m.alias} onChange={(e) => set({ alias: e.target.value })} />
+            <TextField
+              fullWidth
+              placeholder="例：0.7バックホウ 1号機"
+              value={m.alias}
+              onChange={(e) => set({ alias: e.target.value })}
+            />
           </Row>
           <Row label="持込会社名 *">
-            <TextField fullWidth required value={m.company} onChange={(e) => set({ company: e.target.value })} />
+            <TextField
+              fullWidth
+              required
+              placeholder="例：株式会社Arch"
+              value={m.company}
+              onChange={(e) => set({ company: e.target.value })}
+            />
           </Row>
           <Row label="運転者（取扱者）*">
-            <TextField fullWidth required value={m.operator} onChange={(e) => set({ operator: e.target.value })} />
+            <TextField
+              fullWidth
+              required
+              placeholder="例：建設 太郎"
+              value={m.operator}
+              onChange={(e) => set({ operator: e.target.value })}
+            />
           </Row>
           <Row label="使用期間 *">
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -201,7 +228,13 @@ export default function MachineForm() {
             </Box>
           </Row>
           <Row label="一次会社名 *">
-            <TextField fullWidth required value={m.primary} onChange={(e) => set({ primary: e.target.value })} />
+            <TextField
+              fullWidth
+              required
+              placeholder="例：Arch建設"
+              value={m.primary}
+              onChange={(e) => set({ primary: e.target.value })}
+            />
           </Row>
         </Section>
 
@@ -222,19 +255,44 @@ export default function MachineForm() {
           {entryMode === "fields" && (
             <>
               <Row label="使用会社代表者名">
-                <TextField fullWidth value={m.repName} onChange={(e) => set({ repName: e.target.value })} />
+                <TextField
+                  fullWidth
+                  placeholder="例：有明 一郎"
+                  value={m.repName}
+                  onChange={(e) => set({ repName: e.target.value })}
+                />
               </Row>
               <Row label="メーカー">
-                <TextField fullWidth value={m.maker} onChange={(e) => set({ maker: e.target.value })} />
+                <TextField
+                  fullWidth
+                  placeholder="例：コマツ"
+                  value={m.maker}
+                  onChange={(e) => set({ maker: e.target.value })}
+                />
               </Row>
               <Row label="規格・性能">
-                <TextField fullWidth value={m.spec} onChange={(e) => set({ spec: e.target.value })} />
+                <TextField
+                  fullWidth
+                  placeholder="例：バケット容量 0.7m³／機械質量 20t"
+                  value={m.spec}
+                  onChange={(e) => set({ spec: e.target.value })}
+                />
               </Row>
               <Row label="製造年（西暦）">
-                <TextField value={m.madeYear} onChange={(e) => set({ madeYear: e.target.value })} sx={{ width: 140 }} />
+                <TextField
+                  placeholder="例：2021"
+                  value={m.madeYear}
+                  onChange={(e) => set({ madeYear: e.target.value })}
+                  sx={{ width: 140 }}
+                />
               </Row>
               <Row label="使用場所">
-                <TextField fullWidth value={m.usePlace} onChange={(e) => set({ usePlace: e.target.value })} />
+                <TextField
+                  fullWidth
+                  placeholder="例：B1F 躯体工事エリア"
+                  value={m.usePlace}
+                  onChange={(e) => set({ usePlace: e.target.value })}
+                />
               </Row>
               <Row label="自動車検査証有効期限">
                 <TextField
@@ -246,13 +304,14 @@ export default function MachineForm() {
                 />
               </Row>
               {[
-                ["person", "対人"],
-                ["object", "対物"],
-                ["passenger", "搭乗者"],
-                ["other", "その他"],
-              ].map(([k, label]) => (
+                ["person", "対人", "100000"],
+                ["object", "対物", "30000"],
+                ["passenger", "搭乗者", "10000"],
+                ["other", "その他", "0"],
+              ].map(([k, label, sample]) => (
                 <Row key={k} label={`任意保険加入額 ${label}（千円）`}>
                   <TextField
+                    placeholder={`例：${sample}`}
                     value={m.insurance[k]}
                     onChange={(e) => set({ insurance: { ...m.insurance, [k]: e.target.value } })}
                     sx={{ width: 140 }}
