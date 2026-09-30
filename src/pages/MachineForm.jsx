@@ -18,10 +18,12 @@ import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useMachines } from "../components/BroughtMachineContext.jsx";
+import AnnualCheckEditor from "../components/AnnualCheckEditor.jsx";
 import {
+  ANNUAL_KINDS,
   BM_CATEGORIES,
   INSPECTION_TYPES,
-  SPECIFIC_INSPECTION,
+  emptyAnnualChecks,
   fmt,
   specificInspection,
 } from "../broughtMachineData.js";
@@ -86,6 +88,7 @@ function emptyMachine() {
     vehicleInspExpiry: "",
     insurance: { person: "", object: "", passenger: "", other: "" },
     inspections: [newInspection()],
+    annualChecks: emptyAnnualChecks(),
     approval: { status: "", applyNo: "", applyDate: "", applicant: "" },
   };
 }
@@ -114,7 +117,8 @@ export default function MachineForm() {
   const setIns = (iid, patch) =>
     set({ inspections: m.inspections.map((i) => (i.id === iid ? { ...i, ...patch } : i)) });
 
-  const preview = specificInspection({ inspections: m.inspections });
+  const preview = specificInspection(m);
+  const annualChecks = m.annualChecks || emptyAnnualChecks();
 
   function submit() {
     if (!m.company.trim() || !m.operator.trim() || !m.useFrom || !m.useTo || !m.primary.trim()) {
@@ -329,14 +333,25 @@ export default function MachineForm() {
           )}
         </Section>
 
-        <Section title="点検記録">
-          {/* 特定自主検査を選ぶと、点検月の1年後が次回期限になる */}
+        {/* 年1回の点検は点検記録とは別枠。実施を登録すると次回予定が自動で作られる。 */}
+        <Section title="年次点検・特定自主検査">
           {preview.state !== "none" && (
             <Alert severity={preview.state === "overdue" ? "error" : "info"} sx={{ mb: 2 }}>
-              特定自主検査の次回期限は <strong>{fmt(preview.due)}</strong> になります
-              （直近の点検月 {fmt(preview.latest)} の1年後）。期限の30日前から通知します。
+              特定自主検査の次回期限は <strong>{fmt(preview.due)}</strong> です
+              （直近の実施 {fmt(preview.latest)} の1年後）。期限の30日前から通知します。
             </Alert>
           )}
+          {ANNUAL_KINDS.map(({ key, label }) => (
+            <AnnualCheckEditor
+              key={key}
+              label={label}
+              list={annualChecks[key]}
+              onChange={(next) => set({ annualChecks: { ...annualChecks, [key]: next } })}
+            />
+          ))}
+        </Section>
+
+        <Section title="点検記録">
 
           {m.inspections.map((i, idx) => (
             <Box key={i.id} sx={{ mb: 2 }}>
@@ -372,11 +387,7 @@ export default function MachineForm() {
                 value={i.month}
                 onChange={(e) => setIns(i.id, { month: e.target.value })}
                 slotProps={{ inputLabel: { shrink: true } }}
-                helperText={
-                  i.type === SPECIFIC_INSPECTION
-                    ? "この月の1日に実施したものとして次回期限を計算します"
-                    : " "
-                }
+                helperText=" "
                 sx={{ mb: 1 }}
               />
               <Button variant="outlined" size="small" onClick={() => setIns(i.id, { file: "点検記録.pdf" })}>

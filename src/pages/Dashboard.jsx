@@ -69,7 +69,7 @@ function CardGrid({ columns = 4, children }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  // 特定自主検査は期限の30日前から通知する
+  // 年次点検・特定自主検査は期限の30日前から通知する
   const insp = inspectionSummary(useMachines().machines);
 
   // 点検記録確認へ（種別・状態で絞り込み）
@@ -106,7 +106,7 @@ export default function Dashboard() {
         <SummaryCard label="組立後等点検実施数" value={ASSEMBLY.done} unit="件" tone="ok" onLink={() => go(null, null)} />
       </CardGrid>
 
-      <SectionTitle>特定自主検査 ｜ 期限管理</SectionTitle>
+      <SectionTitle>年次点検・特定自主検査 ｜ 期限管理</SectionTitle>
       <CardGrid columns={3}>
         <SummaryCard
           label="期限超過"
@@ -124,12 +124,13 @@ export default function Dashboard() {
           onLink={() => navigate("/app/machines?attention=1")}
           linkLabel="持込機械へ"
         />
+        {/* 記録なしは期限の絞り込み対象外のため、一覧は絞り込まずに開く */}
         <SummaryCard
           label="検査記録なし"
           value={insp.none}
           unit="台"
           tone="idle"
-          onLink={() => navigate("/app/machines?attention=1")}
+          onLink={() => navigate("/app/machines")}
           linkLabel="持込機械へ"
         />
       </CardGrid>

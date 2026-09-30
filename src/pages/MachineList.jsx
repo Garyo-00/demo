@@ -26,6 +26,8 @@ import {
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
+import WarningIcon from "@mui/icons-material/Warning";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import { useMachines } from "../components/BroughtMachineContext.jsx";
 import {
   BM_CATEGORIES,
@@ -35,6 +37,8 @@ import {
   BM_SCOPES,
   BM_TAGS,
   NOTIFY_DAYS_BEFORE,
+  annualAlert,
+  fmt,
   inPeriod,
   inspectionSummary,
   needsAttention,
@@ -51,6 +55,33 @@ const EMPTY = {
   tag: "",
   scope: "inPeriod",
 };
+
+/**
+ * 一覧のアラート列。年次点検・特定自主検査の次回期限で出し分ける。
+ * 期限が設定されていれば通知アイコン、30日以内または期限超過なら警告アイコン。
+ */
+function AlertIcon({ machine }) {
+  const { state, items } = annualAlert(machine);
+  if (state === "none") return null;
+
+  // ツールチップには種別ごとの期限を並べる
+  const title = items
+    .map((i) => {
+      const when = i.days < 0 ? `${Math.abs(i.days)}日超過` : `あと${i.days}日`;
+      return `${i.label}：${fmt(i.due)}（${when}）`;
+    })
+    .join(" / ");
+
+  return (
+    <Tooltip title={title}>
+      {state === "warn" ? (
+        <WarningIcon fontSize="small" sx={{ color: "#EA3323", display: "block", mx: "auto" }} />
+      ) : (
+        <NotificationsActiveIcon fontSize="small" sx={{ display: "block", mx: "auto" }} />
+      )}
+    </Tooltip>
+  );
+}
 
 export default function MachineList() {
   const navigate = useNavigate();
@@ -100,7 +131,7 @@ export default function MachineList() {
         持込機械一覧
       </Typography>
 
-      {/* 特定自主検査の通知。期限の30日前から出す */}
+      {/* 年次点検・特定自主検査の通知。期限の30日前から出す */}
       {(summary.overdue > 0 || summary.due > 0) && !attentionOnly && (
         <Alert
           severity={summary.overdue > 0 ? "error" : "warning"}
@@ -111,7 +142,7 @@ export default function MachineList() {
             </Button>
           }
         >
-          特定自主検査の期限が近い機械があります。
+          年次点検・特定自主検査の期限が近い機械があります。
           {summary.overdue > 0 && `期限超過 ${summary.overdue} 台。`}
           {summary.due > 0 && `${NOTIFY_DAYS_BEFORE}日以内 ${summary.due} 台。`}
         </Alert>
@@ -126,7 +157,7 @@ export default function MachineList() {
             </Button>
           }
         >
-          特定自主検査の対応が必要な機械だけを表示しています。
+          年次点検・特定自主検査の対応が必要な機械だけを表示しています。
         </Alert>
       )}
 
@@ -252,6 +283,7 @@ export default function MachineList() {
                     slotProps={{ input: { "aria-label": "全選択" } }}
                   />
                 </TableCell>
+                <TableCell sx={{ width: 64 }} align="center">アラート</TableCell>
                 <TableCell>カテゴリ</TableCell>
                 <TableCell>機械名</TableCell>
                 <TableCell>現場内呼称</TableCell>
@@ -268,7 +300,7 @@ export default function MachineList() {
             <TableBody>
               {page.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={12} align="center" sx={{ color: "text.secondary", py: 5 }}>
+                  <TableCell colSpan={13} align="center" sx={{ color: "text.secondary", py: 5 }}>
                     条件に一致する持込機械はありません。
                   </TableCell>
                 </TableRow>
@@ -282,6 +314,9 @@ export default function MachineList() {
                       onChange={() => toggle(m.id)}
                       slotProps={{ input: { "aria-label": m.name } }}
                     />
+                  </TableCell>
+                  <TableCell align="center">
+                    <AlertIcon machine={m} />
                   </TableCell>
                   <TableCell>{m.category}</TableCell>
                   <TableCell>{m.name}</TableCell>

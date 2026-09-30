@@ -18,7 +18,7 @@ import { useMachines } from "../components/BroughtMachineContext.jsx";
 import {
   INSPECTION_STATE,
   NOTIFY_DAYS_BEFORE,
-  SPECIFIC_INSPECTION,
+  ANNUAL_KINDS,
   fmt,
   specificInspection,
 } from "../broughtMachineData.js";
@@ -125,6 +125,56 @@ export default function MachineDetail() {
           />
         </Section>
 
+        {/* 年1回の点検。実施済みの履歴と、自動で作られた次回予定を並べる。 */}
+        <Section title="年次点検・特定自主検査">
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ width: "22%" }}>種別</TableCell>
+                  <TableCell sx={{ width: "16%" }}>状態</TableCell>
+                  <TableCell sx={{ width: "22%" }}>実施年月／予定</TableCell>
+                  <TableCell>記録ファイル</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {ANNUAL_KINDS.flatMap(({ key, label }) => {
+                  const rows = (m.annualChecks?.[key] || [])
+                    .slice()
+                    .sort((a, b) => a.ym.localeCompare(b.ym));
+                  if (rows.length === 0) {
+                    return [
+                      <TableRow key={key}>
+                        <TableCell>{label}</TableCell>
+                        <TableCell colSpan={3} sx={{ color: "text.secondary" }}>
+                          記録なし
+                        </TableCell>
+                      </TableRow>,
+                    ];
+                  }
+                  return rows.map((r, idx) => (
+                    <TableRow key={`${key}${r.id}`}>
+                      <TableCell>{idx === 0 ? label : ""}</TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={r.done ? "実施済" : "次回予定"}
+                          color={r.done ? "success" : "warning"}
+                          variant={r.done ? "filled" : "outlined"}
+                        />
+                      </TableCell>
+                      <TableCell>{fmt(r.ym)}</TableCell>
+                      <TableCell sx={{ color: r.file ? "inherit" : "text.secondary" }}>
+                        {r.file || (r.done ? "ファイルなし" : "—")}
+                      </TableCell>
+                    </TableRow>
+                  ));
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Section>
+
         <Section title="点検記録">
           {m.inspections.length === 0 ? (
             <Typography color="text.secondary" sx={{ fontSize: 12.5, py: 2, textAlign: "center" }}>
@@ -136,35 +186,18 @@ export default function MachineDetail() {
                 <TableHead>
                   <TableRow>
                     <TableCell>点検表の種類</TableCell>
-                    <TableCell sx={{ width: "20%" }}>点検月</TableCell>
-                    <TableCell sx={{ width: "30%" }}>点検記録</TableCell>
-                    <TableCell sx={{ width: "20%" }}>次回期限</TableCell>
+                    <TableCell sx={{ width: "25%" }}>点検月</TableCell>
+                    <TableCell sx={{ width: "35%" }}>点検記録</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {m.inspections.map((i) => {
-                    const isSpec = i.type === SPECIFIC_INSPECTION;
-                    // 期限は直近の実施月から計算するため、最新行にだけ状態を出す
-                    const isLatest = isSpec && i.month === s.latest;
-                    return (
-                      <TableRow key={i.id}>
-                        <TableCell>
-                          {i.type}
-                          {isSpec && <Chip size="small" label="期限管理対象" variant="outlined" sx={{ ml: 1 }} />}
-                        </TableCell>
-                        <TableCell>{fmt(i.month)}</TableCell>
-                        <TableCell>{i.file}</TableCell>
-                        <TableCell>
-                          {isLatest && (
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                              <Chip size="small" label={st.label} color={st.color} />
-                              {fmt(s.due)}
-                            </Box>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                  {m.inspections.map((i) => (
+                    <TableRow key={i.id}>
+                      <TableCell>{i.type}</TableCell>
+                      <TableCell>{fmt(i.month)}</TableCell>
+                      <TableCell>{i.file}</TableCell>
+                    </TableRow>
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>
