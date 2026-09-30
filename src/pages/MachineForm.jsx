@@ -101,8 +101,14 @@ export default function MachineForm() {
   const { getMachine, saveMachine } = useMachines();
   const editing = getMachine(id);
   const [m, setM] = useState(() => editing || emptyMachine());
-  // 使用届の入力方法（実画面と同じ2択）
-  const [entryMode, setEntryMode] = useState(editing ? "fields" : "");
+  // 使用届の入力方法。既定は「入力しない」。
+  // 編集時は、既に使用届の内容が入っていれば「項目入力」を開いた状態で表示する。
+  const hasUseNote =
+    editing &&
+    [m.repName, m.maker, m.spec, m.madeYear, m.usePlace, m.vehicleInspExpiry, ...Object.values(m.insurance)].some(
+      (v) => v
+    );
+  const [entryMode, setEntryMode] = useState(hasUseNote ? "fields" : "none");
 
   const set = (patch) => setM((s) => ({ ...s, ...patch }));
   const setIns = (iid, patch) =>
@@ -245,6 +251,7 @@ export default function MachineForm() {
             それ以外の場合は項目入力してください。
           </Typography>
           <RadioGroup value={entryMode} onChange={(e) => setEntryMode(e.target.value)} sx={{ mb: 1 }}>
+            <FormControlLabel value="none" control={<Radio size="small" />} label="入力しない" />
             <FormControlLabel value="upload" control={<Radio size="small" />} label="持込機械使用届のデータ・写真をアップロード" />
             <FormControlLabel value="fields" control={<Radio size="small" />} label="項目入力" />
           </RadioGroup>
