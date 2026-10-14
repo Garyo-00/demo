@@ -20,6 +20,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNewOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { MENU, EXTERNAL_LINKS, MY_PENDING_APPROVALS, todayStr } from "../data.js";
 import { BroughtMachineProvider } from "./BroughtMachineContext.jsx";
+import { TemporaryProvider } from "./TemporaryContext.jsx";
 
 const WIDTH = 248;
 
@@ -38,6 +39,7 @@ function menuTitle(pathname) {
   if (pathname.startsWith("/app/inspection")) return "点検";
   if (pathname.startsWith("/app/approval")) return "承認・申請";
   if (pathname.startsWith("/app/machines")) return "持込機械管理";
+  if (pathname.startsWith("/app/temporary")) return "仮設・その他管理";
   return "デモ";
 }
 
@@ -51,6 +53,7 @@ function AppLayoutInner() {
   let active = "ダッシュボード";
   if (location.pathname.startsWith("/app/inspection")) active = "点検";
   else if (location.pathname.startsWith("/app/machines")) active = "持込機械管理";
+  else if (location.pathname.startsWith("/app/temporary")) active = "仮設・その他管理";
   else if (location.pathname.startsWith("/app/approval")) active = "承認・申請";
   else if (location.pathname.startsWith("/app/placeholder/")) {
     active = decodeURIComponent(location.pathname.split("/app/placeholder/")[1] || "");
@@ -64,6 +67,7 @@ function AppLayoutInner() {
     else if (m === "点検") navigate("/app/inspection");
     else if (m === "承認・申請") navigate("/app/approval");
     else if (m === "持込機械管理") navigate("/app/machines");
+    else if (m === "仮設・その他管理") navigate("/app/temporary");
     else navigate("/app/placeholder/" + encodeURIComponent(m));
   }
 
@@ -191,11 +195,13 @@ function AppLayoutInner() {
   );
 }
 
-// 持込機械の状態は /app 配下の4画面（一覧・詳細・編集・新規登録）で共有する
+// 持込機械・仮設の状態は /app 配下の各画面（一覧・詳細・編集・新規登録）で共有する
 export default function AppLayout() {
   return (
     <BroughtMachineProvider>
-      <AppLayoutInner />
+      <TemporaryProvider>
+        <AppLayoutInner />
+      </TemporaryProvider>
     </BroughtMachineProvider>
   );
 }

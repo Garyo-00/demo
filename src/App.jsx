@@ -45,6 +45,9 @@ import Placeholder from "./pages/Placeholder.jsx";
 import MachineList from "./pages/MachineList.jsx";
 import MachineDetail from "./pages/MachineDetail.jsx";
 import MachineForm from "./pages/MachineForm.jsx";
+import TemporaryList from "./pages/TemporaryList.jsx";
+import TemporaryDetail from "./pages/TemporaryDetail.jsx";
+import TemporaryForm from "./pages/TemporaryForm.jsx";
 import InspectionRun from "./pages/InspectionRun.jsx";
 import WorkPlanOutputPreview from "./pages/WorkPlanOutputPreview.jsx";
 import KynextProviderRoute from "./components/kynext/KynextProviderRoute.jsx";
@@ -92,6 +95,10 @@ export default function App() {
         <Route path="machines/new" element={<MachineForm />} />
         <Route path="machines/:id" element={<MachineDetail />} />
         <Route path="machines/:id/edit" element={<MachineForm />} />
+        <Route path="temporary" element={<TemporaryList />} />
+        <Route path="temporary/new" element={<TemporaryForm />} />
+        <Route path="temporary/:id" element={<TemporaryDetail />} />
+        <Route path="temporary/:id/edit" element={<TemporaryForm />} />
         <Route path="placeholder/:name" element={<Placeholder />} />
       </Route>
       <Route path="/workplan" element={<WorkPlanLayout />}>
