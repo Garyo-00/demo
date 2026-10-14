@@ -7,12 +7,17 @@ import {
   Card,
   CardContent,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
   FormControlLabel,
   IconButton,
+  Menu,
   MenuItem,
-  Radio,
-  RadioGroup,
   Select,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -28,12 +33,14 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import LocalOfferOutlinedIcon from "@mui/icons-material/LocalOfferOutlined";
 import WarningIcon from "@mui/icons-material/Warning";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { useMachines } from "../components/BroughtMachineContext.jsx";
 import {
   BM_CATEGORIES,
   BM_COMPANIES,
   BM_OPERATORS,
   BM_PRIMARY,
+  BM_PROJECT,
   BM_SCOPES,
   BM_TAGS,
   NOTIFY_DAYS_BEFORE,
@@ -53,8 +60,12 @@ const EMPTY = {
   from: "",
   to: "",
   tag: "",
-  scope: "inPeriod",
 };
+
+// 表示対象（検索条件とは独立。切り替えると即反映）。
+// 使用期間内／外は複数選択（いずれか1つは必ずON）、
+// アーカイブはONにすると他を無視してアーカイブ済みだけを表示する
+const DEFAULT_SCOPE = { scopes: { inPeriod: true, outPeriod: true }, archivedOnly: false };
 
 /**
  * 一覧のアラート列。年次点検・特定自主検査の次回期限で出し分ける。
@@ -89,20 +100,23 @@ export default function MachineList() {
   const [params, setParams] = useSearchParams();
   const [cond, setCond] = useState(EMPTY);
   const [applied, setApplied] = useState(EMPTY);
+  const [scope, setScope] = useState(DEFAULT_SCOPE);
   const [selected, setSelected] = useState([]);
   const [perPage, setPerPage] = useState(50);
+  // 一括操作メニューと「使用期間延長」ダイアログ
+  const [bulkAnchor, setBulkAnchor] = useState(null);
+  const [extendOpen, setExtendOpen] = useState(false);
   // ダッシュボードから「要対応だけ」で遷移してくる
   const attentionOnly = params.get("attention") === "1";
 
   const summary = inspectionSummary(machines);
 
   const rows = machines.filter((m) => {
-    if (applied.scope === "archived") {
+    if (scope.archivedOnly) {
       if (!m.archived) return false;
     } else {
       if (m.archived) return false;
-      if (applied.scope === "inPeriod" && !inPeriod(m)) return false;
-      if (applied.scope === "outPeriod" && inPeriod(m)) return false;
+      if (!scope.scopes[inPeriod(m) ? "inPeriod" : "outPeriod"]) return false;
     }
     if (attentionOnly && !needsAttention(m)) return false;
     if (applied.category && m.category !== applied.category) return false;
@@ -230,15 +244,6 @@ export default function MachineList() {
             </Select>
           </Box>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1.5 }}>
-            <Typography variant="body2">表示対象</Typography>
-            <RadioGroup row value={cond.scope} onChange={(e) => set({ scope: e.target.value })}>
-              {BM_SCOPES.map((s) => (
-                <FormControlLabel key={s.value} value={s.value} control={<Radio size="small" />} label={s.label} />
-              ))}
-            </RadioGroup>
-          </Box>
-
           <Box sx={{ display: "flex", justifyContent: "center", gap: 1.5, mt: 1 }}>
             <Button variant="contained" onClick={() => setApplied(cond)}>検索</Button>
             <Button
@@ -254,15 +259,81 @@ export default function MachineList() {
         </CardContent>
       </Card>
 
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-        <Typography variant="body2">持込機械総数：{rows.length}</Typography>
+      <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Typography variant="body2">表示対象</Typography>
+          {BM_SCOPES.map((s) => {
+            const checked = !!scope.scopes[s.value];
+            // 最後の1つはOFFにできない（アーカイブのみ表示中は選択自体を無効化）
+            const lastOne = checked && BM_SCOPES.every((o) => o.value === s.value || !scope.scopes[o.value]);
+            return (
+              <Tooltip key={s.value} title={lastOne && !scope.archivedOnly ? "いずれか1つは選択が必要です" : ""}>
+                <FormControlLabel
+                  label={s.label}
+                  control={
+                    <Checkbox
+                      size="small"
+                      checked={checked}
+                      disabled={scope.archivedOnly || lastOne}
+                      onChange={(e) => setScope((v) => ({ ...v, scopes: { ...v.scopes, [s.value]: e.target.checked } }))}
+                    />
+                  }
+                />
+              </Tooltip>
+            );
+          })}
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+          <FormControlLabel
+            label="アーカイブのみ表示"
+            control={
+              <Switch size="small" checked={scope.archivedOnly} onChange={(e) => {
+                  setScope((v) => ({ ...v, archivedOnly: e.target.checked }));
+                  setSelected([]);
+                }} />
+            }
+          />
+        </Box>
         <Box sx={{ ml: "auto", display: "flex", gap: 1 }}>
+          <Button
+            variant="outlined"
+            size="small"
+            disabled={selected.length === 0}
+            endIcon={<ArrowDropDownIcon />}
+            onClick={(e) => setBulkAnchor(e.currentTarget)}
+          >
+            一括操作{selected.length > 0 && `（${selected.length}件）`}
+          </Button>
+          <Menu anchorEl={bulkAnchor} open={!!bulkAnchor} onClose={() => setBulkAnchor(null)}>
+            {!scope.archivedOnly && (
+              <MenuItem
+                onClick={() => {
+                  setBulkAnchor(null);
+                  setExtendOpen(true);
+                }}
+              >
+                使用期間延長
+              </MenuItem>
+            )}
+            <MenuItem onClick={() => setBulkAnchor(null)}>タグを追加</MenuItem>
+            <Divider />
+            {/* アーカイブ一覧を表示しているときは解除操作に切り替える */}
+            <MenuItem
+              onClick={() => {
+                setBulkAnchor(null);
+                patchMachines(selected, { archived: !scope.archivedOnly });
+                setSelected([]);
+              }}
+            >
+              {scope.archivedOnly ? "アーカイブ解除" : "アーカイブにする"}
+            </MenuItem>
+          </Menu>
           <Button variant="outlined" size="small">インポート</Button>
           <Button variant="contained" size="small" onClick={() => navigate("/app/machines/new")}>
             新規登録
           </Button>
         </Box>
       </Box>
+      <Typography variant="body2" sx={{ mb: 1 }}>持込機械総数：{rows.length}</Typography>
 
       <Card>
         <TableContainer>
@@ -358,22 +429,88 @@ export default function MachineList() {
         />
       </Card>
 
-      <Box sx={{ display: "flex", justifyContent: "center", gap: 1.5, mt: 2 }}>
-        <Button variant="outlined" size="small" disabled={selected.length === 0}>
-          タグを追加
-        </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          disabled={selected.length === 0}
-          onClick={() => {
-            patchMachines(selected, { archived: true });
-            setSelected([]);
-          }}
-        >
-          アーカイブにする
-        </Button>
-      </Box>
+      <ExtendPeriodDialog
+        open={extendOpen}
+        machines={machines.filter((m) => selected.includes(m.id))}
+        onClose={() => setExtendOpen(false)}
+        onApply={(useTo) => {
+          patchMachines(selected, { useTo });
+          setSelected([]);
+          setExtendOpen(false);
+        }}
+      />
     </Box>
+  );
+}
+
+/**
+ * 使用期間延長ダイアログ。選択した機械の使用期間「終了日」だけを一括で変更する。
+ * 「工期末に設定」でプロジェクト情報の工期終了日を反映できる。
+ */
+function ExtendPeriodDialog({ open, machines, onClose, onApply }) {
+  const [useTo, setUseTo] = useState("");
+  // 開くたびに入力をリセット
+  const handleEnter = () => setUseTo("");
+  // 現在の終了日より前に戻す機械があれば注意を出す（延長ではなく短縮になる）
+  const shortened = useTo ? machines.filter((m) => m.useTo > useTo) : [];
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" TransitionProps={{ onEnter: handleEnter }}>
+      <DialogTitle>使用期間延長</DialogTitle>
+      <DialogContent dividers>
+        <Typography variant="body2" sx={{ mb: 1.5 }}>
+          選択した {machines.length} 台の使用期間の終了日を一括で変更します。開始日は変更されません。
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
+          <Typography variant="body2" sx={{ minWidth: 96 }}>新しい終了日</Typography>
+          <TextField
+            type="date"
+            size="small"
+            value={useTo}
+            onChange={(e) => setUseTo(e.target.value)}
+            inputProps={{ min: BM_PROJECT.periodFrom }}
+          />
+          <Button variant="outlined" size="small" onClick={() => setUseTo(BM_PROJECT.periodTo)}>
+            工期末に設定
+          </Button>
+        </Box>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", ml: "112px", mb: 2 }}>
+          工期：{fmt(BM_PROJECT.periodFrom)}〜{fmt(BM_PROJECT.periodTo)}（プロジェクト情報より）
+        </Typography>
+        {shortened.length > 0 && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            {shortened.length} 台は現在の終了日より前の日付になります（使用期間が短縮されます）。
+          </Alert>
+        )}
+        <TableContainer sx={{ maxHeight: 240 }}>
+          <Table size="small" stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell>機械名</TableCell>
+                <TableCell>現場内呼称</TableCell>
+                <TableCell>現在の終了日</TableCell>
+                <TableCell>変更後</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {machines.map((m) => (
+                <TableRow key={m.id}>
+                  <TableCell>{m.name}</TableCell>
+                  <TableCell>{m.alias}</TableCell>
+                  <TableCell>{fmt(m.useTo)}</TableCell>
+                  <TableCell sx={{ color: useTo ? "primary.main" : "text.disabled" }}>{useTo ? fmt(useTo) : "—"}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>キャンセル</Button>
+        <Button variant="contained" disabled={!useTo} onClick={() => onApply(useTo)}>
+          変更する
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
