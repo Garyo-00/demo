@@ -629,7 +629,8 @@ function MachinePanel({ start, monthly, startSheet, monthlySheet }) {
         badge="使用期限切れ"
         rows={[
           ["使用期間", "2026/05/26 〜 2026/05/29"],
-          ["7月17日", startDone ? "点検済" : "点検未"],
+          // 点検表が紐づいていなければ当日の点検自体が存在しないため「—」
+          ["7月17日", startSheet ? (startDone ? "点検済" : "点検未") : ""],
           ["取扱責任者（正）", ""],
           ["取扱責任者（副）", ""],
         ]}
@@ -726,10 +727,10 @@ function TempPanel({ startCount, assemblyReasons, startSheet, assemblySheet }) {
 
   return (
     <>
+      {/* 仮設・その他は当日のステータスを持たない（使用者ごとに点検が必要で「済」の基準が無いため） */}
       <HeaderCard
         name="わくぐみあしば"
         rows={[
-          ["7月17日", startDone ? "点検実施中" : "点検未"],
           ["取扱責任者（正）", ""],
           ["取扱責任者（副）", ""],
         ]}
