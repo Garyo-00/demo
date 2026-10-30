@@ -83,7 +83,7 @@ export default function MachineDetail() {
         持込機械詳細
       </Typography>
 
-      {/* 期限の30日前から通知する */}
+      {/* 期限の60日前から通知する */}
       {s.state !== "ok" && (
         <Alert severity={s.state === "overdue" ? "error" : "warning"} sx={{ mb: 2 }}>
           {s.state === "none"

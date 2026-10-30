@@ -21,6 +21,7 @@ import { useMachines } from "../components/BroughtMachineContext.jsx";
 import AnnualCheckEditor from "../components/AnnualCheckEditor.jsx";
 import {
   ANNUAL_KINDS,
+  NOTIFY_DAYS_BEFORE,
   BM_CATEGORIES,
   INSPECTION_TYPES,
   emptyAnnualChecks,
@@ -338,7 +339,7 @@ export default function MachineForm() {
           {preview.state !== "none" && (
             <Alert severity={preview.state === "overdue" ? "error" : "info"} sx={{ mb: 2 }}>
               特定自主検査の次回期限は <strong>{fmt(preview.due)}</strong> です
-              （直近の実施 {fmt(preview.latest)} の1年後）。期限の30日前から通知します。
+              （直近の実施 {fmt(preview.latest)} の1年後）。期限の{NOTIFY_DAYS_BEFORE}日前から通知します。
             </Alert>
           )}
           {ANNUAL_KINDS.map(({ key, label }) => (

@@ -69,7 +69,7 @@ const DEFAULT_SCOPE = { scopes: { inPeriod: true, outPeriod: true }, archivedOnl
 
 /**
  * 一覧のアラート列。年次点検・特定自主検査の次回期限で出し分ける。
- * 期限が設定されていれば通知アイコン、30日以内または期限超過なら警告アイコン。
+ * 期限が設定されていれば通知アイコン、60日以内または期限超過なら警告アイコン。
  */
 function AlertIcon({ machine }) {
   const { state, items } = annualAlert(machine);
@@ -145,7 +145,7 @@ export default function MachineList() {
         持込機械一覧
       </Typography>
 
-      {/* 年次点検・特定自主検査の通知。期限の30日前から出す */}
+      {/* 年次点検・特定自主検査の通知。期限の60日前から出す */}
       {(summary.overdue > 0 || summary.due > 0) && !attentionOnly && (
         <Alert
           severity={summary.overdue > 0 ? "error" : "warning"}

@@ -69,7 +69,7 @@ function CardGrid({ columns = 4, children }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  // 年次点検・特定自主検査は期限の30日前から通知する
+  // 年次点検・特定自主検査は期限の60日前から通知する
   const insp = inspectionSummary(useMachines().machines);
 
   // 点検記録確認へ（種別・状態で絞り込み）

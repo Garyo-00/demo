@@ -15,7 +15,7 @@ export const ANNUAL_KINDS = [
 export const SPECIFIC_INSPECTION = "特定自主検査";
 
 // 期限の何日前から通知するか
-export const NOTIFY_DAYS_BEFORE = 30;
+export const NOTIFY_DAYS_BEFORE = 60;
 
 // デモの「当日」。本番では実際の当日を使う。
 export const BM_TODAY = "2026-08-25";
@@ -378,7 +378,7 @@ export function fmt(ymd) {
 
 /**
  * 特定自主検査の次回期限。
- * state: "none"（記録なし）／"ok"／"due"（30日前〜期限）／"overdue"（超過）
+ * state: "none"（記録なし）／"ok"／"due"（60日前〜期限）／"overdue"（超過）
  */
 export function specificInspection(machine, today = BM_TODAY) {
   const rows = machine.annualChecks?.specific || [];
@@ -397,7 +397,7 @@ export function specificInspection(machine, today = BM_TODAY) {
 /**
  * 一覧のアラート判定。年次点検・特定自主検査の「次回期限」をまとめて見る。
  *  - 期限が設定されている                     → notify（通知アイコン）
- *  - そのうち1つでも30日以内または期限超過     → warn（警告アイコン）
+ *  - そのうち1つでも60日以内または期限超過     → warn（警告アイコン）
  *  - 次回期限が1つも無い                      → none（アイコンなし）
  */
 export function annualAlert(machine, today = BM_TODAY) {
@@ -419,7 +419,7 @@ export function annualAlert(machine, today = BM_TODAY) {
   };
 }
 
-// 対応が必要な機械。年次点検・特定自主検査のいずれかが期限30日以内／期限超過のもの。
+// 対応が必要な機械。年次点検・特定自主検査のいずれかが期限60日以内／期限超過のもの。
 // 一覧のアラートアイコン（warn）と同じ条件にしている。
 export function needsAttention(machine, today = BM_TODAY) {
   return annualAlert(machine, today).state === "warn";
